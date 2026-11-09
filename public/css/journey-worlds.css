@@ -164,3 +164,5 @@
 @keyframes summitGlow { from { opacity: .18; } to { opacity: .5; } }
 .summit { transition: opacity 1.2s ease; }
 .journey:not([data-world="0"]) .summit { opacity: 0; }
+.summit-gondola { animation: gondola 16s ease-in-out infinite alternate; }
+@keyframes gondola { from { transform: translate(0, 0); } to { transform: translate(-76px, 61px); } }

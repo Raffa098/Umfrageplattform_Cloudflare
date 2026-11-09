@@ -340,6 +340,34 @@ function tesla(cx) {
   </g>`;
 }
 
+// Gipfelstation (wie auf der Zugspitze): Plattform auf Felssockel, Glasfront, zwei schräge Glasdächer mit Stahlrahmen,
+// Geländer, Antennenmast, kleine Besucher und ein Seilbahn-Seil mit fahrender Gondel
+function gipfelstation(cx) {
+  const dx = cx + 6, dy = 58; // linke Kante der Plattform
+  const w = 50;
+  const mull = Array.from({ length: 12 }, (_, k) => `<path d="M${dx + 5 + k * 3.5} ${dy - 10} V${dy - 1}" stroke="#5b6b80" stroke-width=".35"/>`).join('');
+  const rail = Array.from({ length: 14 }, (_, k) => `<path d="M${dx + 1 + k * 3.7} ${dy - 15} v3" stroke="#9aa6b8" stroke-width=".4"/>`).join('');
+  const people = [[dx + 12, '#e0463a'], [dx + 21, '#3f86c9'], [dx + 33, '#f2c14e'], [dx + 44, '#5da35c']].map(([x, col]) => `<g><rect x="${x - 0.8}" y="${dy - 18.8}" width="1.6" height="3.2" rx=".7" fill="${col}"/><circle cx="${x}" cy="${dy - 19.8}" r=".9" fill="#f2c29b"/></g>`).join('');
+  return `<g class="station">
+    <path d="M${dx - 2} ${dy} L${dx + w + 2} ${dy} L${dx + w + 10} ${dy + 40} L${dx + 22} ${dy + 24} L${dx + 4} ${dy + 8}Z" class="mtn"/>
+    <path d="M${dx + 22} ${dy + 1} L${dx + w + 3} ${dy + 1} L${dx + w + 10} ${dy + 40} L${dx + 30} ${dy + 28}Z" fill="#1c2340" opacity=".2"/>
+    <path d="M${dx + 14} ${dy + 2} L${dx + 26} ${dy + 18} M${dx + 38} ${dy + 2} L${dx + 33} ${dy + 20} M${dx + 48} ${dy + 2} L${dx + 52} ${dy + 24}" stroke="#6b7384" stroke-width="1" stroke-linecap="round"/>
+    <rect x="${dx - 1}" y="${dy - 1.6}" width="${w + 2}" height="2.6" rx=".6" fill="#8e97a6"/>
+    <rect x="${dx + 3}" y="${dy - 11}" width="${w - 12}" height="10" fill="#a9d3ea" stroke="#5b6b80" stroke-width=".5"/>${mull}
+    <rect x="${dx + w - 9}" y="${dy - 12}" width="9" height="11" fill="#c9cfd9" stroke="#8e97a6" stroke-width=".4"/>
+    <rect x="${dx + 1}" y="${dy - 12.6}" width="${w - 1}" height="1.6" fill="#7d8798"/>
+    <path d="M${dx + 1} ${dy - 15} H${dx + w}" stroke="#9aa6b8" stroke-width=".5"/>${rail}
+    <path d="M${dx + 7} ${dy - 12.6} L${dx + 16} ${dy - 24} L${dx + 25} ${dy - 24} L${dx + 25} ${dy - 12.6}Z" fill="#b9dcef" opacity=".85" stroke="#5b6b80" stroke-width=".5"/>
+    <path d="M${dx + 10} ${dy - 12.6} L${dx + 17} ${dy - 22.6} M${dx + 14} ${dy - 12.6} L${dx + 19} ${dy - 22.6}" stroke="#5b6b80" stroke-width=".3"/>
+    <path d="M${dx + 28} ${dy - 12.6} L${dx + 35} ${dy - 23} L${dx + 44} ${dy - 23} L${dx + 44} ${dy - 12.6}Z" fill="#b9dcef" opacity=".85" stroke="#5b6b80" stroke-width=".5"/>
+    <path d="M${dx + 31} ${dy - 12.6} L${dx + 36} ${dy - 21.8} M${dx + 35} ${dy - 12.6} L${dx + 38} ${dy - 21.8}" stroke="#5b6b80" stroke-width=".3"/>
+    ${people}
+    <path d="M${dx + 47} ${dy - 12.6} V${dy - 33}" stroke="#7d8798" stroke-width=".7"/><circle cx="${dx + 47}" cy="${dy - 33.6}" r="1.1" fill="#e0463a" class="blink"/><path d="M${dx + 44} ${dy - 29} H${dx + 50}" stroke="#7d8798" stroke-width=".5"/>
+    <path d="M${dx + 2} ${dy - 0.5} L${dx - 78} ${dy + 62}" stroke="#3b4150" stroke-width=".6"/>
+    <g transform="translate(${dx + 2} ${dy})"><g class="summit-gondola"><path d="M0 0 V3.6" stroke="#3b4150" stroke-width=".5"/><rect x="-3" y="3.6" width="6" height="4.2" rx=".9" fill="#e0463a"/><rect x="-2.2" y="4.4" width="4.4" height="1.8" fill="#cfe8f5"/></g></g>
+  </g>`;
+}
+
 // Felsiger Gipfel mit Schneefeldern, zwei Spitzen (wie der Jubiläumsgrat der Zugspitze) und kleinem goldenem Gipfelkreuz
 function summit() {
   const cx = 196; // Weltkoordinate des Hauptgipfels
@@ -350,6 +378,7 @@ function summit() {
     <path d="M${cx + 24} 44 L${cx + 16} 58 L${cx + 22} 56 L${cx + 27} 63 L${cx + 31} 54 L${cx + 36} 58Z" fill="#f4f7fb"/>
     <path d="M${cx - 30} 62 L${cx - 38} 76 L${cx - 32} 73 L${cx - 27} 79 L${cx - 22} 70 L${cx - 18} 70Z" fill="#f4f7fb" opacity=".9"/>
     <path d="M${cx - 8} 70 L${cx - 14} 92 M${cx + 12} 74 L${cx + 20} 100" stroke="#f4f7fb" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+    ${gipfelstation(cx)}
     <circle class="summit-glow" cx="${cx}" cy="29.5" r="4.6" fill="#ffd34d"/>
     <g class="summit-cross"><rect x="${cx - 0.8}" y="24" width="1.6" height="12.6" fill="#f2b705"/><rect x="${cx - 3.6}" y="27.2" width="7.2" height="1.6" fill="#f2b705"/></g>
   </g>`;
