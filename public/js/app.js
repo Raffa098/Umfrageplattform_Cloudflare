@@ -349,8 +349,8 @@ function renderTreatment() {
     journey = createJourney($treat, L, cfg.journey);
     journey.setProgress(S.answered || 0, { animate: false });
   } else {
-    // Kontrolle und Motivation: identischer, neutraler Kopfbereich
-    $treat.innerHTML = `<div class="neutral"><strong>${L.neutralTitle}</strong><span>${L.neutralSub}</span></div>`;
+    // Kontrolle und Motivation: kein Kopfbereich auf den Fragenseiten (kein Thema, keine Hinweise)
+    $treat.innerHTML = '';
   }
 }
 
