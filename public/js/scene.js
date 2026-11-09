@@ -68,7 +68,9 @@ function university(cx) {
     <rect class="uni-wall" x="${cx - 90}" y="74" width="180" height="50"/>
     ${cols}
     <path class="uni-door" d="M${cx - 9} 124 V108 a9 9 0 0 1 18 0 V124Z"/>
-    <rect class="uni-beam" x="${cx - 96}" y="70" width="192" height="6" rx="1"/>
+    <rect class="uni-beam" x="${cx - 96}" y="71" width="192" height="10" rx="1"/>
+    <rect x="${cx - 62}" y="72.4" width="124" height="7.2" rx="1.4" fill="#2b2250"/>
+    <text class="uni-sign" x="${cx}" y="78.2" text-anchor="middle">Universität Paderborn</text>
     <path class="uni-roof" d="M${cx - 102} 71 L${cx} 38 L${cx + 102} 71Z"/>
     <circle class="uni-crest" cx="${cx}" cy="58" r="7"/>
     <path class="uni-crest-in" d="M${cx} 53.6 l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z"/>

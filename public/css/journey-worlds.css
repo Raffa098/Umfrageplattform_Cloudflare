@@ -166,3 +166,4 @@
 .journey:not([data-world="0"]) .summit { opacity: 0; }
 .summit-gondola { animation: gondola 16s ease-in-out infinite alternate; }
 @keyframes gondola { from { transform: translate(0, 0); } to { transform: translate(-76px, 61px); } }
+.uni-sign { font: 800 5.6px/1 system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f2c230; letter-spacing: .05em; }
