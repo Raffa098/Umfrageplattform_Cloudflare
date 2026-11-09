@@ -16,6 +16,9 @@
 .j-char[data-level="1"] .c-pose { transform: translate(-3px, -10px) rotate(16deg); }
 .j-char[data-level="2"] .c-pose, .j-char[data-level="3"] .c-pose { transform: translate(-7px, -0.5px); }
 
+/* Im Cabrio wird alles unterhalb der Türkante abgeschnitten: nie Füße oder Beine sichtbar (auch nicht beim Wechsel/Einblenden) */
+.j-char[data-level="2"] .c-pose, .j-char[data-level="3"] .c-pose { clip-path: url(#jg-cabclip); }
+
 /* Arme zum Lenker bzw. Lenkrad (Gehschwung aus) */
 .j-char[data-level="1"] .c-arm-f, .j-char[data-level="1"] .c-arm-b { transform: rotate(-44deg); }
 .j-char[data-level="2"] .c-arm-f, .j-char[data-level="3"] .c-arm-f { transform: rotate(-54deg); }

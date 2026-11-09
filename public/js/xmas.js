@@ -94,8 +94,8 @@ export function xmasSVG() {
     <ellipse cx="0" cy="0" rx="26" ry="3.6" fill="rgba(0,0,0,.28)"/>
     <rect x="-10.5" y="-50" width="9" height="48" rx="3.2" fill="#2d3b5a"/><rect x="1.5" y="-50" width="9" height="48" rx="3.2" fill="#2d3b5a"/>
     <rect x="-13" y="-5" width="12.5" height="6" rx="3" fill="#1b1b22"/><rect x="0.5" y="-5" width="12.5" height="6" rx="3" fill="#1b1b22"/>
-    <path class="xs-stand" d="M26 -7 L16.5 0 M26 -7 L35.5 0 M26 -7 V0"/><path class="xs-stand" d="M26 -7 V-92 Q26 -99 13.5 -98.4"/>
-    <rect class="xs-mic" x="6.4" y="-101.6" width="11.4" height="6.4" rx="3.2" transform="rotate(8 12 -98.4)"/><circle class="xs-micg" cx="7.4" cy="-98" r="3.5"/>
+    <path class="xs-stand" d="M28 -7 L18.5 0 M28 -7 L37.5 0 M28 -7 V0"/><path class="xs-stand" d="M28 -7 V-90 Q28 -98.5 22.5 -98.5"/>
+    
     <g class="xs-arm-l"><rect x="-24.5" y="-88" width="8.4" height="34" rx="4.2" fill="#154a33"/><circle cx="-20.3" cy="-52" r="4.6" fill="#f2c29b"/></g>
     <rect x="-18" y="-94" width="36" height="50" rx="12" fill="#1f5a3f"/>
     <path d="M-15 -94 Q0 -84 15 -94 V-86 Q0 -76 -15 -86Z" fill="#d83a3a"/><path d="M-10 -89 l2 7 M-3 -87 l2 8 M4 -88 l2 7 M10 -91 l1.5 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
@@ -111,7 +111,9 @@ export function xmasSVG() {
     <path class="xs-hair-b" d="M-9 -111 q3 -1.6 6 0 M3 -111 q3 -1.6 6 0" fill="none" stroke="#c24a24" stroke-width="1.6" stroke-linecap="round"/>
     <circle cx="0" cy="-102" r="1.7" fill="#e9a982"/>
     <ellipse class="xs-mouth" cx="0" cy="-95.6" rx="3.9" ry="3.3" fill="#5a1f24"/>
-    <g class="xs-arm-r"><path d="M14 -86 Q28 -85 26 -75.5" fill="none" stroke="#1f5a3f" stroke-width="8.4" stroke-linecap="round"/><circle cx="26" cy="-74.5" r="4.7" fill="#f2c29b"/></g>
+    <g class="xs-micset" transform="translate(14 -98.5) scale(1.3) translate(-14 98.5)"><rect class="xs-mic" x="11.5" y="-103.2" width="13.4" height="9.4" rx="4.7"/><rect class="xs-micband" x="18.6" y="-103.2" width="3.4" height="9.4"/>
+      <circle class="xs-micg" cx="11.8" cy="-98.5" r="5.6"/><path class="xs-micmesh" d="M7 -98.5 H16.6 M11.8 -103.3 V-93.7 M8.4 -101.9 L15.2 -95.1 M15.2 -101.9 L8.4 -95.1"/></g>
+    <g class="xs-arm-r"><path d="M14 -86 Q30 -85 28 -75.5" fill="none" stroke="#1f5a3f" stroke-width="8.4" stroke-linecap="round"/><circle cx="28" cy="-74.5" r="4.7" fill="#f2c29b"/></g>
   </g></g>`;
 
   return `<svg viewBox="0 -18 360 198" role="img" focusable="false" aria-hidden="true">

@@ -27,8 +27,9 @@
 @keyframes xsNote { 0% { opacity: 0; transform: translate(0, 12px) scale(.6) rotate(-10deg); } 18% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -26px) scale(1.15) rotate(12deg); } }
 
 /* Mikrofonständer */
-.xs-stand { fill: none; stroke: #aab3c2; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.xs-mic { fill: #2a2e38; } .xs-micg { fill: #b9c2d0; stroke: #2a2e38; stroke-width: .8; }
+.xs-stand { fill: none; stroke: #e3e8f0; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.xs-mic { fill: #dfe5ee; stroke: #2a2e38; stroke-width: 1; } .xs-micband { fill: #2a2e38; }
+.xs-micg { fill: #f6f8fb; stroke: #2a2e38; stroke-width: 1.3; } .xs-micmesh { fill: none; stroke: #7d879a; stroke-width: .8; stroke-linecap: round; }
 
 /* Band im Hintergrund */
 .xs-nod { transform-box: fill-box; transform-origin: 50% 100%; animation: xsNod .62s ease-in-out infinite alternate; }

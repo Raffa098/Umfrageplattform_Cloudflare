@@ -321,6 +321,7 @@ export function sceneSVG() {
     <defs>
       <linearGradient id="jg-sky" x1="0" y1="0" x2="0" y2="1"><stop class="sk-a" offset="0"/><stop class="sk-b" offset="1"/></linearGradient>
       <radialGradient id="jg-sun"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <clipPath id="jg-cabclip"><rect x="-60" y="-140" width="120" height="126.5"/></clipPath>
       <linearGradient id="jg-vig" x1="0" y1="0" x2="0" y2="1"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".16"/></linearGradient>
     </defs>
     <rect class="sky" x="0" y="0" width="360" height="160" fill="url(#jg-sky)"/>
