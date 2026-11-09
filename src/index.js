@@ -13,7 +13,7 @@ const EVENT_TYPES = new Set([
   'interstitial_shown', 'interstitial_done', 'extras_shown', 'extras_done', 'resume', 'finish_shown', 'save_error',
 ]);
 // Felder, die das Treatment bzw. die Messung beeinflussen: nach Start der echten Erhebung eingefroren
-const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey', 'word_count_mode'];
+const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey', 'word_count_mode', 'manipulation_after'];
 
 export const DEFAULT_SETTINGS = {
   site_online: true, // Teilnehmerseite erreichbar (aus = Offline-Meldung für alle; Admin-Testmodus bleibt nutzbar)
@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = {
   open_test: false, // Testfreigabe: Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen (Daten = Testdaten)
   experiment_version: 'v1-pilot',
   speeding_factor: { de: 0.3, en: 0.3 }, // Sekunden pro Wort
+  manipulation_after: 5, // Manipulationscheck erscheint nach dieser Hauptfrage (15 = erst nach allen Hauptfragen)
   word_count_mode: 'text_options', // Speeding-Schwelle: Wortzahl inkl. Antwortoptionen (Pflichtenheft) oder 'text' = nur Text/Passage
   consistency: { rule: 'same_side', min_diff: 3 },
   abandon_after_min: 30,
@@ -209,6 +210,7 @@ async function getConfig(env, url) {
     version: s.experiment_version,
     total: TOTAL,
     items: publicItems(lang, s.catalog_overrides),
+    manipulation_after: s.manipulation_after,
     extras: group ? visibleExtras(s, group).map((e) => publicExtra(e, lang)) : [],
     motivation: s.motivation[lang],
     journey: s.journey,
@@ -295,11 +297,11 @@ async function getSession(request, env) {
   const p = await getParticipant(request, env);
   const s = await getSettings(env);
   const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM responses WHERE participant_id = ?').bind(p.id).first();
-  const ex = n >= TOTAL ? await extrasState(env, p, s) : null;
+  const ex = await extrasState(env, p, s);
   return json({
     id: p.id, group: p.grp, lang: p.lang, version: p.version, answered: n,
     main_done: n >= TOTAL, completed: !!p.completed_at, test: !!p.is_test,
-    extras_done: ex ? SECTIONS.filter((sec) => ex.sections[sec].done) : [],
+    extras_done: SECTIONS.filter((sec) => ex.sections[sec].done),
   });
 }
 
@@ -345,9 +347,13 @@ async function postExtras(request, env) {
   const p = await getParticipant(request, env);
   const b = await readJson(request);
   if (!SECTIONS.includes(b.section)) throw new HttpError(400, 'invalid_section');
-  if (!p.main_completed_at) throw new HttpError(409, 'main_not_done');
   if (p.completed_at) return json({ ok: true, duplicate: true });
   const s = await getSettings(env);
+  if (b.section === 'manipulation') {
+    // Zwischenfrage nach Frage manipulation_after (oder danach)
+    const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM responses WHERE participant_id = ?').bind(p.id).first();
+    if (n < Math.min(s.manipulation_after, TOTAL)) throw new HttpError(409, 'too_early');
+  } else if (!p.main_completed_at) throw new HttpError(409, 'main_not_done');
   const items = visibleExtras(s, p.grp).filter((e) => e.section === b.section);
   const given = isObj(b.answers) ? b.answers : {};
   const { results: stored } = await env.DB.prepare('SELECT item_id, value FROM extra_answers WHERE participant_id = ?').bind(p.id).all();
@@ -381,7 +387,14 @@ async function postExtras(request, env) {
     env.DB.prepare('INSERT OR IGNORE INTO extra_answers (participant_id, item_id, value) VALUES (?, ?, ?)').bind(p.id, id, v));
   stmts.push(env.DB.prepare('UPDATE participants SET last_seen_at = ? WHERE id = ?').bind(now, p.id));
   await env.DB.batch(stmts);
-  return json({ ok: true });
+  // Hinweis bei falscher Antwort: richtige Antwort (je Gruppe) nennen
+  const wrong = [];
+  for (const e of items) {
+    const right = e.correct_by_group?.[p.grp];
+    const row = rows.find((r) => r[0] === e.id);
+    if (right && row && row[1] !== '' && Number(row[1]) !== right) wrong.push({ id: e.id, given: Number(row[1]), right, right_text: e[p.lang].options[right - 1] });
+  }
+  return json({ ok: true, wrong });
 }
 
 // Abschluss: Der Code wird vom Gerät erzeugt und OHNE Personenbezug gespeichert (nur mit Datum).
@@ -581,7 +594,7 @@ const KPI_DEFS = [
   { id: 'consistency', name: 'Consistency (Q6/Q10)', definition: 'Q10 invertiert (6 − Q10) und mit Q6 verglichen; Regel und Schwelle laut Konfiguration; fehlend = NA.', denominator: 'Personen mit Antwort auf Q6 und Q10', export: 'derived_person.csv: consistency_flag, q06, q10, q10_inverted' },
   { id: 'comprehension', name: 'Comprehension (Q9)', definition: 'Auffällig (1), wenn die Antwort nicht korrekt ist (A); fehlend = NA.', denominator: 'Personen mit Antwort auf Q9', export: 'derived_person.csv: comprehension_flag, q09_choice' },
   { id: 'reach', name: 'Fortschritt / Abbruchstelle', definition: 'Personen mit mindestens k beantworteten Hauptfragen.', denominator: 'Starts', export: 'responses_long.csv: answered; derived_person.csv: n_answered' },
-  { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (virtuelle Reise, akademische Laufbahn), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Ausgewertet wird der Anteil je Antwort und Gruppe; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
+  { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (virtuelle Reise, akademische Laufbahn), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Gestellt nach Frage 5 (Einstellung); bei falscher Antwort erscheint die richtige als Hinweis. Ausgewertet werden Trefferquote (richtige Antwort je Gruppe) und Anteil je Antwort; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation, correct; derived_person.csv: mc_M1_correct' },
   { id: 'control', name: 'Kontextvariablen', definition: 'Verteilung je Gruppe (z. B. Semester, Umfrageerfahrung, Teilnahmegrund); Fehlwerte werden getrennt gezählt.', denominator: 'beantwortete Items je Gruppe (n) und Fehlwerte (NA)', export: 'checks_and_covariates.csv: check_type = control' },
   { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut). Bei 1–2 folgt F2 (was nicht gefallen hat), bei 4–5 folgt F3 (was besonders gefallen hat), bei 3 keine Nachfrage; nicht gestellte Nachfragen sind NA.', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
   { id: 'quality', name: 'Datenqualität', definition: 'Fehlende Hauptantworten, technische Speicherfehler (save_error), Wiederholungs-Verdacht (Browser hatte schon einen Abschluss), Geräteklasse, Sprache.', denominator: 'Starts bzw. erwartete Antworten (Starts × 15)', export: 'participants.csv: device_class, language; events.csv: event_type = save_error / consent' },
@@ -635,11 +648,13 @@ async function adminStats(env, url) {
   // Manipulationschecks / Kontext / Zufriedenheit je Gruppe (inkl. Fehlwerte)
   const extras = {};
   const multiIds = new Set(s.extras.filter((e) => e.multi).map((e) => e.id));
+  const hitOf = Object.fromEntries(s.extras.filter((e) => e.correct_by_group).map((e) => [e.id, e.correct_by_group]));
   for (const r of await loadExtraAnswers(env, f, s)) {
     const g = ((extras[r.item_id] ??= {})[r.grp] ??= { n: 0, na: 0, sum: 0, dist: {} });
     if (r.value === '') { g.na++; continue; }
     g.n++;
     if (!multiIds.has(r.item_id)) g.sum += Number(r.value);
+    if (hitOf[r.item_id]?.[r.grp] && Number(r.value) === hitOf[r.item_id][r.grp]) g.hit = (g.hit || 0) + 1;
     for (const part of multiIds.has(r.item_id) ? r.value.split('|') : [r.value]) g.dist[part] = (g.dist[part] || 0) + 1;
   }
   for (const e of Object.values(extras)) for (const g of Object.values(e)) { g.mean = g.n && g.sum ? Number((g.sum / g.n).toFixed(2)) : null; delete g.sum; }
@@ -677,7 +692,7 @@ async function adminStats(env, url) {
     langs,
     versions,
     extras,
-    extras_meta: s.extras.map((e) => ({ id: e.id, section: e.section, kind: e.kind, ordinal: e.ordinal, multi: !!e.multi, text: e.de.text, options: e.de.options })),
+    extras_meta: s.extras.map((e) => ({ id: e.id, section: e.section, kind: e.kind, ordinal: e.ordinal, multi: !!e.multi, has_correct: !!e.correct_by_group, text: e.de.text, options: e.de.options })),
     items,
     quality: {
       save_errors: saveErrors,
@@ -802,13 +817,14 @@ function buildCodebook(ctx) {
 // checks_and_covariates.csv – eine Zeile je Zusatzantwort (Manipulationscheck / Kontrollfrage / Zufriedenheit)
 function buildChecks(ctx) {
   const meta = metaOfExtras(ctx.s);
-  const cols = ['participant_id', 'group', 'check_id', 'check_type', 'response_value', 'answered', 'shown_at', 'submitted_at', 'language', 'experiment_version', 'is_test'];
+  const cols = ['participant_id', 'group', 'check_id', 'check_type', 'response_value', 'answered', 'correct', 'shown_at', 'submitted_at', 'language', 'experiment_version', 'is_test'];
   const rows = ctx.extraRows.map((r) => {
     const p = ctx.pById.get(r.participant_id);
     const type = meta[r.item_id]?.section ?? null;
     return {
       participant_id: r.participant_id, group: r.grp, check_id: r.item_id, check_type: type,
       response_value: r.value === '' ? null : r.value, answered: r.value === '' ? 0 : 1,
+      correct: meta[r.item_id]?.correct_by_group?.[r.grp] && r.value !== '' ? (Number(r.value) === meta[r.item_id].correct_by_group[r.grp] ? 1 : 0) : null,
       shown_at: type ? ctx.shownExtras.get(`${r.participant_id}|${type}`) ?? null : null, submitted_at: r.created_at,
       language: p?.lang ?? null, experiment_version: p?.version ?? null, is_test: p?.is_test ?? null,
     };
@@ -821,11 +837,14 @@ function buildDerived(ctx) {
   const meta = metaOfExtras(ctx.s);
   const colOf = (id) => `${PREFIX[meta[id]?.section] || 'x'}_${id}`;
   const ids = [...new Set([...ctx.s.extras.map((e) => e.id), ...ctx.extraRows.map((r) => r.item_id)])];
-  const covCols = ids.map(colOf);
+  const corrIds = ids.filter((id) => meta[id]?.correct_by_group);
+  const covCols = ids.flatMap((id) => [colOf(id), ...(meta[id]?.correct_by_group ? [`${colOf(id)}_correct`] : [])]);
   const cov = new Map();
   for (const r of ctx.extraRows) {
     if (!cov.has(r.participant_id)) cov.set(r.participant_id, {});
     cov.get(r.participant_id)[colOf(r.item_id)] = r.value === '' ? null : r.value;
+    const right = meta[r.item_id]?.correct_by_group?.[r.grp];
+    if (right) cov.get(r.participant_id)[`${colOf(r.item_id)}_correct`] = r.value === '' ? null : Number(r.value) === right ? 1 : 0;
   }
   const cols = ['participant_id', 'group', 'status', 'completed', 'language', 'device_class', 'experiment_version', 'is_test', 'n_answered',
     'n_speeding', 'n_speeding_valid', 'speeding_share', 'bogus_flag', 'consistency_flag', 'comprehension_flag', 'q06', 'q10', 'q10_inverted',
@@ -994,6 +1013,16 @@ function validateExtras(arr) {
     if (!groups.length) bad(`${id}.groups`);
     const out = { id, section: e.section, kind: e.kind, required: !!e.required, visible: !!e.visible, ordinal: !!e.ordinal, groups };
     if (e.kind === 'choice' && e.multi) { out.multi = true; out.ordinal = false; }
+    if (isObj(e.correct_by_group)) {
+      const cbg = {};
+      for (const g of GROUPS) {
+        if (e.correct_by_group[g] === undefined || e.correct_by_group[g] === null || e.correct_by_group[g] === '') continue;
+        const v = clampInt(e.correct_by_group[g], 1, 10);
+        if (v === null) bad(`${id}.correct_by_group`);
+        cbg[g] = v;
+      }
+      if (Object.keys(cbg).length) out.correct_by_group = cbg;
+    }
     if (isObj(e.show_if)) {
       const max = e.show_if.max == null ? null : clampInt(e.show_if.max, 1, 5);
       const min = e.show_if.min == null ? null : clampInt(e.show_if.min, 1, 5);
@@ -1074,6 +1103,11 @@ async function adminPutSettings(request, env) {
         next.speeding_factor[l] = x;
       }
     }
+  }
+  if ('manipulation_after' in b) {
+    const m = clampInt(b.manipulation_after, 1, TOTAL);
+    if (m === null) bad('manipulation_after');
+    next.manipulation_after = m;
   }
   if ('word_count_mode' in b) {
     if (!['text', 'text_options'].includes(b.word_count_mode)) bad('word_count_mode');

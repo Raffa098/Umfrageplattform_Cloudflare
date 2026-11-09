@@ -354,6 +354,14 @@ async function advance(answered, { walk = false } = {}) {
     const slot = { 0: 0, 5: 1, 10: 2 }[answered];
     if (slot !== undefined && !(S.seen || []).includes(answered)) return interstitial(slot, answered);
   }
+  return toQuestion(answered);
+}
+
+// Nächste Frage – oder zuvor die Zwischenfrage (Manipulationscheck) nach Frage manipulation_after
+function toQuestion(answered) {
+  const due = cfg.manipulation_after < cfg.total && answered === cfg.manipulation_after
+    && cfg.extras.some((e) => e.section === 'manipulation') && !(S.extrasDone || []).includes('manipulation');
+  if (due) { setTreatmentVisible(false); return extrasScreen('manipulation'); }
   return questionScreen(cfg.items[answered]);
 }
 
@@ -468,7 +476,7 @@ async function interstitial(slot, answered) {
     saveState();
     ev('interstitial_done', null, { slot, ms: Math.round(performance.now() - t0) });
     await leave();
-    questionScreen(cfg.items[answered]);
+    toQuestion(answered);
   }, { once: true });
 }
 
@@ -619,12 +627,33 @@ async function extrasScreen(section) {
     const err = $screen.querySelector('.q-error');
     err.hidden = true;
     try {
-      await api('/api/extras', { method: 'POST', body: { section, answers: vals }, retries: 3 });
+      const r = await api('/api/extras', { method: 'POST', body: { section, answers: vals }, retries: 3 });
       S.extrasDone = [...(S.extrasDone || []), section];
       saveState();
       ev('extras_done', null, { section });
-      await leave();
-      afterMain();
+      const proceed = async () => {
+        await leave();
+        if (section === 'manipulation' && (S.answered || 0) < cfg.total) return questionScreen(cfg.items[S.answered || 0]);
+        return afterMain();
+      };
+      if (r?.wrong?.length) {
+        // Hinweis auf die richtige Antwort, dann erst weiter
+        $screen.querySelector('.xlist').classList.add('locked');
+        for (const w of r.wrong) {
+          const sec = $screen.querySelector(`.xq[data-q="${w.id}"]`);
+          sec?.querySelector(`[data-v="${w.given}"]`)?.classList.add('wrong');
+          sec?.querySelector(`[data-v="${w.right}"]`)?.classList.add('right');
+          sec?.insertAdjacentHTML('beforeend', `<p class="xhint" role="status"><b>${L.hintWrong}</b> ${esc(w.right_text)}</p>`);
+        }
+        btn.classList.remove('busy');
+        btn.onclick = null;
+        btn.replaceWith(btn.cloneNode(true));
+        const nb = $screen.querySelector('#xBtn');
+        nb.addEventListener('click', proceed, { once: true });
+        nb.scrollIntoView({ block: 'center', behavior: isReduced() ? 'auto' : 'smooth' });
+        return;
+      }
+      await proceed();
     } catch (e) {
       if (e.offline) return;
       btn.classList.remove('busy');

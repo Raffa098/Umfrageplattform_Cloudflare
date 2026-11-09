@@ -26,14 +26,15 @@ export const DEFAULT_EXTRAS = [
   // Kodierung: 1 = Gamification-Aussage, 2 = Motivations-Aussage, 3 = neutral
   {
     id: 'M1', section: 'manipulation', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
-    de: { text: 'Was trifft auf deine Erfahrung in dieser Umfrage am ehesten zu?', options: [
-      'Ich habe während der Umfrage eine virtuelle Reise (akademische Laufbahn) durchlebt.',
-      'Ich wurde zwischendurch mit Worten ermutigt, die Fragen sorgfältig zu beantworten.',
-      'Weder noch: Es gab nur die Fragen, ohne weitere Besonderheiten.'] },
-    en: { text: 'Which of these best describes your experience in this survey?', options: [
-      'During the survey I went on a virtual journey (an academic career).',
-      'In between, I was encouraged with words to answer the questions carefully.',
-      'Neither: there were only the questions, nothing else.'] },
+    correct_by_group: { gamification: 1, motivation: 2, control: 3 }, // richtige Antwort je Gruppe; bei falscher Antwort wird sie als Hinweis gezeigt
+    de: { text: 'Was trifft auf deine bisherige Erfahrung in dieser Umfrage am ehesten zu?', options: [
+      'Ich durchlebe während der Umfrage eine virtuelle Reise (akademische Laufbahn).',
+      'Ich werde zwischendurch mit Worten ermutigt, die Fragen sorgfältig zu beantworten.',
+      'Weder noch: Es gibt nur die Fragen, ohne weitere Besonderheiten.'] },
+    en: { text: 'Which of these best describes your experience in this survey so far?', options: [
+      'During the survey I am going through a virtual journey (an academic career).',
+      'In between, I am being encouraged with words to answer the questions carefully.',
+      'Neither: there are only the questions, nothing else.'] },
   },
   {
     id: 'C1', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,

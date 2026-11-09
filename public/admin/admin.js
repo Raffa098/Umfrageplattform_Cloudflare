@@ -183,7 +183,8 @@ function extraCell(meta, g) {
   if (!g.n) return `<span class="muted">NA</span>${na}`;
   if (meta.ordinal) return `<b>Ø ${g.mean}</b><small>n=${g.n}${g.n < SMALL_N ? ' · kleines n' : ''}</small>${na}`;
   const dist = Object.entries(g.dist).sort(([a], [b]) => a - b).map(([k, n]) => `${k}: ${n}`).join(' · ');
-  return `<b>${dist}</b><small>n=${g.n}</small>${na}`;
+  const hit = meta.has_correct ? `<small>Treffer ${g.hit || 0}/${g.n} (${Math.round(((g.hit || 0) / g.n) * 100)} %)</small>` : '';
+  return `<b>${dist}</b><small>n=${g.n}</small>${hit}${na}`;
 }
 function extrasTable(sel, d, section) {
   const metas = d.extras_meta.filter((m) => m.section === section);
@@ -378,6 +379,7 @@ function fillSettings() {
   f.sf_de.value = s.speeding_factor.de;
   f.sf_en.value = s.speeding_factor.en;
   f.word_mode.value = s.word_count_mode;
+  f.manip_after.value = s.manipulation_after;
   f.c_rule.value = s.consistency.rule;
   f.c_min.value = s.consistency.min_diff;
   f.abandon.value = s.abandon_after_min;
@@ -423,6 +425,7 @@ $('#setForm').addEventListener('submit', async (e) => {
     experiment_version: f.experiment_version.value.trim(),
     speeding_factor: { de: Number(f.sf_de.value), en: Number(f.sf_en.value) },
     word_count_mode: f.word_mode.value,
+    manipulation_after: Number(f.manip_after.value),
     privacy_page: { de: f.pp_de.value, en: f.pp_en.value },
     consistency: { rule: f.c_rule.value, min_diff: Number(f.c_min.value) },
     abandon_after_min: Number(f.abandon.value),
@@ -470,6 +473,7 @@ function extraRow(e, isNew = false) {
   const d = document.createElement('div');
   d.className = 'xe';
   d.dataset.kind = e.kind;
+  if (e.correct_by_group) d.dataset.correct = JSON.stringify(e.correct_by_group);
   d.innerHTML = `
     <div class="xe-head">
       <label class="field"><span>ID</span><input data-f="id" value="${esc(e.id)}" ${isNew ? '' : 'readonly'} maxlength="16" pattern="[A-Za-z][A-Za-z0-9_]*" required></label>
@@ -561,6 +565,7 @@ $('#qForm').addEventListener('submit', async (e) => {
     };
     if (kind === 'number') { x.min = Number(v('min').value); x.max = Number(v('max').value); }
     if (kind === 'choice' && v('multi')?.checked) x.multi = true;
+    if (d.dataset.correct) x.correct_by_group = JSON.parse(d.dataset.correct);
     if (v('cond_item').value) {
       const lo = Number(v('cond_min').value), hi = Number(v('cond_max').value);
       x.show_if = { item: v('cond_item').value, ...(lo > 1 ? { min: lo } : {}), ...(hi < 5 ? { max: hi } : {}) };

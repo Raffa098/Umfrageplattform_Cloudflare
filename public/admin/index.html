@@ -140,6 +140,8 @@
             <label class="field"><span>Schwelle (nur Regel „diff“)</span><input type="number" name="c_min" min="1" max="4"></label>
             <label class="field"><span>Abbruch nach (Min. inaktiv)</span><input type="number" name="abandon" min="5" max="1440"></label>
           </div>
+          <label class="field"><span>Manipulationscheck nach Frage (1–15)</span><input type="number" name="manip_after" min="1" max="15" step="1"></label>
+          <p class="hint">Wird nach dieser Hauptfrage eingeblendet (Standard 5); bei 15 erst nach allen Fragen. Bei falscher Antwort erscheint die richtige als Hinweis (richtige Antwort je Gruppe im Fragen-Tab nicht änderbar). Wird mit der Experimentversion eingefroren.</p>
           <label class="field"><span>Wortzahl für die Speeding-Schwelle</span>
             <select name="word_mode">
               <option value="text_options">Text/Passage + Antwortoptionen (laut Pflichtenheft)</option>
