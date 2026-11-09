@@ -487,8 +487,8 @@ export function sceneSVG() {
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
-    ${forum(1240)}
-    ${cypress(922, 1, 0.4)}${olive(1230, 1.05, 2)}
+    ${forum(1290)}
+    ${cypress(922, 1, 0.4)}${olive(1285, 1.05, 2)}
     </g>
 
     <rect class="path" x="-60" y="${GY + 1}" width="1860" height="8" rx="4"/>
