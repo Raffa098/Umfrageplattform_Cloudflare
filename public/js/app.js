@@ -698,6 +698,7 @@ async function finishScreen(already) {
       </div>
       <h1 style="--i:1">${already ? L.alreadyTitle : L.doneTitle}</h1>
       <p class="lead closing" style="--i:2">${esc(already ? L.alreadyText : (cfg?.closing_text || L.doneText))}</p>
+      ${prize ? `<button type="button" class="prize-hint" id="prizeHint" style="--i:2"><span>${L.prizeHint}</span><span class="ph-arrow" aria-hidden="true">↓</span></button>` : ''}
       ${cfg?.christmas ? `<div class="xmas" style="--i:3" aria-hidden="true">${xmasSVG()}</div><p class="xmas-cap" style="--i:3">${L.xmas}</p>` : ''}
       ${code ? `
         <p class="code-label" style="--i:3">${L.codeLabel}</p>
@@ -706,7 +707,7 @@ async function finishScreen(already) {
           <button type="button" class="btn-copy" id="copyBtn">${ICONS.copy}<span>${L.copy}</span></button>
         </div>` : `<p class="muted small" style="--i:3">${L.codeLost}</p>`}
       ${prize ? `
-        <div class="prize" style="--i:5">
+        <div class="prize" id="prizeBox" style="--i:5">
           <h3>${L.prizeTitle}</h3>
           <p>${L.prizeText} <span class="mail">${esc(prize.email)}</span></p>
           ${mailHref ? `<a class="btn btn-warm" href="${esc(mailHref)}">${L.prizeMail}</a>` : ''}
@@ -720,6 +721,7 @@ async function finishScreen(already) {
   ev('finish_shown', null, { already });
   flush();
   $screen.querySelector('#againBtn')?.addEventListener('click', restart, { once: true });
+  $screen.querySelector('#prizeHint')?.addEventListener('click', () => $screen.querySelector('#prizeBox')?.scrollIntoView({ behavior: isReduced() ? 'auto' : 'smooth', block: 'center' }));
   const copyBtn = $screen.querySelector('#copyBtn');
   copyBtn?.addEventListener('click', async () => {
     try {

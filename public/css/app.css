@@ -508,3 +508,9 @@ h1, h2, p { margin: 0; }
 .opt.right { border-color: var(--ok, #1f8a5b); background: rgba(31, 138, 91, .12); }
 .opt.wrong { border-color: var(--danger, #c2412d); background: rgba(194, 65, 45, .1); }
 .xhint { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(31, 138, 91, .12); border: 1px solid var(--ok, #1f8a5b); color: var(--text); line-height: 1.45; animation: condIn .4s ease both; }
+
+/* Hinweis auf das Gewinnspiel weiter unten */
+.prize-hint { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; margin: 14px auto 0; padding: 9px 16px; border-radius: 999px; background: var(--warm-soft); color: var(--warm-text); font-weight: 700; font-size: .92rem; border: 1px solid rgba(79, 174, 123, .35); }
+.prize-hint:focus-visible { outline: 3px solid var(--ring); }
+.ph-arrow { display: inline-block; animation: phBounce 1.4s ease-in-out infinite; }
+@keyframes phBounce { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(3px); } }
