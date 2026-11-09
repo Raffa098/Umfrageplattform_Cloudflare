@@ -279,7 +279,8 @@ function hermann(cx) {
   const trees = [[-62, 9], [-50, 14], [-38, 19], [-26, 24], [-14, 28], [14, 28], [26, 24], [38, 19], [50, 14], [62, 9]]
     .map(([dx, up], i) => `<circle cx="${cx + dx}" cy="${GY - up - 3}" r="${i % 2 ? 7 : 8.4}" fill="${i % 2 ? '#2b6a47' : '#235a3c'}"/>`).join('');
   const arches = [-6.5, 0, 6.5].map((dx) => `<path d="M${cx + dx - 2} ${y0 - 5} V${y0 - 12} a2 2 0 0 1 4 0 V${y0 - 5}Z" fill="#4a463f"/>`).join('');
-  return `<g class="hermann">
+  const k = 1.35; // Denkmal vergrößert (Skalierung um den Fußpunkt)
+  return `<g class="hermann" transform="translate(${cx} ${GY}) scale(${k}) translate(${-cx} ${-GY})">
     <path d="M${cx - 95} ${GY} C${cx - 62} ${GY} ${cx - 46} ${y0} ${cx} ${y0 - 1} S${cx + 62} ${GY} ${cx + 95} ${GY}Z" fill="#1d4a33"/>
     ${trees}
     <rect x="${cx - 14}" y="${y0 - 4}" width="28" height="4" fill="#8b8478"/>
@@ -480,7 +481,8 @@ export function sceneSVG() {
     ${university(430)}
     ${lamp(334)}${oak(552, 0.9, 1.3)}${pine(566, 0.95, 2.2)}${lamp(542)}${libori()}${pine(864, 1, 0.8)}${oak(880, 0.9, 3.1)}${lamp(846)}
 
-    ${hermann(1268)}
+    ${hermann(1285)}
+    ${[[1396, 1.0, 'p'], [1410, 1.2, 'o'], [1426, 0.95, 'p'], [1442, 1.25, 'p'], [1456, 1.05, 'o'], [1472, 1.2, 'p'], [1488, 0.95, 'o'], [1504, 1.1, 'p']].map(([x, sc, t], i) => (t === 'p' ? pine : oak)(x, sc, (i * 0.9) % 5)).join('')}
     <g transform="translate(250 0)">
     ${hangar(646)}
     ${gantry(722, 18)}${rocket(766)}${tesla(766)}
