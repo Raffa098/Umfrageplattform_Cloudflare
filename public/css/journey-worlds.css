@@ -169,8 +169,8 @@
 .uni-sign { font: 800 5.6px/1 system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f2c230; letter-spacing: .05em; }
 
 /* Moderner Universitätsbau (Paderborn-Stil) */
-.journey { --u2-panel: #d3d9e2; --u2-seam: #aab3c0; --u2-glass: #3a3f49; --u2-slat: #7e6a56; --u2-brick: #8b3f3d; --u2-brickl: #6e2f2e; --u2-band: #8f9aa8; --u2-win: #b8d7e8; --u2-louv: #8a8f97; --u2-pillar: #98a2b0; --u2-soffit: #4a505c; --u2-fascia: #e4e8ee; --u2-text: #2b303a; --u2-hedge: #67a557; }
-:root[data-theme="dark"] .journey { --u2-panel: #6b7384; --u2-seam: #565e6e; --u2-glass: #20242c; --u2-slat: #5a4b3e; --u2-brick: #5a2a2b; --u2-brickl: #44201f; --u2-band: #555d6c; --u2-win: #4a6e86; --u2-louv: #565b64; --u2-pillar: #6a7384; --u2-soffit: #2b2f38; --u2-fascia: #7b8394; --u2-text: #151820; --u2-hedge: #335f3d; }
+.journey { --u2-panel: #d3d9e2; --u2-seam: #aab3c0; --u2-glass: #3a3f49; --u2-slat: #7e6a56; --u2-brick: #8b3f3d; --u2-brickl: #6e2f2e; --u2-band: #8f9aa8; --u2-win: #b8d7e8; --u2-louv: #8a8f97; --u2-pillar: #98a2b0; --u2-soffit: #4a505c; --u2-fascia: #e4e8ee; --u2-text: #0b57b0; --u2-hedge: #67a557; }
+:root[data-theme="dark"] .journey { --u2-panel: #6b7384; --u2-seam: #565e6e; --u2-glass: #20242c; --u2-slat: #5a4b3e; --u2-brick: #5a2a2b; --u2-brickl: #44201f; --u2-band: #555d6c; --u2-win: #4a6e86; --u2-louv: #565b64; --u2-pillar: #6a7384; --u2-soffit: #2b2f38; --u2-fascia: #aab2c2; --u2-text: #0a3f94; --u2-hedge: #335f3d; }
 .u2-panel { fill: var(--u2-panel); } .u2-seam { stroke: var(--u2-seam); stroke-width: .5; fill: none; }
 .u2-glass { fill: var(--u2-glass); } .u2-slat { stroke: var(--u2-slat); stroke-width: 1.5; fill: none; }
 .u2-mull { stroke: var(--u2-panel); stroke-width: 2; fill: none; }
