@@ -115,7 +115,9 @@ export function createJourney(host, L, opts = {}) {
     if (!a) return;
     ach.querySelector('.ach-ic').innerHTML = RANK_ICONS[l];
     ach.querySelector('b').textContent = a.t;
-    ach.querySelector('small').textContent = a.s;
+    const sub = ach.querySelector('small');
+    sub.textContent = a.s;
+    sub.hidden = !a.s; // am Ziel nur eine Zeile
     ach.classList.add('show');
     clearTimeout(achTimer);
     // im Finale kürzer, damit das Feuerwerk frei zu sehen ist
