@@ -41,3 +41,8 @@
 @keyframes xsCym { from { transform: rotate(-1.6deg); } to { transform: rotate(1.8deg); } }
 .xs-strum { transform-box: fill-box; transform-origin: 0 0; animation: xsStrum .38s ease-in-out infinite alternate; }
 @keyframes xsStrum { from { transform: rotate(-9deg); } to { transform: rotate(11deg); } }
+
+/* Untertitel zum Lied des Sängers */
+.xmas-lyric { min-height: 1.5em; margin: 12px 0 0; font-style: italic; font-weight: 650; color: var(--text); opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s ease; }
+.xmas-lyric.on { opacity: 1; transform: none; }
+:root[data-motion="reduced"] .xmas-lyric { opacity: 1; transform: none; }
