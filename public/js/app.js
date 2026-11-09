@@ -316,12 +316,7 @@ async function consentScreen() {
         auth: false,
         body: {
           lang: S.lang, consent: true, source: SOURCE, group: pickedGroup,
-          device: {
-            mobile: matchMedia('(pointer: coarse)').matches,
-            w: innerWidth, h: innerHeight,
-            dark: isDark(),
-            reduced: isReduced(),
-          },
+          device: { mobile: matchMedia('(pointer: coarse)').matches }, // nur Handy/Computer; keine Bildschirmgröße, kein Farbschema
         },
       });
       S = { pid: r.id, lang: r.lang, group: r.group, answered: 0, seen: [], extrasDone: [] };

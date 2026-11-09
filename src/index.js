@@ -250,11 +250,12 @@ async function insertParticipant(env, s, { group, lang, isTest, source, device =
   const now = nowIso();
   await env.DB.prepare(
     `INSERT INTO participants (id, grp, lang, version, is_test, consent_at, source,
-       device_mobile, viewport_w, viewport_h, dark_mode, reduced_motion, created_at, last_seen_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       device_mobile, created_at, last_seen_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
+    // Datensparsamkeit: nur grobe Geräteart (Handy/Computer); Bildschirmgröße und Farbschema werden nicht gespeichert
     id, group, lang, s.experiment_version, isTest, now, source,
-    flag01(device.mobile), clampInt(device.w, 0, 10000), clampInt(device.h, 0, 10000), flag01(device.dark), flag01(device.reduced), now, now,
+    flag01(device.mobile), now, now,
   ).run();
   return id;
 }
@@ -722,13 +723,13 @@ function buildParticipants(ctx, profile) {
   const raw = profile === 'raw';
   const cols = ['participant_id', 'group', 'consent_at', 'started_at', ...(raw ? ['last_seen_at'] : []), 'main_completed_at', 'completed_at', 'status',
     'language', 'device_class', 'experiment_version', 'randomization_version', 'is_test', 'n_answered',
-    ...(raw ? ['source', 'viewport_w', 'viewport_h', 'dark_mode', 'reduced_motion'] : [])];
+    ...(raw ? ['source'] : [])];
   const rows = ctx.participants.map((p) => ({
     participant_id: p.id, group: p.grp, consent_at: p.consent_at, started_at: p.created_at, last_seen_at: p.last_seen_at,
     main_completed_at: p.main_completed_at, completed_at: p.completed_at, status: statusOf(p, ctx.s, ctx.now),
     language: p.lang, device_class: deviceClass(p), experiment_version: p.version, randomization_version: p.version,
     is_test: p.is_test, n_answered: (ctx.responsesBy.get(p.id) || []).length,
-    source: p.source, viewport_w: p.viewport_w, viewport_h: p.viewport_h, dark_mode: p.dark_mode, reduced_motion: p.reduced_motion,
+    source: p.source,
   }));
   return { cols, rows };
 }

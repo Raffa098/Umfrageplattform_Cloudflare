@@ -21,7 +21,7 @@ In der Umfrage selbst erheben wir keine Namen, E-Mail-Adressen oder andere Angab
 - deine Antworten auf die Umfragefragen (einschließlich der Zusatzfragen am Ende),
 - die Zeit, die du für jede Frage benötigt hast, sowie der Zeitpunkt der Teilnahme,
 - die dir zufällig zugeteilte Versuchsgruppe und die gewählte Sprache,
-- grobe technische Angaben (z. B. Handy oder Computer, Bildschirmgröße, helles oder dunkles Farbschema, Einstellung „Bewegung reduzieren“),
+- die grobe Geräteart (Handy oder Computer); Bildschirmgröße und Farbschema werden nicht gespeichert,
 - technische Ereignisse, die für den Ablauf nötig sind (z. B. ob die Seite im Hintergrund war oder ob das Speichern fehlgeschlagen ist),
 - eine zufällige Teilnahme-ID. Sie dient nur dazu, deine Antworten innerhalb der Umfrage zusammenzuhalten und enthält keine Informationen über dich.
 
@@ -69,7 +69,7 @@ In the survey itself we do not collect names, e-mail addresses or any other deta
 - your answers to the survey questions (including the additional questions at the end),
 - the time you needed for each question and the time of participation,
 - the experimental group randomly assigned to you and the language you chose,
-- coarse technical details (e.g. phone or computer, screen size, light or dark colour scheme, the “reduce motion” setting),
+- the rough device type (phone or computer); screen size and colour scheme are not stored,
 - technical events needed for the procedure (e.g. whether the page was in the background or saving failed),
 - a random participation ID. It only keeps your answers together within the survey and contains no information about you.
 
