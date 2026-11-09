@@ -38,8 +38,8 @@ export const DEFAULT_EXTRAS = [
   },
   {
     id: 'C2', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
-    de: { text: 'In welchem Fachsemester bist du?', options: ['1–2', '3–4', '5–6', '7+'] },
-    en: { text: 'Which semester of your degree are you in?', options: ['1–2', '3–4', '5–6', '7+'] },
+    de: { text: 'In welchem Fachsemester bist du?', options: ['1–2', '3–4', '5–6', '7+ (oder Master)'] },
+    en: { text: 'Which semester of your degree are you in?', options: ['1–2', '3–4', '5–6', '7+ (or Master)'] },
   },
   {
     id: 'C3', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,

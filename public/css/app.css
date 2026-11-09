@@ -454,3 +454,6 @@ h1, h2, p { margin: 0; }
 @keyframes smRing { from { transform: scale(.85); opacity: .9; } to { transform: scale(2); opacity: 0; } }
 .sm-p { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--c); pointer-events: none; animation: smP .78s cubic-bezier(.15, .7, .3, 1) forwards; }
 @keyframes smP { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+
+/* kompakte Auswahl: längere Beschriftungen dürfen umbrechen (2 Spalten) */
+.scale.compact .sc { padding: 6px 10px; text-align: center; line-height: 1.25; font-size: .98rem; }
