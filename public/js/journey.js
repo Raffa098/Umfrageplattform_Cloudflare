@@ -46,8 +46,8 @@ export function createJourney(host, L, opts = {}) {
   // Meilensteine unter der Szene: nur Start · Punkte · Ziel (keine Titel/Weltnamen)
   const MILESTONES = [
     { icon: I.dot, label: L.jStart },
-    { icon: I.star, label: `${5 * PPA} ${L.points}` },
-    { icon: I.star, label: `${10 * PPA} ${L.points}` },
+    { icon: I.star, label: '', cls: 'pts' },  // nur das Punkte-Zeichen (Stern), keine Zahl und kein Text
+    { icon: I.star, label: '', cls: 'pts' },
     { icon: I.flag, label: L.goal },
   ];
 
@@ -67,7 +67,7 @@ export function createJourney(host, L, opts = {}) {
     </div>
     <div class="j-ladder" aria-hidden="true">
       <div class="lad-line"><i class="lad-fill"></i></div>
-      ${MILESTONES.map((m, i) => `<div class="lad-node${i === 0 ? ' on' : ''}" data-i="${i}"><span class="lad-dot">${m.icon}</span><small>${m.label}</small></div>`).join('')}
+      ${MILESTONES.map((m, i) => `<div class="lad-node${i === 0 ? ' on' : ''}${m.cls ? ` ${m.cls}` : ''}" data-i="${i}"><span class="lad-dot">${m.icon}</span>${m.label ? `<small>${m.label}</small>` : ''}</div>`).join('')}
     </div>`;
   host.appendChild(el);
 
