@@ -37,9 +37,9 @@ export const DEFAULT_EXTRAS = [
     en: { text: 'How often do you take part in online surveys?', options: ['This is my first time', 'Rarely (less than once a month)', 'A few times a month', 'A few times a week'] },
   },
   {
-    id: 'C2', section: 'control', kind: 'number', min: 0, max: 40, required: true, visible: true, ordinal: true, groups: ALL_GROUPS,
-    de: { text: 'In welchem Fachsemester bist du? (0 = ich studiere nicht)', options: [] },
-    en: { text: 'Which semester of your degree are you in? (0 = I am not studying)', options: [] },
+    id: 'C2', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
+    de: { text: 'In welchem Fachsemester bist du?', options: ['1–2', '3–4', '5–6', '7+'] },
+    en: { text: 'Which semester of your degree are you in?', options: ['1–2', '3–4', '5–6', '7+'] },
   },
   {
     id: 'C3', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,

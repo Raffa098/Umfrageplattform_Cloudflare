@@ -509,6 +509,11 @@ function extraHTML(e) {
     body = `<div class="smileys" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
         ${e.options.map((o, i) => `<button type="button" class="sm" role="radio" aria-checked="false" aria-label="${esc(o)}" data-v="${i + 1}">${SMILEYS[i]}</button>`).join('')}
       </div><p class="sm-label" aria-live="polite">&nbsp;</p>`;
+  } else if (e.kind === 'choice' && e.options.length <= 5 && e.options.every((o) => o.length <= 8) && !(e.options.length === 5 && e.ordinal)) {
+    // kurze Antworten (z. B. "1–2", "3–4", "5–6", "7+"): kompakt in einer Reihe
+    body = `<div class="scale compact" style="grid-template-columns:repeat(${e.options.length},1fr)" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
+        ${e.options.map((o, i) => `<button type="button" class="sc" role="radio" aria-checked="false" data-v="${i + 1}">${esc(o)}</button>`).join('')}
+      </div>`;
   } else if (e.kind === 'number') {
     body = `<input class="num" type="number" inputmode="numeric" pattern="[0-9]*" min="${e.min}" max="${e.max}" step="1" placeholder="${L.numberHint}" data-id="${e.id}" aria-labelledby="h-${e.id}">`;
   } else if (e.options.length === 5 && e.ordinal) {
