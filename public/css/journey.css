@@ -1,13 +1,13 @@
 /* ============================================================ Fortschrittsreise (Gamification) */
 .journey {
   --sk-a: #bfe3f4; --sk-b: #e8f6ee; --mtn: #9ec4b8; --glow: rgba(255, 255, 255, .55);
-  --gown: #1d4e89; --stole: #f2c14e; --cap: #1f2d3d; --tassel: #f2c14e; --hair-now: var(--hair);
+  --gown: #1d4e89; --stole: #f2c14e; --cap: #0c0c0f; --tassel: #f2c14e; --hair-now: var(--hair);
   padding: 10px 10px 14px; border-radius: var(--radius); background: var(--surface);
   border: 1px solid var(--border); box-shadow: var(--shadow);
 }
 .journey[data-world="1"] { --sk-a: #b7cdf0; --sk-b: #e6eefb; --mtn: #9db3d6; --hill-1: #b4c8e4; --hill-2: #c9d8ee; }
 .journey[data-world="2"] { --sk-a: #cbbdef; --sk-b: #f1eafb; --mtn: #b5a8de; --hill-1: #c7bae6; --hill-2: #dbd2f1; }
-:root[data-theme="dark"] .journey { --sk-a: #061a1f; --sk-b: #12362e; --mtn: #17402f; --glow: rgba(255, 255, 255, .08); --cap: #e7edf5; }
+:root[data-theme="dark"] .journey { --sk-a: #061a1f; --sk-b: #12362e; --mtn: #17402f; --glow: rgba(255, 255, 255, .08); }
 :root[data-theme="dark"] .journey[data-world="1"] { --sk-a: #08122a; --sk-b: #17294a; --mtn: #1d2f52; --hill-1: #1b2c47; --hill-2: #16253d; }
 :root[data-theme="dark"] .journey[data-world="2"] { --sk-a: #120d2a; --sk-b: #2b2152; --mtn: #2d2458; --hill-1: #2c2350; --hill-2: #241d44; }
 
@@ -72,11 +72,11 @@
 .j-char[data-level="1"] .c-cap, .j-char[data-level="2"] .c-cap, .j-char[data-level="3"] .c-cap { display: block; }
 .j-char[data-level="2"] .c-gown, .j-char[data-level="3"] .c-gown { display: block; }
 .j-char[data-level="3"] .c-glasses, .j-char[data-level="3"] .c-beard { display: block; }
-.j-char[data-level="2"] { --gown: #0e7490; --cap: #153a4b; }
-.j-char[data-level="3"] { --gown: #8b1e3f; --cap: #2a1d12; --hair-now: #cfd5de; }
-:root[data-theme="dark"] .j-char[data-level="2"] { --cap: #d6f1f7; }
-:root[data-theme="dark"] .j-char[data-level="3"] { --cap: #f6e6c0; }
-.c-cap-board { fill: var(--cap); } .c-cap-base { fill: var(--cap); opacity: .92; }
+.j-char[data-level="2"] { --gown: #0e7490; }
+.j-char[data-level="3"] { --gown: #8b1e3f; --hair-now: #cfd5de; }
+/* Doktorhut immer schwarz (im Dunkelmodus mit feiner heller Kante, damit er sichtbar bleibt) */
+.c-cap-board { fill: var(--cap); stroke: var(--fxcap-edge); stroke-width: .5; stroke-linejoin: round; }
+.c-cap-base { fill: var(--cap); stroke: var(--fxcap-edge); stroke-width: .5; }
 .c-tassel { stroke: var(--tassel); stroke-width: 1; fill: none; } .c-tassel-b { fill: var(--tassel); }
 .c-robe { fill: var(--gown); transition: fill .6s; } .c-stole { fill: var(--stole); }
 .c-beard { fill: #cfd5de; }

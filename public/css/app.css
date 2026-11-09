@@ -150,6 +150,10 @@ h1, h2, p { margin: 0; }
   padding: 20px 0 calc(40px + env(safe-area-inset-bottom));
   scroll-margin-bottom: calc(24px + env(safe-area-inset-bottom));
 }
+@supports (-webkit-touch-callout: none) {
+  /* iPhone/iPad (Safari): die untere Leiste überdeckt den Seitenrand -> deutlich mehr Platz unter dem Knopf */
+  .actions { padding-bottom: calc(112px + env(safe-area-inset-bottom)); scroll-margin-bottom: calc(104px + env(safe-area-inset-bottom)); }
+}
 .btn {
   all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; min-height: 56px; padding: 0 22px; border-radius: 16px;

@@ -1,0 +1,109 @@
+/* ============================================================ Welten: Wald · Stadt+Universität · Raketenstation · antikes Forum
+   (wird nach journey.css geladen und ergänzt/überschreibt dessen Welt-Farben) */
+.journey {
+  --g-space: #b6bece; --g-greek: #e8dcbc;
+  --hg-wall: #dfe4ec; --hg-roof: #8a94a8; --hg-door: #5b667b; --hg-stripe: #e0463a;
+  --tw: #7e889a; --pad: #9aa3b4; --rk-body: #f7f8fb; --rk-red: #e0463a; --rk-shade: rgba(30, 40, 70, .14); --rk-win: #52b5e6;
+  --dish: #e9edf4; --tank: #d3d9e3; --panel: #2f4f93; --ant: #8a94a8;
+  --marble: #f3eee2; --marble-dark: #d8cdb4; --marble-col: #f7f2e6; --gold: #e8b93f; --statue: #d3cbb8; --amph: #c9693a;
+  --cyp: #2e6b4d; --ol-a: #90a272; --ol-b: #6f865a;
+  --fxcap: #0c0c0f; --fxcap-edge: transparent;
+}
+:root[data-theme="dark"] .journey {
+  --g-space: #2c3345; --g-greek: #4b4048; --hg-wall: #3b4358; --hg-roof: #242a3a; --hg-door: #1c2130; --tw: #6b7590; --pad: #454d62;
+  --rk-body: #e9edf5; --dish: #aab3c6; --tank: #59647c; --panel: #3d62b3; --ant: #7d87a0;
+  --marble: #8e879c; --marble-dark: #5b566c; --marble-col: #a39cb2; --statue: #8f8898; --cyp: #1d4a37; --ol-a: #55684a; --ol-b: #435339;
+  --fxcap-edge: rgba(255, 255, 255, .55);
+}
+.journey[data-world="2"] { --sk-a: #27316f; --sk-b: #8791d2; --mtn: #5964ae; --hill-1: #6670b6; --hill-2: #7a85c6; }
+.journey[data-world="3"] { --sk-a: #84cbf0; --sk-b: #fff0d3; --mtn: #cbb98f; --hill-1: #dbc790; --hill-2: #ebdab0; }
+:root[data-theme="dark"] .journey[data-world="2"] { --sk-a: #070a26; --sk-b: #1c2262; --mtn: #1a2056; --hill-1: #171c4c; --hill-2: #12163e; }
+:root[data-theme="dark"] .journey[data-world="3"] { --sk-a: #15123a; --sk-b: #54386a; --mtn: #4a3a5f; --hill-1: #3d2f4d; --hill-2: #33283f; }
+/* Feuerwerk-Nacht (Professor-Meilenstein) */
+.journey.fx-night { --sk-a: #050820 !important; --sk-b: #231d52 !important; --mtn: #161c4c !important; --hill-1: #12163e !important; --hill-2: #0e1233 !important; }
+
+.sunset, .clouds { transition: opacity 1.2s ease; }
+.journey[data-world="2"] .sunset, .journey[data-world="2"] .clouds, .journey.fx-night .sunset, .journey.fx-night .clouds { opacity: 0; }
+.star { transition: fill 1.2s ease; }
+.journey[data-world="2"] .star, .journey.fx-night .star { fill: #fff; }
+.planet { opacity: 0; transition: opacity 1.4s ease; }
+.journey[data-world="2"] .planet { opacity: 1; }
+.planet-body { fill: #e58b6a; } .planet-ring { fill: none; stroke: #f3d9a4; stroke-width: 2.4; opacity: .9; }
+
+.g-space { fill: var(--g-space); } .g-greek { fill: var(--g-greek); }
+.pole { fill: var(--lamp); }
+.uni-crest { fill: var(--gold); } .uni-crest-in { fill: #fff; }
+
+/* Raketenstation */
+.hg-wall { fill: var(--hg-wall); } .hg-roof { fill: var(--hg-roof); } .hg-door { fill: var(--hg-door); } .hg-stripe, .hg-logo { fill: var(--hg-stripe); }
+.hg-line { stroke: rgba(255, 255, 255, .28); stroke-width: .8; fill: none; }
+.tw-leg, .tw-arm { fill: var(--tw); } .tw-x { stroke: var(--tw); stroke-width: 1; fill: none; } .tw-light { fill: #ff4d4d; }
+.blink { animation: blink 1.3s linear infinite; }
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .15; } }
+.pad { fill: var(--pad); }
+.rk-body { fill: var(--rk-body); } .rk-nose, .rk-band, .rk-fin { fill: var(--rk-red); } .rk-ring { fill: #b9c3d4; } .rk-window { fill: var(--rk-win); }
+.rk-shade { fill: var(--rk-shade); } .rk-skirt { fill: #59627a; }
+.steam { fill: rgba(255, 255, 255, .8); transform-box: fill-box; transform-origin: center; animation: steam 3.2s ease-out infinite; }
+@keyframes steam { 0% { transform: translateY(0) scale(.5); opacity: 0; } 15% { opacity: .8; } 100% { transform: translateY(-14px) scale(1.7); opacity: 0; } }
+.dish-pole { fill: var(--ant); } .dish { transform-box: fill-box; transform-origin: 50% 100%; animation: scan 7s ease-in-out infinite alternate; }
+.dish-bowl { fill: var(--dish); } .dish-arm { stroke: var(--ant); stroke-width: 1.2; fill: none; } .dish-feed { fill: #ff6b6b; }
+@keyframes scan { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+.tank { fill: var(--tank); } .tank-leg { stroke: var(--ant); stroke-width: 1.6; fill: none; } .tank-band { stroke: rgba(0, 0, 0, .18); stroke-width: 1.2; fill: none; } .tank-hi { fill: rgba(255, 255, 255, .55); }
+.panel { fill: var(--panel); } .panel-l { stroke: rgba(255, 255, 255, .4); stroke-width: .7; fill: none; }
+.ant { stroke: var(--ant); stroke-width: 1.4; fill: none; }
+
+/* Antikes Forum */
+.mb, .mb-step, .mb-cap, .mb-chip { fill: var(--marble); } .mb-dark { fill: var(--marble-dark); } .mb-col { fill: var(--marble-col); }
+.mb-flute { stroke: rgba(0, 0, 0, .1); stroke-width: .7; fill: none; } .mb-trig { stroke: rgba(0, 0, 0, .18); stroke-width: 1.4; fill: none; }
+.gold { fill: var(--gold); } .statue { fill: var(--statue); stroke: var(--statue); } .amph { fill: var(--amph); } .amph-h { stroke: var(--amph); stroke-width: 1.2; fill: none; }
+.cyp { fill: var(--cyp); } .ol-a { fill: var(--ol-a); } .ol-b { fill: var(--ol-b); }
+
+/* ============================================================ Meilenstein-Effekte */
+/* 1) Doktorhüte fliegen in die Luft */
+.j-caps { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.fx-cap { position: absolute; bottom: 44%; width: 26px; height: 18px; animation: capX var(--dur) linear var(--delay) both; }
+.fx-cap i { display: block; width: 100%; height: 100%; animation: capY var(--dur) var(--delay) both; }
+.fx-cap svg { display: block; width: 100%; height: 100%; overflow: visible; animation: capSpin var(--dur) linear var(--delay) both; }
+.fx-board, .fx-base { fill: var(--fxcap); stroke: var(--fxcap-edge); stroke-width: .9; stroke-linejoin: round; }
+.fx-tassel { stroke: var(--tassel); stroke-width: 1.1; fill: none; } .fx-tassel-b { fill: var(--tassel); }
+@keyframes capX { from { transform: translateX(0); } to { transform: translateX(var(--dx)); } }
+@keyframes capY {
+  0% { transform: translateY(0); opacity: 0; animation-timing-function: cubic-bezier(.15, .75, .35, 1); }
+  6% { opacity: 1; }
+  45% { transform: translateY(calc(var(--h) * -1)); animation-timing-function: cubic-bezier(.55, 0, .85, .45); }
+  88% { opacity: 1; }
+  100% { transform: translateY(46px); opacity: 0; }
+}
+@keyframes capSpin { from { transform: rotate(0); } to { transform: rotate(var(--rot)); } }
+
+/* 2) Rakete startet im Hintergrund */
+.fxr { opacity: 0; } .fxr.go { opacity: 1; }
+.fxr-trail { fill: rgba(255, 255, 255, .7); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+.fxr.go .fxr-trail { animation: trailUp 3.2s cubic-bezier(.5, 0, .85, .35) both, trailFade 4s ease-out both; }
+.fxr.go .fxr-lift { animation: lift 3.2s cubic-bezier(.5, 0, .85, .35) both; }
+.fxr-flame { fill: #ff9d2e; opacity: 0; } .fxr-flame-in { fill: #fff2a8; opacity: 0; }
+.fxr.go .fxr-flame, .fxr.go .fxr-flame-in { opacity: 1; transform-box: fill-box; transform-origin: 50% 0; animation: flame .11s ease-in-out infinite alternate; }
+.fxr-puff { fill: rgba(255, 255, 255, .85); transform-box: fill-box; transform-origin: center; opacity: 0; }
+.fxr.go .fxr-puff { animation: puff 2.6s ease-out both; }
+@keyframes lift { from { transform: translateY(0); } to { transform: translateY(-520px); } }
+@keyframes trailUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes trailFade { 0%, 55% { opacity: .85; } 100% { opacity: 0; } }
+@keyframes flame { from { transform: scaleY(.8); } to { transform: scaleY(1.15); } }
+@keyframes puff { 0% { opacity: 0; transform: scale(.3); } 12% { opacity: .9; } 100% { opacity: 0; transform: translateY(-8px) scale(2.8); } }
+
+/* 3) Feuerwerk im Hintergrund */
+.fx-fire { pointer-events: none; }
+.fw-shell { fill: #fff; animation: fwShell .54s cubic-bezier(.25, .6, .4, 1) both; }
+@keyframes fwShell { from { transform: translateY(0); } to { transform: translateY(var(--dy)); } }
+.fw-burst { animation: fwFall 1.9s ease-in both; }
+@keyframes fwFall { from { transform: translateY(0); } to { transform: translateY(22px); } }
+.fw-p { transform-box: view-box; transform-origin: 0 0; animation: fwSpark 1.6s cubic-bezier(.12, .7, .3, 1) both; }
+@keyframes fwSpark { 0% { transform: rotate(var(--a)) translateX(0) scale(1.2); opacity: 1; } 60% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(var(--r)) scale(.2); opacity: 0; } }
+.fw-flash { transform-box: fill-box; transform-origin: center; animation: fwFlash .5s ease-out both; }
+@keyframes fwFlash { from { transform: scale(.2); opacity: .95; } to { transform: scale(1.8); opacity: 0; } }
+
+/* Rang-Symbol und Rangleiste ohne Beschriftung */
+.j-rank-pill { padding: 5px; }
+.j-ladder { margin-top: 12px; }
+.lad-line { left: 18px; right: 18px; }
+.lad-node { width: 36px; }

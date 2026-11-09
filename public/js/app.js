@@ -59,7 +59,8 @@ function revealNext(btn) {
   requestAnimationFrame(() => {
     const r = btn.getBoundingClientRect();
     const vh = window.visualViewport?.height || innerHeight;
-    const inset = 28;
+    // iOS-Safari: untere Leiste (~70 px) überdeckt den Rand -> Knopf höher ins Bild holen
+    const inset = window.CSS?.supports?.('-webkit-touch-callout', 'none') ? 112 : 28;
     if (r.bottom > vh - inset) window.scrollBy({ top: r.bottom - vh + inset + 12, behavior: isReduced() ? 'auto' : 'smooth' });
   });
 }
@@ -340,7 +341,7 @@ async function advance(answered, { walk = false } = {}) {
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: isReduced() ? 'auto' : 'smooth' });
     // Animation läuft erst nach gespeicherter Antwort; der Timer der nächsten Frage startet erst danach
     await Promise.all([leave(), journey.setProgress(answered, { animate: true })]);
-    if (answered >= total) await sleep(isReduced() ? 300 : 2000); // Ziel kurz genießen
+    if (answered >= total) await sleep(isReduced() ? 300 : 4800); // Ziel genießen: Feuerwerk läuft im Hintergrund
   } else {
     await leave();
   }
