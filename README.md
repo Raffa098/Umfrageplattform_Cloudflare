@@ -3,8 +3,8 @@
 Mobile-first Web-App für das Experiment „Verbessern Fortschrittsreise oder einmalige Motivationsimpulse die Antwortqualität?“
 Cloudflare Workers (API + statische App) mit Cloudflare D1 als Datenbank.
 
-- **Umfrage:** https://umfrageplattform.rasa-215.workers.dev
-- **Adminbereich:** https://umfrageplattform.rasa-215.workers.dev/admin/ (Schlüssel = Secret `ADMIN_TOKEN`, lokal in `.dev.vars`)
+- **Umfrage:** https://anonymsurvey.rasa-215.workers.dev
+- **Adminbereich:** https://anonymsurvey.rasa-215.workers.dev/admin/ (Schlüssel = Secret `ADMIN_TOKEN`, lokal in `.dev.vars`)
 
 ## Ablauf für Teilnehmende
 Sprachwahl (DE/EN) → Einwilligung → serverseitige Zuteilung 1:1:1 → 15 Fragen in fester Reihenfolge → Abschlusscode.
