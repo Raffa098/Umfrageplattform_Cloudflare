@@ -293,28 +293,30 @@ function carousel(cx) {
 }
 
 function libori() {
-  const x0 = 655; // Eingangsbogen in der Mitte der Kirmes
-  const arch = `<g><rect x="${x0}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/><rect x="${x0 + 42.6}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/>
-    <path d="M${x0 - 2} ${GY - 50} Q${x0 + 23} ${GY - 62} ${x0 + 48} ${GY - 50}" fill="none" stroke="#e8b93f" stroke-width="2.4"/>
-    <rect x="${x0 - 3}" y="${GY - 48}" width="52" height="14" rx="3" fill="#b3262f" stroke="#e8b93f" stroke-width="1.6"/>
-    <text class="lib-name" x="${x0 + 23}" y="${GY - 37.4}" text-anchor="middle">Libori</text>
-    ${[0, 1, 2, 3, 4, 5].map((k) => `<circle class="lib-light" cx="${x0 + 3 + k * 8.4}" cy="${GY - 48}" r="1.1" style="animation-delay:-${k * 0.3}s"/>`).join('')}</g>`;
+  const x0 = 655; // hoher Eingangsbogen in der Mitte der Kirmes; man sieht das Karussell durch das Tor
+  const arch = `<g><rect x="${x0}" y="${GY - 70}" width="3.4" height="70" fill="#7a2a2a"/><rect x="${x0 + 42.6}" y="${GY - 70}" width="3.4" height="70" fill="#7a2a2a"/>
+    <path d="M${x0 - 2} ${GY - 70} Q${x0 + 23} ${GY - 82} ${x0 + 48} ${GY - 70}" fill="none" stroke="#e8b93f" stroke-width="2.4"/>
+    <rect x="${x0 - 3}" y="${GY - 68}" width="52" height="14" rx="3" fill="#b3262f" stroke="#e8b93f" stroke-width="1.6"/>
+    <text class="lib-name" x="${x0 + 23}" y="${GY - 57.4}" text-anchor="middle">Libori</text>
+    ${[0, 1, 2, 3, 4, 5].map((k) => `<circle class="lib-light" cx="${x0 + 3 + k * 8.4}" cy="${GY - 68}" r="1.1" style="animation-delay:-${k * 0.3}s"/>`).join('')}</g>`;
   // Langos-Stand links: goldene Teigfladen auf der Theke, Dampf, Verkäufer
-  const langos = [0, 1, 2].map((k) => `<ellipse cx="${559 + k * 8}" cy="${GY - 13.2}" rx="3.6" ry="1.5" fill="#e2a64b"/><ellipse cx="${559 + k * 8}" cy="${GY - 13.8}" rx="2.4" ry=".9" fill="#f3c872"/>`).join('');
-  const steam = [0, 1, 2].map((k) => `<circle class="steam" cx="${561 + k * 7.5}" cy="${GY - 18}" r="1.9" style="animation-delay:-${k * 0.9}s"/>`).join('');
+  const lx = 592;
+  const langos = [0, 1, 2].map((k) => `<ellipse cx="${lx + 7 + k * 8}" cy="${GY - 13.2}" rx="3.6" ry="1.5" fill="#e2a64b"/><ellipse cx="${lx + 7 + k * 8}" cy="${GY - 13.8}" rx="2.4" ry=".9" fill="#f3c872"/>`).join('');
+  const steam = [0, 1, 2].map((k) => `<circle class="steam" cx="${lx + 9 + k * 7.5}" cy="${GY - 18}" r="1.9" style="animation-delay:-${k * 0.9}s"/>`).join('');
   // Bier-Bude rechts: Krüge mit Schaum, Fass
   const mugs = [0, 1, 2].map((k) => `<g transform="translate(${800 + k * 7.6} ${GY - 21})"><rect x="0" y="2" width="5" height="7.4" rx="1" fill="#e2a64b" opacity=".95"/><rect x="0" y="0.2" width="5" height="3" rx="1.4" fill="#fffdf2"/><path d="M5 3.6 h1.6 v3.4 h-1.6" fill="none" stroke="#c9d3df" stroke-width=".8"/></g>`).join('');
   const keg = `<g transform="translate(838 ${GY})"><ellipse cx="0" cy="-7.4" rx="5.6" ry="7.4" fill="#8a5a2f"/><path d="M-5.4 -11 H5.4 M-5.6 -4 H5.6" stroke="#c9a66b" stroke-width="1"/><circle cx="0" cy="-7.4" r="1.2" fill="#f2c14e"/></g>`;
   return `<g class="libori">
-    ${booth(552, 36, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
-    ${person(576, GY - 12, 'e', 2, 0.5, true)}
-    ${carousel(628)}
+    ${carousel(679)}
+    ${booth(lx, 36, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
+    ${person(lx + 24, GY - 12, 'e', 2, 0.5, true)}
+    ${person(lx - 6, GY - 2, 'c', 2, 0.3, true)}${person(lx - 15, GY - 2, 'a', 1, 1.6, true)}
     ${arch}
     ${wheel(752, GY - 44, 32)}
     ${booth(794, 34, '#7a4a1f', '#f2c14e', mugs, 'Bier')}
     ${person(819, GY - 12, 'd', 1, 1.1, true)}${keg}
     ${person(786, GY - 2, 'b', 1, 1.4, true)}${person(776, GY - 2, 'f', 3, 0.8, true)}
-    ${garland(588, GY - 36, 655, GY - 54, 5)}${garland(703, GY - 54, 752, GY - 78, 5)}${garland(752, GY - 78, 811, GY - 36, 7)}
+    ${garland(lx + 38, GY - 36, x0, GY - 69, 5)}${garland(x0 + 46, GY - 69, 752, GY - 80, 4)}${garland(752, GY - 80, 811, GY - 36, 7)}
   </g>`;
 }
 
@@ -375,7 +377,7 @@ export function sceneSVG() {
     ${lamp(334)}${lamp(542)}${libori()}${lamp(846)}
 
     <g transform="translate(250 0)">
-    ${hangar(598)}
+    ${hangar(646)}
     ${gantry(722, 18)}${rocket(766)}${tesla(766)}
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
