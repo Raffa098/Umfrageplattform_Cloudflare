@@ -48,8 +48,8 @@ export const DEFAULT_EXTRAS = [
   },
   {
     id: 'C3', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
-    de: { text: 'Was war dein wichtigster Grund, an dieser Umfrage teilzunehmen?', options: ['Interesse am Thema', 'Forschung unterstützen', 'Gewinnchance / Belohnung', 'Anforderung im Studium oder Kurs', 'Sonstiges'] },
-    en: { text: 'What was your main reason for taking part in this survey?', options: ['Interest in the topic', 'Supporting research', 'Chance to win / reward', 'Course or study requirement', 'Other'] },
+    de: { text: 'Was war dein wichtigster Grund, an dieser Umfrage teilzunehmen?', options: ['Interesse am Thema', 'Forschung unterstützen', 'Gewinnchance / Belohnung', 'Sonstiges'] },
+    en: { text: 'What was your main reason for taking part in this survey?', options: ['Interest in the topic', 'Supporting research', 'Chance to win / reward', 'Other'] },
   },
   scale('C4', 'control',
     'Ich habe vor allem wegen der Gewinnchance (Mystery-Box) teilgenommen.',
