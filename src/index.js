@@ -123,7 +123,7 @@ async function audit(env, action, detail) {
 const visibleExtras = (s, grp) => s.extras.filter((e) => e.visible && e.groups.includes(grp));
 const publicExtra = (e, lang) => ({
   id: e.id, section: e.section, kind: e.kind, required: e.required, ordinal: e.ordinal,
-  min: e.min ?? null, max: e.max ?? null, show_if: e.show_if ?? null, text: e[lang].text, options: e[lang].options,
+  min: e.min ?? null, max: e.max ?? null, multi: !!e.multi, show_if: e.show_if ?? null, text: e[lang].text, options: e[lang].options,
 });
 
 // Bedingte Zusatzfrage (show_if): nur gefragt, wenn die Bezugsantwort vorhanden und <= max ist
@@ -358,6 +358,14 @@ async function postExtras(request, env) {
     if (raw === '') {
       if (e.required) throw new HttpError(400, 'required_missing', { item: e.id });
       rows.push([e.id, '']);
+      continue;
+    }
+    if (e.kind === 'choice' && e.multi) {
+      // Mehrfachauswahl: Positionen der gewählten Optionen, eindeutig, aufsteigend, mit "|" verbunden (z. B. "1|3")
+      const parts = [...new Set(raw.split('|').map((x) => x.trim()))];
+      const nums = parts.map(Number).sort((a, b) => a - b);
+      if (!parts.every((x) => /^\d+$/.test(x)) || nums.some((x) => x < 1 || x > e.de.options.length)) throw new HttpError(400, 'invalid_value', { item: e.id });
+      rows.push([e.id, nums.join('|')]);
       continue;
     }
     const n = Number(raw);
@@ -625,14 +633,15 @@ async function adminStats(env, url) {
 
   // Manipulationschecks / Kontext / Zufriedenheit je Gruppe (inkl. Fehlwerte)
   const extras = {};
+  const multiIds = new Set(s.extras.filter((e) => e.multi).map((e) => e.id));
   for (const r of await loadExtraAnswers(env, f, s)) {
     const g = ((extras[r.item_id] ??= {})[r.grp] ??= { n: 0, na: 0, sum: 0, dist: {} });
     if (r.value === '') { g.na++; continue; }
     g.n++;
-    g.sum += Number(r.value);
-    g.dist[r.value] = (g.dist[r.value] || 0) + 1;
+    if (!multiIds.has(r.item_id)) g.sum += Number(r.value);
+    for (const part of multiIds.has(r.item_id) ? r.value.split('|') : [r.value]) g.dist[part] = (g.dist[part] || 0) + 1;
   }
-  for (const e of Object.values(extras)) for (const g of Object.values(e)) { g.mean = g.n ? Number((g.sum / g.n).toFixed(2)) : null; delete g.sum; }
+  for (const e of Object.values(extras)) for (const g of Object.values(e)) { g.mean = g.n && g.sum ? Number((g.sum / g.n).toFixed(2)) : null; delete g.sum; }
 
   // Datenqualität: technische Fehler, Wiederholungs-Verdacht
   let saveErrors = 0, repeats = 0;
@@ -667,7 +676,7 @@ async function adminStats(env, url) {
     langs,
     versions,
     extras,
-    extras_meta: s.extras.map((e) => ({ id: e.id, section: e.section, kind: e.kind, ordinal: e.ordinal, text: e.de.text, options: e.de.options })),
+    extras_meta: s.extras.map((e) => ({ id: e.id, section: e.section, kind: e.kind, ordinal: e.ordinal, multi: !!e.multi, text: e.de.text, options: e.de.options })),
     items,
     quality: {
       save_errors: saveErrors,
@@ -782,7 +791,7 @@ function buildCodebook(ctx) {
       question_id: e.id, question_kind: e.section, item_type: e.kind, block: null, item_order: TOTAL + 1 + i,
       passage_de: null, passage_en: null, question_text_de: e.de.text, question_text_en: e.en.text,
       options_de: opts(e.de.options), options_en: opts(e.en.options),
-      coding: e.kind === 'number' ? `ganze Zahl ${e.min}–${e.max}` : `${e.de.options.length} Optionen; Wert = Position der Option (1 = erste)`,
+      coding: e.kind === 'number' ? `ganze Zahl ${e.min}–${e.max}` : e.multi ? `Mehrfachauswahl aus ${e.de.options.length} Optionen; Wert = Positionen der gewählten Optionen, mit | getrennt (z. B. 1|3); NA = nicht beantwortet oder nicht gefragt` : `${e.de.options.length} Optionen; Wert = Position der Option (1 = erste)`,
       is_speeding_item: 0, check_role: e.section, required: e.required ? 1 : 0, visible: e.visible ? 1 : 0, groups: e.groups.join('|'), version: s.experiment_version,
     });
   });
@@ -983,6 +992,7 @@ function validateExtras(arr) {
     const groups = Array.isArray(e.groups) ? e.groups.filter((g) => GROUPS.includes(g)) : [];
     if (!groups.length) bad(`${id}.groups`);
     const out = { id, section: e.section, kind: e.kind, required: !!e.required, visible: !!e.visible, ordinal: !!e.ordinal, groups };
+    if (e.kind === 'choice' && e.multi) { out.multi = true; out.ordinal = false; }
     if (isObj(e.show_if)) {
       const max = e.show_if.max == null ? null : clampInt(e.show_if.max, 1, 5);
       const min = e.show_if.min == null ? null : clampInt(e.show_if.min, 1, 5);

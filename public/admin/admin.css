@@ -131,3 +131,8 @@ code { font: .84rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; ba
 .file-row > div { flex: 1 1 320px; min-width: 0; }
 .file-row b { display: block; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; }
 .file-row span { color: var(--muted); font-size: .84rem; }
+
+.xe-cond { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.xe-cond .field { margin-bottom: 0; }
+.xe-cond.off .field:not(:first-child) { opacity: .45; pointer-events: none; }
+@media (max-width: 700px) { .xe-cond { grid-template-columns: 1fr; } }

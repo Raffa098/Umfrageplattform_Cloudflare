@@ -545,6 +545,10 @@ function extraHTML(e) {
     body = `<div class="smileys" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
         ${e.options.map((o, i) => `<button type="button" class="sm sm-${i + 1}" role="radio" aria-checked="false" aria-label="${esc(o)}" data-v="${i + 1}">${SMILEYS[i]}</button>`).join('')}
       </div><p class="sm-label" aria-live="polite">&nbsp;</p>`;
+  } else if (e.kind === 'choice' && e.multi) {
+    body = `<p class="multi-hint">${L.multiHint}</p><div class="opts multi" role="group" aria-labelledby="h-${e.id}" data-id="${e.id}" data-multi="1">
+        ${e.options.map((o, i) => `<button type="button" class="opt" role="checkbox" aria-checked="false" data-v="${i + 1}"><span class="opt-label">${esc(o)}</span><span class="opt-dot opt-box" aria-hidden="true"></span></button>`).join('')}
+      </div>`;
   } else if (e.kind === 'choice' && e.options.length <= 5 && e.options.every((o) => o.length <= 20) && !(e.options.length === 5 && e.ordinal)) {
     // kurze Antworten (z. B. "1–2", "3–4", "5–6", "7+"): kompakt in einer Reihe
     body = `<div class="scale compact" style="grid-template-columns:repeat(${e.options.some((o) => o.length > 8) ? 2 : e.options.length},1fr)" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
@@ -596,6 +600,15 @@ async function extrasScreen(section) {
     const b = ev2.target.closest('[data-v]');
     if (!b) return;
     const grp = b.closest('[data-id]');
+    if (grp.dataset.multi) {
+      // Mehrfachauswahl: Option an-/abwählen, Wert = aufsteigende Nummern mit | verbunden
+      b.setAttribute('aria-checked', String(b.getAttribute('aria-checked') !== 'true'));
+      const on = [...grp.querySelectorAll('[data-v][aria-checked="true"]')].map((o) => Number(o.dataset.v)).sort((x, y) => x - y);
+      if (on.length) vals[grp.dataset.id] = on.join('|'); else delete vals[grp.dataset.id];
+      syncCond();
+      refresh(true);
+      return;
+    }
     vals[grp.dataset.id] = b.dataset.v;
     grp.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
     if (grp.classList.contains('smileys')) {

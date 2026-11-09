@@ -469,7 +469,6 @@ function extraRow(e, isNew = false) {
   const d = document.createElement('div');
   d.className = 'xe';
   d.dataset.kind = e.kind;
-  if (e.show_if) d.dataset.showIf = JSON.stringify(e.show_if);
   d.innerHTML = `
     <div class="xe-head">
       <label class="field"><span>ID</span><input data-f="id" value="${esc(e.id)}" ${isNew ? '' : 'readonly'} maxlength="16" pattern="[A-Za-z][A-Za-z0-9_]*" required></label>
@@ -486,9 +485,27 @@ function extraRow(e, isNew = false) {
       <label class="toggle"><input type="checkbox" data-f="visible" ${e.visible ? 'checked' : ''}><span></span>Sichtbar</label>
       <label class="toggle"><input type="checkbox" data-f="required" ${e.required ? 'checked' : ''}><span></span>Pflicht</label>
       <label class="toggle"><input type="checkbox" data-f="ordinal" ${e.ordinal ? 'checked' : ''}><span></span>Ø sinnvoll (Skala)</label>
-      ${e.show_if ? `<span class="chip" title="Wird nur gefragt, wenn die Antwort auf ${esc(e.show_if.item)} ${e.show_if.max != null ? `höchstens ${e.show_if.max}` : `mindestens ${e.show_if.min}`} ist">nur wenn ${esc(e.show_if.item)} ${e.show_if.max != null ? `≤ ${e.show_if.max}` : `≥ ${e.show_if.min}`}</span>` : ''}
+      ${e.kind === 'choice' ? `<label class="toggle"><input type="checkbox" data-f="multi" ${e.multi ? 'checked' : ''}><span></span>Mehrfachauswahl</label>` : ''}
       <span class="xe-groups">Gruppen: ${Object.entries(GROUPS).map(([g, n]) => `<label><input type="checkbox" data-g="${g}" ${e.groups.includes(g) ? 'checked' : ''}> ${n}</label>`).join('')}</span>
     </div>`;
+  // Bedingung: Frage nur anzeigen, wenn eine andere Frage (z. B. der Smiley) im gewählten Bereich beantwortet wurde
+  const refs = (settings?.extras || []).filter((x) => x.id !== e.id && (x.kind === 'smiley' || x.ordinal));
+  const si = e.show_if || {};
+  const faces = ['1 · Gar nicht gut', '2 · Eher nicht gut', '3 · Geht so', '4 · Eher gut', '5 · Sehr gut'];
+  const cond = document.createElement('div');
+  cond.className = 'xe-cond';
+  cond.innerHTML = `<label class="field"><span>Anzeigen</span><select data-f="cond_item"><option value="">Immer</option>${refs.map((x) => `<option value="${esc(x.id)}">Nur wenn ${esc(x.id)} (${esc(x.de.text.slice(0, 34))}…) beantwortet mit …</option>`).join('')}</select></label>
+    <label class="field"><span>von</span><select data-f="cond_min">${faces.map((t, k) => `<option value="${k + 1}">${t}</option>`).join('')}</select></label>
+    <label class="field"><span>bis</span><select data-f="cond_max">${faces.map((t, k) => `<option value="${k + 1}">${t}</option>`).join('')}</select></label>`;
+  d.appendChild(cond);
+  const ci = cond.querySelector('[data-f=cond_item]');
+  if (si.item && !refs.some((x) => x.id === si.item)) ci.insertAdjacentHTML('beforeend', `<option value="${esc(si.item)}">Nur wenn ${esc(si.item)} beantwortet mit …</option>`);
+  ci.value = si.item || '';
+  cond.querySelector('[data-f=cond_min]').value = si.min ?? 1;
+  cond.querySelector('[data-f=cond_max]').value = si.max ?? 5;
+  const syncCond = () => { cond.classList.toggle('off', !ci.value); };
+  ci.addEventListener('change', syncCond);
+  syncCond();
   d.querySelector('[data-f=section]').value = e.section;
   d.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-act]');
@@ -530,6 +547,7 @@ $('#qForm').addEventListener('submit', async (e) => {
     }
     overrides[d.dataset.id] = o;
   }
+  let condError = null;
   const extras = $$('#extraQs .xe').map((d) => {
     const v = (f) => d.querySelector(`[data-f=${f}]`);
     const kind = d.dataset.kind;
@@ -541,10 +559,16 @@ $('#qForm').addEventListener('submit', async (e) => {
       en: { text: v('text_en').value, options: kind !== 'number' ? unlines(v('opts_en').value) : [] },
     };
     if (kind === 'number') { x.min = Number(v('min').value); x.max = Number(v('max').value); }
-    if (d.dataset.showIf) x.show_if = JSON.parse(d.dataset.showIf);
+    if (kind === 'choice' && v('multi')?.checked) x.multi = true;
+    if (v('cond_item').value) {
+      const lo = Number(v('cond_min').value), hi = Number(v('cond_max').value);
+      x.show_if = { item: v('cond_item').value, ...(lo > 1 ? { min: lo } : {}), ...(hi < 5 ? { max: hi } : {}) };
+      if (lo > hi || (lo === 1 && hi === 5)) condError = `Bedingung bei ${x.id}: „von“ darf nicht größer als „bis“ sein, und „1 bis 5“ wäre keine Einschränkung (dann „Immer“ wählen).`;
+    }
     return x;
   });
   const msg = $('#qMsg');
+  if (condError) return say(msg, condError, 'err');
   try {
     const r = await api('/api/admin/settings', { method: 'PUT', body: { catalog_overrides: overrides, extras } });
     await loadSettings();
