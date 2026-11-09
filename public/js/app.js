@@ -279,7 +279,7 @@ async function consentScreen() {
         </div>
         <p class="warn-small">${L.pickHint}</p>
       </div>` : ''}
-      <a class="privacy-btn" style="--i:5" id="privacyBtn" href="/datenschutz.html?lang=${S.lang}" target="_blank" rel="noopener">${ICONS.shield}<span><span>${L.privacyBtn}</span><span class="pb-sub">${L.privacySub}</span></span><span class="pb-arrow" aria-hidden="true">↗</span></a>
+      <a class="privacy-btn" style="--i:5" id="privacyBtn" href="/datenschutz.html?lang=${S.lang}" target="_blank" rel="noopener">${ICONS.shield}<span>${L.privacyBtn}</span><span class="pb-arrow" aria-hidden="true">↗</span></a>
       <label class="check" style="--i:5"><input type="checkbox" id="agree"><span class="box" aria-hidden="true"></span><span>${L.consentCheck}</span></label>
     </section>
     <div class="actions"><button class="btn btn-primary" id="startBtn" disabled>${L.start}<span class="arrow" aria-hidden="true">→</span></button></div>`);
