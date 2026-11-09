@@ -500,14 +500,44 @@ const MOUTHS = [
   '<path d="M13 28 H35 Q35 41.5 24 41.5 Q13 41.5 13 28Z" class="mouth-open"/><path d="M15.5 28.8 H32.5" class="teeth"/>',
 ];
 const BROWS = ['<path class="brow" d="M11.5 13.5 L19.5 16.5 M36.5 13.5 L28.5 16.5" />', '', '', '', ''];
-const SMILEYS = FACE_COLORS.map((c, i) => `<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="face" cx="24" cy="24" r="22" fill="${c}"/>${BROWS[i]}<circle class="eye" cx="17" cy="20" r="2.6"/><circle class="eye" cx="31" cy="20" r="2.6"/><g class="mouth">${MOUTHS[i]}</g></svg>`);
+const FACE_EXTRA = [
+  '',
+  '<path class="tear" d="M32.4 26 q-2.8 4.2 0 6.4 q2.8 -2.2 0 -6.4Z"/>',
+  '',
+  '<ellipse class="blush" cx="10" cy="29" rx="3.6" ry="2.2"/><ellipse class="blush" cx="38" cy="29" rx="3.6" ry="2.2"/>',
+  '<path class="spk spk1" d="M41 6 l1.5 3.4 3.4 1.5 -3.4 1.5 -1.5 3.4 -1.5 -3.4 -3.4 -1.5 3.4 -1.5Z"/><path class="spk spk2" d="M6 10 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1Z"/>',
+];
+const SMILEYS = FACE_COLORS.map((c, i) => `<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="face" cx="24" cy="24" r="22" fill="${c}"/>${BROWS[i]}<circle class="eye" cx="17" cy="20" r="2.6"/><circle class="eye" cx="31" cy="20" r="2.6"/><g class="mouth">${MOUTHS[i]}</g>${FACE_EXTRA[i]}</svg>`);
+
+// Beim Anklicken: Ring und kleine Partikel in den Farben des Gesichts
+const BURST_COLORS = [['#f26b5b', '#ffb3a8'], ['#f4a259', '#ffd8a8'], ['#f6d55c', '#fff1a8'], ['#b5df6a', '#e3f7b0'], ['#5ec27a', '#ffd466', '#ff9ad5']];
+function smBurst(btn) {
+  if (isReduced()) return;
+  const cols = BURST_COLORS[Number(btn.dataset.v) - 1] || BURST_COLORS[4];
+  const ring = document.createElement('i');
+  ring.className = 'sm-ring';
+  ring.style.setProperty('--c', cols[0]);
+  btn.appendChild(ring);
+  setTimeout(() => ring.remove(), 700);
+  for (let k = 0; k < 11; k++) {
+    const p = document.createElement('i');
+    p.className = 'sm-p';
+    const ang = (Math.PI * 2 * k) / 11 + Math.random() * 0.5;
+    const dist = 34 + Math.random() * 22;
+    p.style.setProperty('--dx', `${Math.cos(ang) * dist}px`);
+    p.style.setProperty('--dy', `${Math.sin(ang) * dist}px`);
+    p.style.setProperty('--c', cols[k % cols.length]);
+    btn.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
+}
 
 function extraHTML(e) {
   const tag = e.required ? '' : `<span class="opt-tag">${L.optional}</span>`;
   let body;
   if (e.kind === 'smiley') {
     body = `<div class="smileys" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
-        ${e.options.map((o, i) => `<button type="button" class="sm" role="radio" aria-checked="false" aria-label="${esc(o)}" data-v="${i + 1}">${SMILEYS[i]}</button>`).join('')}
+        ${e.options.map((o, i) => `<button type="button" class="sm sm-${i + 1}" role="radio" aria-checked="false" aria-label="${esc(o)}" data-v="${i + 1}">${SMILEYS[i]}</button>`).join('')}
       </div><p class="sm-label" aria-live="polite">&nbsp;</p>`;
   } else if (e.kind === 'choice' && e.options.length <= 5 && e.options.every((o) => o.length <= 8) && !(e.options.length === 5 && e.ordinal)) {
     // kurze Antworten (z. B. "1–2", "3–4", "5–6", "7+"): kompakt in einer Reihe
@@ -556,6 +586,7 @@ async function extrasScreen(section) {
     grp.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
     if (grp.classList.contains('smileys')) {
       grp.classList.add('has-sel');
+      smBurst(b);
       const lab = grp.parentElement.querySelector('.sm-label');
       if (lab) lab.textContent = b.getAttribute('aria-label'); // gewählte Bewertung als Text darunter
     }

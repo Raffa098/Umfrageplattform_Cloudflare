@@ -413,3 +413,44 @@ h1, h2, p { margin: 0; }
 /* Marke oben links ausgeblendet (Logo + Name); Schalter bleiben rechts */
 .topbar { justify-content: flex-end; }
 .topbar > .logo, .topbar > .brand { display: none !important; }
+
+/* Smileys: animiert beim Darüberfahren und Anklicken (je Stimmung eine eigene Bewegung) */
+.sm { position: relative; }
+.sm svg { transform-origin: 50% 60%; }
+.sm-1:hover svg, .sm-1:focus-visible svg { animation: smShake .42s ease-in-out infinite; }
+.sm-2:hover svg, .sm-2:focus-visible svg { animation: smDroop 1.1s ease-in-out infinite alternate; }
+.sm-3:hover svg, .sm-3:focus-visible svg { animation: smSway 1.3s ease-in-out infinite alternate; }
+.sm-4:hover svg, .sm-4:focus-visible svg { animation: smBounce .72s ease-in-out infinite; }
+.sm-5:hover svg, .sm-5:focus-visible svg { animation: smJump .62s ease-in-out infinite; }
+/* ausgewählt: ruhigere Dauerbewegung */
+.sm-1[aria-checked="true"] svg { animation: smShake 2.2s ease-in-out infinite; }
+.sm-2[aria-checked="true"] svg { animation: smDroop 2s ease-in-out infinite alternate; }
+.sm-3[aria-checked="true"] svg { animation: smSway 2.2s ease-in-out infinite alternate; }
+.sm-4[aria-checked="true"] svg { animation: smBounce 1.5s ease-in-out infinite; }
+.sm-5[aria-checked="true"] svg { animation: smJump 1.3s ease-in-out infinite; }
+@keyframes smShake { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-2.5px) rotate(-5deg); } 40% { transform: translateX(2.5px) rotate(5deg); } 60% { transform: translateX(-2px) rotate(-3deg); } 80% { transform: translateX(2px) rotate(3deg); } }
+@keyframes smDroop { from { transform: translateY(0) rotate(-2deg) scale(1); } to { transform: translateY(3px) rotate(3deg) scale(1, .95); } }
+@keyframes smSway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes smBounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 40% { transform: translateY(-6px) scale(.96, 1.05); } 70% { transform: translateY(0) scale(1.06, .94); } }
+@keyframes smJump { 0%, 100% { transform: translateY(0) rotate(0) scale(1, 1); } 25% { transform: translateY(-9px) rotate(-7deg) scale(1.06); } 50% { transform: translateY(0) rotate(0) scale(1.08, .92); } 75% { transform: translateY(-9px) rotate(7deg) scale(1.06); } }
+
+.sm .tear { fill: #6ec0ff; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.sm-2:hover .tear, .sm-2:focus-visible .tear, .sm-2[aria-checked="true"] .tear { animation: smTear 1.1s ease-in infinite; }
+@keyframes smTear { 0% { opacity: 0; transform: translateY(-2px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(13px); } }
+.sm .blush { fill: #ff8fa3; opacity: 0; transition: opacity .25s; }
+.sm-4:hover .blush, .sm-4:focus-visible .blush, .sm-4[aria-checked="true"] .blush { opacity: .6; }
+.sm .spk { fill: #ffd466; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.sm-5:hover .spk, .sm-5:focus-visible .spk, .sm-5[aria-checked="true"] .spk { animation: smSpk .8s ease-in-out infinite alternate; }
+.sm-5:hover .spk2, .sm-5[aria-checked="true"] .spk2 { animation-delay: -.4s; }
+@keyframes smSpk { from { opacity: .2; transform: scale(.5) rotate(0); } to { opacity: 1; transform: scale(1.25) rotate(45deg); } }
+.sm-3:hover .eye, .sm-3:focus-visible .eye { animation: smLook 1.3s ease-in-out infinite alternate; }
+@keyframes smLook { from { transform: translateX(-1.6px); } to { transform: translateX(1.6px); } }
+.sm .mouth-open { transform-box: fill-box; transform-origin: 50% 20%; }
+.sm-5:hover .mouth-open, .sm-5[aria-checked="true"] .mouth-open { animation: smLaugh .32s ease-in-out infinite alternate; }
+@keyframes smLaugh { from { transform: scaleY(.82); } to { transform: scaleY(1.12); } }
+
+/* Anklicken: Ring + Partikel */
+.sm-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--c); pointer-events: none; animation: smRing .6s ease-out forwards; }
+@keyframes smRing { from { transform: scale(.85); opacity: .9; } to { transform: scale(2); opacity: 0; } }
+.sm-p { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--c); pointer-events: none; animation: smP .78s cubic-bezier(.15, .7, .3, 1) forwards; }
+@keyframes smP { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
