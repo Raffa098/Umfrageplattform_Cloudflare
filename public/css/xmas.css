@@ -1,0 +1,28 @@
+/* Weihnachtsszene (Abschlussseite) */
+.xmas { width: 100%; max-width: 440px; margin: 20px auto 2px; border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.xmas svg { display: block; width: 100%; height: auto; }
+.xmas-cap { margin: 10px 0 0; font-weight: 750; letter-spacing: .01em; color: var(--warm-text); }
+
+.xs-star { fill: #fff; animation: xsTwinkle 3.4s ease-in-out infinite alternate; }
+@keyframes xsTwinkle { from { opacity: .25; } to { opacity: 1; } }
+.xs-snow { fill: #fff; opacity: .85; animation: xsFall linear infinite; }
+@keyframes xsFall { from { transform: translate(0, 0); } to { transform: translate(var(--dx), 190px); } }
+
+.xs-light { animation: xsTwinkle 1.3s ease-in-out infinite alternate; }
+.xs-bb { animation: xsBb 2.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes xsBb { from { transform: scale(1); } to { transform: scale(1.14); } }
+.xs-topstar { transform-box: fill-box; transform-origin: center; animation: xsPulse 1.8s ease-in-out infinite alternate; }
+@keyframes xsPulse { from { transform: scale(.94) rotate(-4deg); filter: brightness(1); } to { transform: scale(1.1) rotate(4deg); filter: brightness(1.25); } }
+
+/* Sänger */
+.xs-sing { transform-box: view-box; transform-origin: 0 0; animation: xsSway 1.9s ease-in-out infinite alternate; }
+@keyframes xsSway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
+.xs-hair { fill: #d9552b; } .xs-beard { fill: #c64b26; }
+.xs-mouth { transform-box: fill-box; transform-origin: center; animation: xsSing .42s ease-in-out infinite alternate; }
+@keyframes xsSing { from { transform: scaleY(.35); } to { transform: scaleY(1.08); } }
+.xs-arm-r { transform-box: view-box; transform-origin: 14px -86px; animation: xsMic 1.1s ease-in-out infinite alternate; }
+@keyframes xsMic { from { transform: rotate(-4deg); } to { transform: rotate(5deg); } }
+.xs-arm-l { transform-box: view-box; transform-origin: -20px -86px; animation: xsArmL 1.9s ease-in-out infinite alternate; }
+@keyframes xsArmL { from { transform: rotate(5deg); } to { transform: rotate(-9deg); } }
+.xs-note { transform-box: fill-box; transform-origin: center; opacity: 0; animation: xsNote 3.2s ease-out infinite; }
+@keyframes xsNote { 0% { opacity: 0; transform: translate(0, 12px) scale(.6) rotate(-10deg); } 18% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -26px) scale(1.15) rotate(12deg); } }

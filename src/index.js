@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   catalog_overrides: {},
   journey: { walk_ms: 1300, easing: 'standard', confetti: true, points_per_answer: 50 }, // Punkte: fix pro beantworteter Frage
   default_theme: 'system',
+  christmas_scene: true, // Weihnachtsszene auf der Abschlussseite (im Admin abschaltbar)
   contact: { de: '', en: '' },
   privacy_extra: { de: '', en: '' },
   closing_text: {
@@ -153,6 +154,7 @@ async function getConfig(env, url) {
     motivation: s.motivation[lang],
     journey: s.journey,
     default_theme: s.default_theme,
+    christmas: !!s.christmas_scene,
     contact: s.contact[lang] || '',
     privacy_extra: s.privacy_extra[lang] || '',
     closing_text: s.closing_text[lang] || '',
@@ -760,6 +762,7 @@ async function adminPutSettings(request, env) {
     if (pts === null) bad('journey.points_per_answer');
     next.journey = { walk_ms: w, easing, confetti: b.journey.confetti === undefined ? next.journey.confetti : !!b.journey.confetti, points_per_answer: pts };
   }
+  if ('christmas_scene' in b) next.christmas_scene = !!b.christmas_scene;
   if ('default_theme' in b) {
     if (!['system', 'light', 'dark'].includes(b.default_theme)) bad('default_theme');
     next.default_theme = b.default_theme;

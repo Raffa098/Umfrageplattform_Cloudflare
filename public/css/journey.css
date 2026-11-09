@@ -91,8 +91,8 @@
 .c-ring { fill: none; stroke: var(--stole); stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .c-ring.pulse { animation: ringOut 1s ease-out; }
 @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.2); } }
-.j-char.jump .c-body { animation: jump .95s cubic-bezier(.3, .7, .4, 1) both; }
-.j-char.jump2 .c-body { animation: jump .95s cubic-bezier(.3, .7, .4, 1) 2 both; }
+/* Sprung: siehe journey-vehicles.css (.c-all) */
+
 .j-char.jump .c-shadow, .j-char.jump2 .c-shadow { animation: shadowJump .95s ease-in-out 1; }
 .j-char.jump2 .c-shadow { animation-iteration-count: 2; }
 @keyframes jump {

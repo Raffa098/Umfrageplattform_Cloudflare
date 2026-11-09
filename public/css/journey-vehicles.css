@@ -1,0 +1,62 @@
+/* ============================================================ Fahrzeuge der Figur: ab Bachelor Fahrrad, ab Master Cabrio */
+.journey { --bike: #2f8fd1; --car: #d9483a; }
+
+.c-all { transform-box: fill-box; transform-origin: 50% 100%; }
+.veh, .bk-leg { display: none; }
+.j-char[data-level="1"] .veh-bike,
+.j-char[data-level="2"] .veh-car, .j-char[data-level="3"] .veh-car,
+.j-char[data-level="2"] .veh-car-front, .j-char[data-level="3"] .veh-car-front { display: block; }
+.j-char[data-level="1"] .bk-leg { display: block; }
+.veh { transform-box: fill-box; transform-origin: 50% 100%; animation: vehIn .65s var(--spring) both; }
+@keyframes vehIn { from { transform: translateY(-14px) scale(.3); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Mit Fahrzeug laufen die Beine nicht mehr; Körper sitzt auf Sattel bzw. im Sitz */
+.j-char:not([data-level="0"]) .c-leg-f, .j-char:not([data-level="0"]) .c-leg-b { display: none; }
+.c-pose { transform-box: view-box; transform-origin: 0 -12.5px; }
+.j-char[data-level="1"] .c-pose { transform: translate(-3px, -10px) rotate(16deg); }
+.j-char[data-level="2"] .c-pose, .j-char[data-level="3"] .c-pose { transform: translate(-7px, -0.5px); }
+
+/* Arme zum Lenker bzw. Lenkrad (Gehschwung aus) */
+.j-char[data-level="1"] .c-arm-f, .j-char[data-level="1"] .c-arm-b { transform: rotate(-44deg); }
+.j-char[data-level="2"] .c-arm-f, .j-char[data-level="3"] .c-arm-f { transform: rotate(-54deg); }
+.j-char[data-level="2"] .c-arm-b, .j-char[data-level="3"] .c-arm-b { transform: rotate(-50deg); }
+.j-char:not([data-level="0"]).walking .c-arm-f, .j-char:not([data-level="0"]).walking .c-arm-b { animation: none; }
+
+/* Radfahrer: Beine treten */
+.bk-leg { transform-box: fill-box; transform-origin: 50% 8%; }
+.j-char[data-level="1"] .bk-leg-a { transform: rotate(-36deg); }
+.j-char[data-level="1"] .bk-leg-b { transform: rotate(-12deg); }
+.j-char.walking .bk-leg-a { animation: pedA .5s ease-in-out infinite alternate; }
+.j-char.walking .bk-leg-b { animation: pedB .5s ease-in-out infinite alternate; }
+@keyframes pedA { from { transform: rotate(-52deg); } to { transform: rotate(-10deg); } }
+@keyframes pedB { from { transform: rotate(-10deg); } to { transform: rotate(-52deg); } }
+
+/* Räder */
+.tire { fill: none; stroke: #2a2e38; stroke-width: 1.9; } .rim { fill: none; stroke: #b3bccb; stroke-width: .8; }
+.spoke { stroke: #b3bccb; stroke-width: .55; } .hub { fill: #59637a; }
+.wspin, .cspin { transform-box: fill-box; transform-origin: center; }
+.j-char.walking .wspin { animation: wspin .42s linear infinite; }
+.j-char.walking .cspin { animation: wspin .5s linear infinite; }
+@keyframes wspin { to { transform: rotate(360deg); } }
+
+/* Fahrrad */
+.frame { fill: none; stroke: var(--bike); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.saddle, .pedal { fill: #2a2e38; }
+
+/* Cabrio */
+.car-body { fill: var(--car); }
+.car-strip { stroke: rgba(255, 255, 255, .55); stroke-width: .9; fill: none; }
+.car-glass { fill: rgba(190, 225, 255, .55); stroke: #cfd6e2; stroke-width: .6; } .car-bar { stroke: #cfd6e2; stroke-width: 1; fill: none; }
+.well { fill: #1d2029; } .head-l { fill: #ffe9a0; } .tail-l { fill: #ff6b6b; }
+.car-seat { fill: #5a2b2b; } .steer { stroke: #2a2e38; stroke-width: 1; fill: none; } .steer-w { fill: none; stroke: #2a2e38; stroke-width: 1; }
+.puff { fill: rgba(190, 195, 205, .8); transform-box: fill-box; transform-origin: center; opacity: 0; }
+.j-char.walking .puff { animation: exhaust .9s ease-out infinite; }
+@keyframes exhaust { 0% { opacity: .7; transform: translate(0, 0) scale(.5); } 100% { opacity: 0; transform: translate(-9px, -5px) scale(1.7); } }
+
+/* Schatten passend zur Länge des Fahrzeugs */
+.j-char[data-level="1"] .c-shadow { transform: scaleX(1.7); }
+.j-char[data-level="2"] .c-shadow, .j-char[data-level="3"] .c-shadow { transform: scaleX(2.7); }
+
+/* Sprung am Meilenstein betrifft Figur + Fahrzeug */
+.j-char.jump .c-all { animation: jump .95s cubic-bezier(.3, .7, .4, 1) both; }
+.j-char.jump2 .c-all { animation: jump .95s cubic-bezier(.3, .7, .4, 1) 2 both; }

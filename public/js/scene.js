@@ -268,15 +268,41 @@ export function sceneSVG() {
   const front = [16, 130, 210, 300].map(tuft).join('');
 
   // Figur: Fuß auf y=0, Kopf bei y≈-34. Titel-Ebenen (Hut, Robe, Brille, Bart) per data-level.
+  // Fahrzeuge: Level 1 (nach Bachelor) = Fahrrad, Level 2+3 (ab Master) = Cabrio.
+  const wheel = (x, y, r) => `<g transform="translate(${x} ${y})"><g class="wspin"><circle class="tire" r="${r}"/><circle class="rim" r="${r - 2}"/><path class="spoke" d="M${-(r - 2)} 0H${r - 2}M0 ${-(r - 2)}V${r - 2}M${-(r - 2) * 0.7} ${-(r - 2) * 0.7}L${(r - 2) * 0.7} ${(r - 2) * 0.7}M${-(r - 2) * 0.7} ${(r - 2) * 0.7}L${(r - 2) * 0.7} ${-(r - 2) * 0.7}"/><circle class="hub" r="1.1"/></g></g>`;
+  const bike = `<g class="veh veh-bike">
+      ${wheel(-12, -9, 8.6)}${wheel(12, -9, 8.6)}
+      <path class="frame" d="M-12 -9 L-2 -8 L-4 -21 L7 -21 L12 -9 M-2 -8 L7 -21 M-4 -21 L-12 -9 M7 -21 L8 -25 M7.4 -25.2 H11.4"/>
+      <rect class="saddle" x="-7.6" y="-23.8" width="7.4" height="2.5" rx="1.2"/>
+      <g transform="translate(-2 -8)"><g class="cspin"><path class="frame" d="M0 -4 V4"/><rect class="pedal" x="-2.2" y="-5.2" width="4.4" height="1.5" rx=".6"/><rect class="pedal" x="-2.2" y="3.7" width="4.4" height="1.5" rx=".6"/></g></g>
+    </g>`;
+  const carBack = `<g class="veh veh-car">
+      <rect class="car-seat" x="-15" y="-25.5" width="6.5" height="11" rx="2.6"/>
+      <path class="car-seat" d="M-9 -15 H3 V-12 H-9Z"/>
+      <path class="steer" d="M3.4 -18 L5.6 -22.6"/><ellipse class="steer-w" cx="5.7" cy="-22.8" rx="1.1" ry="2.6" transform="rotate(28 5.7 -22.8)"/>
+    </g>`;
+  const carFront = `<g class="veh veh-car-front">
+      <path class="car-body" d="M-25 -8 Q-26.2 -13 -23 -15 L-12 -16.5 L2 -17.4 L7 -17.8 L10.5 -17.2 L21 -15.4 Q26.6 -14 26.8 -9.5 L25.5 -5.4 H-22 Q-25 -5.4 -25 -8Z"/>
+      <path class="car-strip" d="M-23.5 -11.2 H25.4"/>
+      <path class="car-glass" d="M2.2 -17.4 L6.2 -25 L8 -24.6 L5.8 -17.6Z"/><path class="car-bar" d="M2.2 -17.4 L6.2 -25"/>
+      <circle class="well" cx="-14" cy="-6.5" r="7.8"/><circle class="well" cx="14" cy="-6.5" r="7.8"/>
+      ${wheel(-14, -6.5, 6.4)}${wheel(14, -6.5, 6.4)}
+      <circle class="head-l" cx="25.4" cy="-12.2" r="1.9"/><rect class="tail-l" x="-25.8" y="-13.6" width="2.2" height="3.4" rx="1"/>
+      <circle class="puff" cx="-27" cy="-6" r="2" style="animation-delay:0s"/><circle class="puff" cx="-27" cy="-6" r="2" style="animation-delay:-.45s"/>
+    </g>`;
   const character = `<g transform="translate(${CX} ${GY + 4}) scale(1.2)"><g class="j-char" data-level="0">
     <circle class="c-ring" cx="0.5" cy="-20" r="11"/>
     <ellipse class="c-shadow" cx="0" cy="0.5" rx="10" ry="2.6"/>
-    <g class="c-body">
+    <g class="c-all">
+    ${bike}${carBack}
+    <g class="c-pose"><g class="c-body">
       <g class="c-limb c-leg-b"><rect class="c-pants-b" x="-2.6" y="-14" width="5.2" height="14" rx="2.6"/></g>
+      <g class="c-limb bk-leg bk-leg-b"><rect class="c-pants-b" x="-2.4" y="-14" width="4.8" height="14.5" rx="2.4"/></g>
       <g class="c-limb c-arm-b"><rect class="c-skin-b" x="-1.9" y="-27" width="3.8" height="12" rx="1.9"/></g>
       <rect class="c-pack" x="-10" y="-27.5" width="6.5" height="11.5" rx="2.2"/>
       <rect class="c-shirt" x="-5.2" y="-28.5" width="10.4" height="16" rx="4.5"/>
       <g class="c-limb c-leg-f"><rect class="c-pants" x="-2.6" y="-14" width="5.2" height="14" rx="2.6"/></g>
+      <g class="c-limb bk-leg bk-leg-a"><rect class="c-pants" x="-2.4" y="-14" width="4.8" height="14.5" rx="2.4"/></g>
       <g class="c-gown"><path class="c-robe" d="M-6.4 -28.6 Q-8 -15 -7.4 -7.5 L7.6 -7.5 Q8 -15 6.4 -28.6Z"/><path class="c-stole" d="M-2.4 -28.8 L-0.6 -8 L2.6 -8 L2.8 -28.8Z"/></g>
       <circle class="c-skin" cx="0.5" cy="-34.5" r="6"/>
       <path class="c-hair" d="M-5.6 -34.6 A6.1 6.1 0 0 1 6.5 -35.6 Q3 -38.4 -0.6 -36.4 Q-3 -35 -5.6 -34.6Z"/>
@@ -288,6 +314,8 @@ export function sceneSVG() {
         <path class="c-tassel" d="M10.4 -40.4 V-34"/><circle class="c-tassel-b" cx="10.4" cy="-33.2" r="1.4"/></g>
       <g class="c-limb c-arm-f"><rect class="c-skin" x="-1.9" y="-27" width="3.8" height="12" rx="1.9"/></g>
       <g class="c-diploma" transform="translate(5.5 -18) rotate(-28)"><rect class="dip-paper" x="-5.4" y="-1.8" width="10.8" height="3.6" rx="1.8"/><rect class="dip-ribbon" x="-0.9" y="-2" width="1.8" height="4"/></g>
+    </g></g>
+    ${carFront}
     </g></g></g>`;
 
   return `<svg class="j-svg" viewBox="0 0 360 160" preserveAspectRatio="xMidYMax slice" role="img" focusable="false">

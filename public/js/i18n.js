@@ -1,6 +1,7 @@
 export const STRINGS = {
   de: {
     brand: 'Anonymous Survey',
+    xmas: 'Frohe Weihnachten!',
     points: 'Punkte',
     ranks: ['Student', 'Bachelor', 'Master', 'Professor'],
     ach: [
@@ -83,6 +84,7 @@ export const STRINGS = {
   },
   en: {
     brand: 'Anonymous Survey',
+    xmas: 'Merry Christmas!',
     points: 'points',
     ranks: ['Student', 'Bachelor', 'Master', 'Professor'],
     ach: [

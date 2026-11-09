@@ -1,5 +1,6 @@
 import { STRINGS } from './i18n.js';
 import { createJourney } from './journey.js';
+import { xmasSVG } from './xmas.js';
 import { isReduced, isDark, setTheme, setMotion, applyDefaultTheme } from './prefs.js';
 
 // ---------------------------------------------------------------- Grundlagen
@@ -603,6 +604,7 @@ async function finishScreen(already) {
       </div>
       <h1 style="--i:1">${already ? L.alreadyTitle : L.doneTitle}</h1>
       <p class="lead closing" style="--i:2">${esc(already ? L.alreadyText : (cfg?.closing_text || L.doneText))}</p>
+      ${cfg?.christmas ? `<div class="xmas" style="--i:3" aria-hidden="true">${xmasSVG()}</div><p class="xmas-cap" style="--i:3">${L.xmas}</p>` : ''}
       ${code ? `
         <p class="code-label" style="--i:3">${L.codeLabel}</p>
         <div class="code-box" style="--i:3">
