@@ -27,11 +27,11 @@ export const DEFAULT_EXTRAS = [
   {
     id: 'M1', section: 'manipulation', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
     de: { text: 'Was trifft auf deine Erfahrung in dieser Umfrage am ehesten zu?', options: [
-      'Ich habe während der Umfrage eine akademische Laufbahn durchlebt.',
+      'Ich habe während der Umfrage eine virtuelle Reise (akademische Laufbahn) durchlebt.',
       'Ich wurde zwischendurch mit Worten ermutigt, die Fragen sorgfältig zu beantworten.',
       'Weder noch: Es gab nur die Fragen, ohne weitere Besonderheiten.'] },
     en: { text: 'Which of these best describes your experience in this survey?', options: [
-      'During the survey I went through an academic career.',
+      'During the survey I went on a virtual journey (an academic career).',
       'In between, I was encouraged with words to answer the questions carefully.',
       'Neither: there were only the questions, nothing else.'] },
   },
