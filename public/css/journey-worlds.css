@@ -156,3 +156,11 @@
 .tesla-car { animation: teslaBob 2.6s ease-in-out infinite alternate; }
 @keyframes teslaBob { from { transform: translate(var(--tx, 0), 0) rotate(-1.5deg); } to { transform: translate(var(--tx, 0), -.8px) rotate(1.5deg); } }
 .tesla-t { font: 800 5px/1 system-ui, sans-serif; fill: #fff; }
+
+.lib-horse { animation: libHorse 2.2s ease-in-out infinite alternate; }
+@keyframes libHorse { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+.summit-glow { opacity: .35; animation: summitGlow 3.2s ease-in-out infinite alternate; }
+@keyframes summitGlow { from { opacity: .18; } to { opacity: .5; } }
+.summit { transition: opacity 1.2s ease; }
+.journey:not([data-world="0"]) .summit { opacity: 0; }

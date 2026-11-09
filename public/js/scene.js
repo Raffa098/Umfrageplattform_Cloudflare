@@ -1,10 +1,10 @@
 // SVG-Szene der Fortschrittsreise. Welt-Streifen (x = Weltkoordinate, Figur steht bei x = CX + Fragen * STEP):
-//   Wald (Start) · Stadt mit Universität (x≈390, Bachelor nach Q5) · Kirmes "Libori" (x≈560–740)
-//   · Raketenstation (x≈840, Master nach Q10) · antikes griechisches Forum (x≈1140, Professor nach Q15)
+//   Wald (Start) · Stadt mit Universität (x≈390, Bachelor nach Q5) · Kirmes "Libori" (x≈550–830)
+//   · Raketenstation (x≈940, Master nach Q10) · antikes griechisches Forum (x≈1240, Professor nach Q15)
 // Keine Beschriftungen in der Szene.
 
 export const STEP = 60;   // Pixel pro Frage
-const LIBORI_EXTRA = 150; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
+const LIBORI_EXTRA = 250; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
 // Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 je STEP pro Frage, Q5–10 mit Libori-Abschnitt (länger)
 export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5;
 export const CX = 90;     // feste x-Position der Figur im Bild
@@ -276,48 +276,81 @@ function wheel(cx, cy, r) {
     <circle r="3" fill="#e0463a" stroke="#fff" stroke-width="1"/></g>`;
 }
 
+// Karussell: gestreiftes Dach, Lichterkranz, vier Pferdchen die an Stangen auf und ab wippen
+function carousel(cx) {
+  const horses = [[-16, '#ffffff', 0], [-5.5, '#ffb3c7', 0.5], [5.5, '#fff1a8', 1.0], [16, '#b9e3ff', 1.5]].map(([dx, col, d]) => `<g transform="translate(${cx + dx} ${GY - 8})">
+    <path d="M0 -26 V-3" stroke="#e8b93f" stroke-width="1.1"/>
+    <g class="lib-horse" style="animation-delay:-${d}s"><ellipse cx="0" cy="-14" rx="4.6" ry="2.7" fill="${col}" stroke="#9aa3b4" stroke-width=".4"/><path d="M3 -15 l2.6 -3.6 l2.4 1.6 l-1.4 3.6Z" fill="${col}" stroke="#9aa3b4" stroke-width=".4"/><circle cx="6.4" cy="-17.4" r=".5" fill="#3b2a1a"/><path d="M-4.6 -14.6 q-2 1.6 -1.4 4" stroke="${col}" stroke-width="1.2" fill="none"/></g></g>`).join('');
+  const lights = Array.from({ length: 7 }, (_, k) => `<circle class="lib-light" cx="${cx - 22 + k * 7.3}" cy="${GY - 34.5}" r="1.1" style="animation-delay:-${k * 0.3}s"/>`).join('');
+  return `<g class="lib-carousel">
+    <ellipse cx="${cx}" cy="${GY - 4}" rx="26" ry="3.4" fill="#7a2a2a"/><rect x="${cx - 26}" y="${GY - 8}" width="52" height="4.4" rx="1.6" fill="#b3262f"/><rect x="${cx - 26}" y="${GY - 8}" width="52" height="1.4" fill="#e8b93f"/>
+    <rect x="${cx - 1.6}" y="${GY - 36}" width="3.2" height="30" fill="#e8b93f"/>
+    ${horses}
+    <path d="M${cx - 28} ${GY - 33} L${cx} ${GY - 48} L${cx + 28} ${GY - 33}Z" fill="#e0463a"/>
+    <path d="M${cx - 28} ${GY - 33} L${cx - 14} ${GY - 40.5} L${cx - 7} ${GY - 33}Z M${cx} ${GY - 48} L${cx + 7} ${GY - 33} L${cx + 14} ${GY - 40.5}Z M${cx + 14} ${GY - 40.5} L${cx + 28} ${GY - 33} L${cx + 21} ${GY - 33}Z" fill="#ffffff" opacity=".92"/>
+    <rect x="${cx - 29}" y="${GY - 34}" width="58" height="3.2" rx="1.2" fill="#e8b93f"/>${lights}
+    <circle cx="${cx}" cy="${GY - 49.5}" r="1.8" fill="#ffe08a"/></g>`;
+}
+
 function libori() {
-  const x0 = 556; // Eingangsbogen
-  const arch = `<g><rect x="${x0}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/><rect x="${x0 + 40.6}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/>
-    <path d="M${x0 - 2} ${GY - 50} Q${x0 + 22} ${GY - 62} ${x0 + 46} ${GY - 50}" fill="none" stroke="#e8b93f" stroke-width="2.4"/>
-    <rect x="${x0 - 3}" y="${GY - 48}" width="50" height="14" rx="3" fill="#b3262f" stroke="#e8b93f" stroke-width="1.6"/>
-    <text class="lib-name" x="${x0 + 22}" y="${GY - 37.4}" text-anchor="middle">Libori</text>
-    ${[0, 1, 2, 3, 4, 5].map((i) => `<circle class="lib-light" cx="${x0 + 3 + i * 8}" cy="${GY - 48 + (i % 2) * 0}" r="1.1" style="animation-delay:-${i * 0.3}s"/>`).join('')}</g>`;
-  const rnd2 = rand(5);
-  const sweets = [0, 1, 2, 3].map((i) => `<circle cx="${608 + i * 6.2}" cy="${GY - 15}" r="2.4" fill="${['#ff7aa8', '#ffd34d', '#7fd4ff', '#b9ff9f'][i]}"/>`).join('');
-  const prizes = [0, 1, 2].map((i) => `<rect x="${672 + i * 7.6}" y="${GY - 20}" width="5.6" height="7.6" rx="1.4" fill="${['#e0463a', '#3f86c9', '#f2c14e'][i]}"/>`).join('');
-  // Langos-Stand: goldene Teigfladen auf der Theke, Dampf, Verkäufer
-  const langos = [0, 1, 2].map((i) => `<ellipse cx="${712 + i * 7.5}" cy="${GY - 13.2}" rx="3.6" ry="1.5" fill="#e2a64b"/><ellipse cx="${712 + i * 7.5}" cy="${GY - 13.8}" rx="2.4" ry=".9" fill="#f3c872"/>`).join('');
-  const steam = [0, 1, 2].map((i) => `<circle class="steam" cx="${714 + i * 7}" cy="${GY - 18}" r="1.9" style="animation-delay:-${i * 0.9}s"/>`).join('');
-  const vendor = person(726, GY - 12, 'e', 2, 0.5, true);
-  const guest = person(754 - 12, GY - 2, 'b', 1, 1.4, true) + person(754 - 3, GY - 2, 'f', 3, 0.8, true);
-  void rnd2;
+  const x0 = 655; // Eingangsbogen in der Mitte der Kirmes
+  const arch = `<g><rect x="${x0}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/><rect x="${x0 + 42.6}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/>
+    <path d="M${x0 - 2} ${GY - 50} Q${x0 + 23} ${GY - 62} ${x0 + 48} ${GY - 50}" fill="none" stroke="#e8b93f" stroke-width="2.4"/>
+    <rect x="${x0 - 3}" y="${GY - 48}" width="52" height="14" rx="3" fill="#b3262f" stroke="#e8b93f" stroke-width="1.6"/>
+    <text class="lib-name" x="${x0 + 23}" y="${GY - 37.4}" text-anchor="middle">Libori</text>
+    ${[0, 1, 2, 3, 4, 5].map((k) => `<circle class="lib-light" cx="${x0 + 3 + k * 8.4}" cy="${GY - 48}" r="1.1" style="animation-delay:-${k * 0.3}s"/>`).join('')}</g>`;
+  // Langos-Stand links: goldene Teigfladen auf der Theke, Dampf, Verkäufer
+  const langos = [0, 1, 2].map((k) => `<ellipse cx="${559 + k * 8}" cy="${GY - 13.2}" rx="3.6" ry="1.5" fill="#e2a64b"/><ellipse cx="${559 + k * 8}" cy="${GY - 13.8}" rx="2.4" ry=".9" fill="#f3c872"/>`).join('');
+  const steam = [0, 1, 2].map((k) => `<circle class="steam" cx="${561 + k * 7.5}" cy="${GY - 18}" r="1.9" style="animation-delay:-${k * 0.9}s"/>`).join('');
+  // Bier-Bude rechts: Krüge mit Schaum, Fass
+  const mugs = [0, 1, 2].map((k) => `<g transform="translate(${800 + k * 7.6} ${GY - 21})"><rect x="0" y="2" width="5" height="7.4" rx="1" fill="#e2a64b" opacity=".95"/><rect x="0" y="0.2" width="5" height="3" rx="1.4" fill="#fffdf2"/><path d="M5 3.6 h1.6 v3.4 h-1.6" fill="none" stroke="#c9d3df" stroke-width=".8"/></g>`).join('');
+  const keg = `<g transform="translate(838 ${GY})"><ellipse cx="0" cy="-7.4" rx="5.6" ry="7.4" fill="#8a5a2f"/><path d="M-5.4 -11 H5.4 M-5.6 -4 H5.6" stroke="#c9a66b" stroke-width="1"/><circle cx="0" cy="-7.4" r="1.2" fill="#f2c14e"/></g>`;
   return `<g class="libori">
-    ${wheel(652, GY - 44, 32)}
+    ${booth(552, 36, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
+    ${person(576, GY - 12, 'e', 2, 0.5, true)}
+    ${carousel(628)}
     ${arch}
-    ${booth(604, 30, '#e0463a', '#ffffff', sweets, 'Süßes')}
-    ${booth(668, 30, '#3f86c9', '#ffffff', prizes + balloon(682, GY - 40, '#e0463a', 0) + balloon(688, GY - 42, '#f2c14e', 1) + balloon(694, GY - 39, '#3f86c9', 2), 'Lose')}
-    ${booth(704, 40, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
-    ${vendor}${guest}
-    ${garland(x0 + 44, GY - 52, 652, GY - 74, 5)}${garland(652, GY - 74, 744, GY - 33, 7)}
+    ${wheel(752, GY - 44, 32)}
+    ${booth(794, 34, '#7a4a1f', '#f2c14e', mugs, 'Bier')}
+    ${person(819, GY - 12, 'd', 1, 1.1, true)}${keg}
+    ${person(786, GY - 2, 'b', 1, 1.4, true)}${person(776, GY - 2, 'f', 3, 0.8, true)}
+    ${garland(588, GY - 36, 655, GY - 54, 5)}${garland(703, GY - 54, 752, GY - 78, 5)}${garland(752, GY - 78, 811, GY - 36, 7)}
   </g>`;
 }
 
-// Tesla (rot) auf der vorderen Rakete: steht auf einer kleinen Plattform an der Nase und ist mit zwei Seilen an der Rakete festgebunden
+// Cybertruck-artiger Pickup (Edelstahl-Look, kantig, ohne Logo) seitlich an der vorderen Rakete festgeschnallt:
+// steht hochkant (Nase nach oben, Räder zur Rakete) und ist mit zwei Seilen an der Rakete festgebunden
 function tesla(cx) {
-  const py = GY - 103; // Plattform direkt unter der Nasenspitze (bleibt im sichtbaren Bildausschnitt)
+  const y0 = GY - 52; // Mitte des Pickups an der Rakete
   return `<g class="tesla">
-    <path class="rope" d="M${cx - 11} ${py + 1} Q${cx - 15} ${GY - 93} ${cx - 10} ${GY - 84}"/><path class="rope" d="M${cx + 11} ${py + 1} Q${cx + 15} ${GY - 93} ${cx + 10} ${GY - 84}"/>
-    <rect x="${cx - 12}" y="${py}" width="24" height="2.4" rx="1" fill="#6b7384"/>
-    <g transform="translate(${cx} ${py}) scale(.78)"><g class="tesla-car">
-      <path d="M-14 -2 Q-14.6 -5.4 -10.6 -6.2 L-4.6 -7.4 Q-1 -11.6 4.4 -11.6 L8.4 -7.6 L12.6 -6.6 Q15.2 -5.8 15 -2Z" fill="#c8202f"/>
-      <path d="M-2.4 -7.6 Q0.4 -10.2 4.2 -10.2 L7 -7.8Z" fill="#cfe8f5"/>
-      <path d="M-13 -4.6 H14.4" stroke="#8d1520" stroke-width=".6"/>
-      <circle cx="-8" cy="-1.4" r="3.1" fill="#1b1b1f"/><circle cx="-8" cy="-1.4" r="1.2" fill="#aeb6c4"/>
-      <circle cx="8.4" cy="-1.4" r="3.1" fill="#1b1b1f"/><circle cx="8.4" cy="-1.4" r="1.2" fill="#aeb6c4"/>
-      <circle cx="14.6" cy="-4.4" r="1" fill="#fff7c2"/>
-      <text class="tesla-t" x="-1.5" y="-3.2" text-anchor="middle">T</text>
-    </g></g></g>`;
+    <g transform="matrix(0 -1.45 -1.45 0 ${cx + 12.4} ${y0})"><g class="tesla-car">
+      <path d="M-15 -3 V-9 H-8 L-6.5 -11.4 H-1.5 L15 -5.8 V-3Z" fill="#c4cad4"/>
+      <path d="M-15 -3 V-5 H15 V-3Z" fill="#8f97a5"/>
+      <path d="M11.4 -6.2 L-0.6 -10.4 H-5.6 V-6.6Z" fill="#17212d"/>
+      <path d="M-5.6 -6.6 V-10.4" stroke="#8f97a5" stroke-width=".5"/>
+      <path d="M15 -5.8 V-3.6" stroke="#fff7c2" stroke-width="1.4"/><path d="M-15 -8 V-5.4" stroke="#e0463a" stroke-width="1.2"/>
+      <path d="M-11.6 -3 a3.6 3.6 0 0 1 7.2 0Z M5.2 -3 a3.6 3.6 0 0 1 7.2 0Z" fill="#2a303a"/>
+      <circle cx="-8" cy="-1.6" r="3.1" fill="#16181d"/><circle cx="-8" cy="-1.6" r="1.2" fill="#aeb6c4"/>
+      <circle cx="8.8" cy="-1.6" r="3.1" fill="#16181d"/><circle cx="8.8" cy="-1.6" r="1.2" fill="#aeb6c4"/>
+    </g></g>
+    <path class="rope" d="M${cx - 10.5} ${y0 - 14} Q${cx + 9} ${y0 - 18} ${cx + 29} ${y0 - 14}"/>
+    <path class="rope" d="M${cx - 10.5} ${y0 + 14} Q${cx + 9} ${y0 + 18} ${cx + 29} ${y0 + 14}"/>
+  </g>`;
+}
+
+// Felsiger Gipfel mit Schneefeldern, zwei Spitzen (wie der Jubiläumsgrat der Zugspitze) und kleinem goldenem Gipfelkreuz
+function summit() {
+  const cx = 196; // Weltkoordinate des Hauptgipfels
+  return `<g class="summit">
+    <path class="mtn" d="M${cx - 92} 126 L${cx - 62} 88 L${cx - 50} 94 L${cx - 30} 62 L${cx - 18} 70 L${cx} 36 L${cx + 10} 50 L${cx + 24} 44 L${cx + 54} 90 L${cx + 66} 98 L${cx + 94} 126Z"/>
+    <path d="M${cx} 36 L${cx + 10} 50 L${cx + 24} 44 L${cx + 54} 90 L${cx + 66} 98 L${cx + 94} 126 L${cx + 20} 126 L${cx + 8} 84 L${cx - 2} 66Z" fill="#1c2340" opacity=".2"/>
+    <path d="M${cx} 36 L${cx - 10} 53 L${cx - 3} 51 L${cx + 2} 59 L${cx + 7} 50 L${cx + 10} 50Z" fill="#f4f7fb"/>
+    <path d="M${cx + 24} 44 L${cx + 16} 58 L${cx + 22} 56 L${cx + 27} 63 L${cx + 31} 54 L${cx + 36} 58Z" fill="#f4f7fb"/>
+    <path d="M${cx - 30} 62 L${cx - 38} 76 L${cx - 32} 73 L${cx - 27} 79 L${cx - 22} 70 L${cx - 18} 70Z" fill="#f4f7fb" opacity=".9"/>
+    <path d="M${cx - 8} 70 L${cx - 14} 92 M${cx + 12} 74 L${cx + 20} 100" stroke="#f4f7fb" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+    <circle class="summit-glow" cx="${cx}" cy="29.5" r="4.6" fill="#ffd34d"/>
+    <g class="summit-cross"><rect x="${cx - 0.8}" y="24" width="1.6" height="12.6" fill="#f2b705"/><rect x="${cx - 3.6}" y="27.2" width="7.2" height="1.6" fill="#f2b705"/></g>
+  </g>`;
 }
 
 // ---------------------------------------------------------------- Szene
@@ -331,17 +364,17 @@ export function sceneSVG() {
 
   const back = `
     <rect class="g-forest" x="-60" y="${GY - 4}" width="400" height="40"/>
-    <rect class="g-city" x="330" y="${GY - 4}" width="440" height="40"/>
-    <rect class="g-space" x="770" y="${GY - 4}" width="290" height="40"/>
-    <rect class="g-greek" x="1050" y="${GY - 4}" width="700" height="40"/>
+    <rect class="g-city" x="330" y="${GY - 4}" width="540" height="40"/>
+    <rect class="g-space" x="870" y="${GY - 4}" width="290" height="40"/>
+    <rect class="g-greek" x="1150" y="${GY - 4}" width="700" height="40"/>
 
     ${forest.map(([x, s, t], i) => (t === 'p' ? pine : oak)(x, s, (i * 0.7) % 5)).join('')}
 
     ${city.map(([x, w, h, v], i) => building(x, w, h, v, 17 + i * 31)).join('')}
     ${university(430)}
-    ${lamp(334)}${lamp(550)}${libori()}${lamp(752)}
+    ${lamp(334)}${lamp(542)}${libori()}${lamp(846)}
 
-    <g transform="translate(150 0)">
+    <g transform="translate(250 0)">
     ${hangar(598)}
     ${gantry(722, 18)}${rocket(766)}${tesla(766)}
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
@@ -351,8 +384,8 @@ export function sceneSVG() {
     ${cypress(922, 1, 0.4)}${olive(1290, 1.05, 2)}
     </g>
 
-    <rect class="path" x="-60" y="${GY + 1}" width="1760" height="8" rx="4"/>
-    <path class="path-dash" d="M-60 ${GY + 5} H1700"/>`;
+    <rect class="path" x="-60" y="${GY + 1}" width="1860" height="8" rx="4"/>
+    <path class="path-dash" d="M-60 ${GY + 5} H1800"/>`;
 
   const front = [16, 130, 210, 300].map(tuft).join('');
 
@@ -420,7 +453,7 @@ export function sceneSVG() {
     <g class="sunset"><circle class="sun-glow" cx="306" cy="32" r="34" fill="url(#jg-sun)"/><circle class="sun" cx="306" cy="32" r="12"/></g>
     <g class="clouds">${cloud(30, 1, 70, 10)}${cloud(52, 0.75, 90, 55)}${cloud(22, 0.6, 110, 80)}</g>
     <g class="fx-fire"></g>
-    <g class="j-far2"><path class="mtn" d="${mountains()}"/></g>
+    <g class="j-far2"><path class="mtn" d="${mountains()}"/>${summit()}</g>
     ${launchRocket()}
     <g class="j-far">
       <path class="hill-2" d="M-20 110 C40 82 110 90 180 102 S300 78 380 96 S520 84 600 98 S720 80 800 94 V160 H-20Z"/>
