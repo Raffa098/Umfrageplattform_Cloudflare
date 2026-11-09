@@ -17,12 +17,26 @@
 /* Sänger */
 .xs-sing { transform-box: view-box; transform-origin: 0 0; animation: xsSway 1.9s ease-in-out infinite alternate; }
 @keyframes xsSway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-.xs-hair { fill: #d9552b; } .xs-beard { fill: #c64b26; }
+.xs-hair { fill: #d9552b; } .xs-hair2 { fill: #ea7a3c; } .xs-beard { fill: #c64b26; }
 .xs-mouth { transform-box: fill-box; transform-origin: center; animation: xsSing .42s ease-in-out infinite alternate; }
 @keyframes xsSing { from { transform: scaleY(.35); } to { transform: scaleY(1.08); } }
-.xs-arm-r { transform-box: view-box; transform-origin: 14px -86px; animation: xsMic 1.1s ease-in-out infinite alternate; }
-@keyframes xsMic { from { transform: rotate(-4deg); } to { transform: rotate(5deg); } }
+.xs-arm-r { }
 .xs-arm-l { transform-box: view-box; transform-origin: -20px -86px; animation: xsArmL 1.9s ease-in-out infinite alternate; }
 @keyframes xsArmL { from { transform: rotate(5deg); } to { transform: rotate(-9deg); } }
 .xs-note { transform-box: fill-box; transform-origin: center; opacity: 0; animation: xsNote 3.2s ease-out infinite; }
 @keyframes xsNote { 0% { opacity: 0; transform: translate(0, 12px) scale(.6) rotate(-10deg); } 18% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -26px) scale(1.15) rotate(12deg); } }
+
+/* Mikrofonständer */
+.xs-stand { fill: none; stroke: #aab3c2; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.xs-mic { fill: #2a2e38; } .xs-micg { fill: #b9c2d0; stroke: #2a2e38; stroke-width: .8; }
+
+/* Band im Hintergrund */
+.xs-nod { transform-box: fill-box; transform-origin: 50% 100%; animation: xsNod .62s ease-in-out infinite alternate; }
+@keyframes xsNod { from { transform: translateY(0) rotate(-1.2deg); } to { transform: translateY(-1.4px) rotate(1.2deg); } }
+.xs-stick { transform-box: fill-box; transform-origin: 50% 0; animation: xsStick .3s ease-in-out infinite alternate; }
+.xs-stick-b { animation-delay: -.15s; animation-direction: alternate-reverse; }
+@keyframes xsStick { from { transform: rotate(-16deg); } to { transform: rotate(18deg); } }
+.xs-cymbal { transform-box: fill-box; transform-origin: 50% 100%; animation: xsCym .3s ease-in-out infinite alternate; }
+@keyframes xsCym { from { transform: rotate(-1.6deg); } to { transform: rotate(1.8deg); } }
+.xs-strum { transform-box: fill-box; transform-origin: 0 0; animation: xsStrum .38s ease-in-out infinite alternate; }
+@keyframes xsStrum { from { transform: rotate(-9deg); } to { transform: rotate(11deg); } }

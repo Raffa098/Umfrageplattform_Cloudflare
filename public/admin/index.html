@@ -28,7 +28,13 @@
     <header class="admin-head">
       <div class="admin-title"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21v-7"/><path d="M12 14c0-4-6-4-6-10"/><path d="M12 14c0-4 6-4 6-10"/></svg></span>
         <div><b>Studienleitung</b><small id="studyState">…</small></div></div>
-      <button class="link" id="logoutBtn" type="button">Abmelden</button>
+      <div class="head-right">
+        <div class="site-switch" title="Teilnehmerseite online oder offline schalten">
+          <span class="site-chip" id="siteChip">…</span>
+          <button class="btn-sm" id="siteBtn" type="button">…</button>
+        </div>
+        <button class="link" id="logoutBtn" type="button">Abmelden</button>
+      </div>
     </header>
     <nav class="tabs" role="tablist">
       <button role="tab" data-tab="overview" aria-selected="true">Übersicht</button>
@@ -39,6 +45,7 @@
       <button role="tab" data-tab="preview">Testmodus</button>
       <button role="tab" data-tab="audit">Protokoll</button>
     </nav>
+    <div id="offlineBanner" class="banner warn" hidden><b>Die Teilnehmerseite ist OFFLINE.</b> Alle sehen die Offline-Meldung, auch wer gerade mitten in der Umfrage ist. Die Admin-Vorschau (Tab „Testmodus“) funktioniert weiterhin.</div>
     <div id="openTestBanner" class="banner warn" hidden><b>Testfreigabe ist EIN:</b> Teilnehmende können die Gruppe selbst wählen und mehrfach teilnehmen. Alle Teilnahmen zählen als Testdaten. Vor dem echten Start in den Einstellungen ausschalten.</div>
     <div id="frozenBanner" class="banner" hidden></div>
     <div class="banner info">Der Fragenkatalog ist ein <b>vorläufiger Testkatalog</b> und kein validiertes Instrument. Wissenschaftliche Regeln (Schwellen, Konsistenzregel, Ausschlusskriterien) vor der Erhebung festlegen.</div>
@@ -71,6 +78,12 @@
       <form id="setForm" class="grid-2">
         <div class="panel">
           <h2>Experiment</h2>
+          <label class="toggle"><input type="checkbox" name="site_online"><span></span><b>Teilnehmerseite online</b></label>
+          <div class="row">
+            <label class="field"><span>Offline-Meldung (DE)</span><textarea name="offline_de" rows="2" maxlength="500"></textarea></label>
+            <label class="field"><span>Offline message (EN)</span><textarea name="offline_en" rows="2" maxlength="500"></textarea></label>
+          </div>
+          <p class="hint"><b>Offline</b> = die Seite für Teilnehmende ist komplett gesperrt (auch mitten in der Umfrage; Fortschritt bleibt gespeichert und läuft nach „Online“ weiter). <b>Studie aktiv</b> aus = nur neue Teilnahmen werden gestoppt, wer schon dabei ist, kann beenden.</p>
           <label class="toggle"><input type="checkbox" name="study_active"><span></span>Studie aktiv (neue Teilnahmen möglich)</label>
           <label class="toggle"><input type="checkbox" name="test_mode"><span></span>Alle neuen öffentlichen Teilnahmen als Test markieren</label>
           <label class="toggle"><input type="checkbox" name="open_test"><span></span><b>Testfreigabe:</b>&nbsp;Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen</label>

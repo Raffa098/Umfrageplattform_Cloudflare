@@ -137,3 +137,6 @@
 .gar { fill: none; stroke: rgba(60, 50, 40, .55); stroke-width: .8; }
 .spark { fill: #ffd466; transform-box: fill-box; transform-origin: center; opacity: 0; animation: sparkup 3.8s ease-in infinite; }
 @keyframes sparkup { 0% { opacity: 0; transform: translateY(8px) scale(.4); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px) scale(1.15) rotate(90deg); } }
+
+/* Banner im Forum: Schriftzug UPB */
+.bn-t { fill: #fff; font: 800 6.4px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .04em; }

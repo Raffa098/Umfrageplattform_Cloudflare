@@ -82,6 +82,30 @@ $('#loginForm').addEventListener('submit', async (e) => {
 });
 $('#logoutBtn').addEventListener('click', () => logout());
 
+// Teilnehmerseite online/offline schalten (Offline braucht eine zweite Bestätigung, Online sofort)
+let offlineArmed = false;
+$('#siteBtn').addEventListener('click', async () => {
+  const btn = $('#siteBtn');
+  const goOffline = settings.site_online;
+  if (goOffline && !offlineArmed) {
+    offlineArmed = true;
+    btn.textContent = 'Wirklich offline? Erneut klicken';
+    setTimeout(() => { offlineArmed = false; if (settings) btn.textContent = settings.site_online ? 'Offline nehmen' : 'Online nehmen'; }, 4000);
+    return;
+  }
+  offlineArmed = false;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/settings', { method: 'PUT', body: { site_online: !goOffline } });
+    await loadSettings();
+    if (!$('#tab-settings').hidden) fillSettings();
+  } catch (err) {
+    btn.textContent = `Fehler: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 function start() {
   $('#login').hidden = true;
   $('#app').hidden = false;
@@ -165,6 +189,12 @@ $('#ovVersion').addEventListener('change', loadOverview);
 // ------------------------------------------------------------ Einstellungen
 function updateHeader() {
   $('#studyState').textContent = `${settings.study_active ? 'Aktiv' : 'Pausiert'}${settings.test_mode ? ' · Testmodus' : ''} · ${settings.experiment_version}`;
+  const online = settings.site_online;
+  $('#offlineBanner').hidden = online;
+  const chip = $('#siteChip');
+  chip.textContent = online ? 'Seite ONLINE' : 'Seite OFFLINE';
+  chip.className = `site-chip ${online ? 'on' : 'off'}`;
+  $('#siteBtn').textContent = online ? 'Offline nehmen' : 'Online nehmen';
   const ot = $('#openTestBanner');
   ot.hidden = !settings.open_test;
   const b = $('#frozenBanner');
@@ -186,6 +216,9 @@ function fillSettings() {
   const f = $('#setForm');
   const s = settings;
   f.study_active.checked = s.study_active;
+  f.site_online.checked = s.site_online;
+  f.offline_de.value = s.offline_text.de;
+  f.offline_en.value = s.offline_text.en;
   f.test_mode.checked = s.test_mode;
   f.open_test.checked = s.open_test;
   f.experiment_version.value = s.experiment_version;
@@ -224,6 +257,8 @@ $('#setForm').addEventListener('submit', async (e) => {
   const mot = (l) => [0, 1, 2].map((i) => ({ title: f[`mt_${l}_${i}`].value, text: f[`mx_${l}_${i}`].value }));
   const body = {
     study_active: f.study_active.checked,
+    site_online: f.site_online.checked,
+    offline_text: { de: f.offline_de.value, en: f.offline_en.value },
     test_mode: f.test_mode.checked,
     open_test: f.open_test.checked,
     experiment_version: f.experiment_version.value.trim(),

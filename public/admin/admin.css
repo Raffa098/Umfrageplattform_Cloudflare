@@ -7,6 +7,11 @@ body.admin { background: var(--bg); }
 .panel h2 { margin-top: 0; }
 .admin-shell { max-width: 1180px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px 48px; }
 .admin-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.head-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; }
+.site-switch { display: inline-flex; align-items: center; gap: 8px; }
+.site-chip { padding: 5px 12px; border-radius: 999px; font-size: .76rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--surface-3); color: var(--muted); }
+.site-chip.on { background: var(--warm-soft); color: var(--warm-text); }
+.site-chip.off { background: rgba(194, 65, 45, .14); color: var(--danger); }
 .admin-title { display: flex; align-items: center; gap: 12px; }
 .admin-title b { display: block; font-size: 1.05rem; }
 .admin-title small { color: var(--muted); font-size: .84rem; }

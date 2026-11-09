@@ -144,9 +144,8 @@ const bubble = (x, y, d) => `<g transform="translate(${x} ${y})"><rect class="sb
 const brazier = (x) => `<g transform="translate(${x} ${GY - 4})"><circle class="brz-glow" cx="0" cy="-16" r="11"/><rect class="pole" x="-1" y="-12" width="2" height="12"/>
   <path class="brz" d="M-4.4 -12 H4.4 L2.9 -8 H-2.9Z"/><path class="flame-b" d="M0 -23 Q-4.4 -17 -2.7 -12.4 H2.7 Q4.4 -17 0 -23Z"/></g>`;
 
-const banner = (x) => `<g transform="translate(${x} ${GY - 5})"><rect class="pole" x="-.8" y="-46" width="1.6" height="46"/><g class="flag-sway"><path class="bn" d="M.8 -45 h15 v23 l-7.5 -5.5 l-7.5 5.5Z"/>
-  <circle class="owl-e" cx="5.6" cy="-36" r="2.5"/><circle class="owl-e" cx="11" cy="-36" r="2.5"/><circle class="owl-p" cx="5.6" cy="-36" r="1"/><circle class="owl-p" cx="11" cy="-36" r="1"/>
-  <path class="owl-b" d="M8.3 -34.2 l-1.3 2.2 h2.6Z"/><path class="owl-w" d="M3 -31.5 q-1 4.5 2.6 6 M13.6 -31.5 q1 4.5 -2.6 6"/></g></g>`;
+const banner = (x) => `<g transform="translate(${x} ${GY - 5}) scale(1.2)"><rect class="pole" x="-.8" y="-46" width="1.6" height="46"/><g class="flag-sway"><path class="bn" d="M.8 -45 h15 v23 l-7.5 -5.5 l-7.5 5.5Z"/>
+  <text class="bn-t" x="8.3" y="-31.4" text-anchor="middle">UPB</text></g></g>`;
 
 const spark = (x, y, d) => `<g transform="translate(${x} ${y})"><path class="spark" d="M0 -2.4 L.7 -.7 L2.4 0 L.7 .7 L0 2.4 L-.7 .7 L-2.4 0 L-.7 -.7Z" style="animation-delay:-${d}s"/></g>`;
 

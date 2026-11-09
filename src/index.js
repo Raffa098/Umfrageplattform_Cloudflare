@@ -15,6 +15,11 @@ const EVENT_TYPES = new Set([
 const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey'];
 
 export const DEFAULT_SETTINGS = {
+  site_online: true, // Teilnehmerseite erreichbar (aus = Offline-Meldung für alle; Admin-Testmodus bleibt nutzbar)
+  offline_text: {
+    de: 'Diese Umfrage ist derzeit offline. Bitte versuche es später noch einmal.',
+    en: 'This survey is currently offline. Please try again later.',
+  },
   study_active: true,
   test_mode: false,
   open_test: false, // Testfreigabe: Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen (Daten = Testdaten)
@@ -128,6 +133,39 @@ async function extrasState(env, p, s) {
     sections[sec] = { total: its.length, done: its.every((e) => have.has(e.id)) };
   }
   return { items, sections, allDone: SECTIONS.every((sec) => sections[sec].done) };
+}
+
+// ---------------------------------------------------------------- Online/Offline der Teilnehmerseite
+
+const bearer = (request) => (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+
+// Offline: öffentliche API gesperrt – außer für Admin-Testsitzungen (is_test), damit die Vorschau weiter funktioniert
+async function requireOnline(request, env) {
+  const s = await getSettings(env);
+  if (s.site_online) return;
+  const id = bearer(request);
+  if (UUID_RE.test(id)) {
+    const row = await env.DB.prepare('SELECT is_test FROM participants WHERE id = ?').bind(id).first();
+    if (row?.is_test) return;
+  }
+  throw new HttpError(503, 'offline', { text: s.offline_text });
+}
+
+const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function offlinePage(s) {
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Offline</title>
+<style>
+:root{color-scheme:light dark;--bg:#eef3f7;--text:#0f2236;--muted:#56687a;--card:#fff;--bd:#d9e2ea}
+@media (prefers-color-scheme:dark){:root{--bg:#09131f;--text:#e6edf4;--muted:#9caebf;--card:#111e2d;--bd:#213347}}
+body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif}
+.c{max-width:420px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:24px;padding:36px 26px;box-shadow:0 10px 30px -12px rgba(0,0,0,.25)}
+.i{width:64px;height:64px;margin:0 auto 18px;border-radius:20px;background:#e3f1ea;display:grid;place-items:center}
+.i i{display:block;width:8px;height:24px;border-radius:4px;background:#4fae7b;box-shadow:16px 0 0 #4fae7b;transform:translateX(-8px)}
+h1{font-size:1.4rem;margin:0 0 10px}p{margin:0 0 10px;color:var(--muted)}p:last-child{margin:0}
+</style></head><body><main class="c"><div class="i" aria-hidden="true"><i></i></div>
+<h1>Umfrage offline · Survey offline</h1><p>${escHtml(s.offline_text.de)}</p><p>${escHtml(s.offline_text.en)}</p></main></body></html>`;
+  return new Response(html, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'retry-after': '3600', 'x-robots-tag': 'noindex' } });
 }
 
 // ---------------------------------------------------------------- Teilnehmende
@@ -712,6 +750,8 @@ async function adminPutSettings(request, env) {
   };
 
   if ('study_active' in b) next.study_active = !!b.study_active;
+  if ('site_online' in b) next.site_online = !!b.site_online;
+  if (isObj(b.offline_text)) langPair('offline_text', b.offline_text, 500);
   if ('test_mode' in b) next.test_mode = !!b.test_mode;
   if ('open_test' in b) next.open_test = !!b.open_test;
   if ('experiment_version' in b) {
@@ -832,6 +872,8 @@ async function route(request, env, url) {
   const p = url.pathname;
   const m = request.method;
 
+  if (['/api/config', '/api/session', '/api/answer', '/api/extras', '/api/finish', '/api/events'].includes(p)) await requireOnline(request, env);
+
   if (p === '/api/config' && m === 'GET') return getConfig(env, url);
   if (p === '/api/session' && m === 'POST') return createSession(request, env);
   if (p === '/api/session' && m === 'GET') return getSession(request, env);
@@ -872,7 +914,14 @@ async function route(request, env, url) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (!url.pathname.startsWith('/api/')) {
+      // Offline: Startseite durch Offline-Hinweis ersetzen (Admin-Vorschau mit ?ts=<Testsitzung> bleibt erreichbar)
+      if ((url.pathname === '/' || url.pathname === '/index.html') && !UUID_RE.test(url.searchParams.get('ts') || '')) {
+        const s = await getSettings(env).catch(() => null);
+        if (s && !s.site_online) return offlinePage(s);
+      }
+      return env.ASSETS.fetch(request);
+    }
     try {
       return await route(request, env, url);
     } catch (e) {

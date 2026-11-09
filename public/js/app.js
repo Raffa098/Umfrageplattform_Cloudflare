@@ -90,14 +90,24 @@ async function api(path, { method = 'GET', body, auth = true, retries = 2 } = {}
         const e = new Error(data.error || String(res.status));
         e.status = res.status;
         e.data = data;
+        if (data.error === 'offline') { e.offline = true; offlineScreen(data.text); }
         throw e;
       }
       return data;
     } catch (e) {
-      if ((e.status && e.status < 500) || i >= retries) throw e;
+      if ((e.status && e.status < 500) || e.offline || i >= retries) throw e;
       await sleep(700 * (i + 1));
     }
   }
+}
+
+// Seite wurde im Admin offline genommen: Hinweis statt Umfrage (auch mitten in der Teilnahme)
+let offlineShown = false;
+function offlineScreen(text) {
+  if (offlineShown) return;
+  offlineShown = true;
+  setTreatmentVisible(false);
+  return messageScreen(L.offlineTitle, (text && text[document.documentElement.lang]) || L.offlineText, 'pause');
 }
 
 // Ereignisprotokoll (Frage sichtbar, Pausen, Zwischenseiten …), gebündelt übertragen
@@ -223,7 +233,7 @@ function langScreen() {
 }
 
 async function loadConfig(lang, group = '') {
-  cfg = await api(`/api/config?lang=${lang}${group ? `&group=${group}` : ''}`, { auth: false });
+  cfg = await api(`/api/config?lang=${lang}${group ? `&group=${group}` : ''}`, { auth: !!S.pid });
   applyDefaultTheme(cfg.default_theme);
   // Testfreigabe: Neustart jederzeit möglich (Teilnahme wiederholen)
   const rb = document.getElementById('restartBtn');
@@ -249,7 +259,8 @@ document.getElementById('restartBtn').addEventListener('click', restart);
 async function consentScreen() {
   try {
     await loadConfig(S.lang);
-  } catch {
+  } catch (e) {
+    if (e.offline) return;
     return errorScreen(consentScreen);
   }
   if (!cfg.active) return messageScreen(L.pausedTitle, L.pausedText, 'pause');
@@ -316,6 +327,7 @@ async function consentScreen() {
       renderTreatment();
       advance(0);
     } catch (e) {
+      if (e.offline) return;
       btn.classList.remove('busy');
       btn.disabled = false;
       if (e.status === 503) return messageScreen(L.pausedTitle, L.pausedText, 'pause');
@@ -427,6 +439,7 @@ async function questionScreen(item) {
       saveState();
       advance(S.answered, { walk: true });
     } catch (e) {
+      if (e.offline) return;
       if (e.status === 409 && e.data?.expected) {
         S.answered = e.data.expected - 1;
         saveState();
@@ -564,6 +577,7 @@ async function extrasScreen(section) {
       await leave();
       afterMain();
     } catch (e) {
+      if (e.offline) return;
       btn.classList.remove('busy');
       if (e.status === 401 || e.status === 404) { S = {}; saveState(); return langScreen(); }
       err.textContent = e.data?.error === 'invalid_value' || e.data?.error === 'required_missing' ? L.saveError : L.saveError;
@@ -582,6 +596,7 @@ async function completeSurvey() {
     } catch (e) {
       if (e.status === 409 && e.data?.error === 'code_taken') { S.code = newCode(); saveState(); continue; }
       if (e.status === 409 && e.data?.error === 'extras_missing') { S.extrasDone = (S.extrasDone || []).filter((x) => x !== e.data.section); saveState(); return extrasScreen(e.data.section); }
+      if (e.offline) return;
       if (e.status === 401 || e.status === 404) { S = {}; saveState(); return langScreen(); }
       return errorScreen(completeSurvey);
     }
@@ -699,6 +714,7 @@ async function boot() {
         S = {};
         saveState();
       } else {
+        if (e.offline) return;
         return errorScreen(boot);
       }
     }
