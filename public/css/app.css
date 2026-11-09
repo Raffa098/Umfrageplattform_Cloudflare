@@ -494,3 +494,6 @@ h1, h2, p { margin: 0; }
 .opts.multi .opt-box::after { inset: auto; border-radius: 0; background: transparent; width: 6px; height: 11px; left: 6px; top: 2px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) scale(0); }
 .opts.multi .opt[aria-checked="true"] .opt-box { background: var(--brand); }
 .opts.multi .opt[aria-checked="true"] .opt-box::after { transform: rotate(45deg) scale(1); }
+
+.more-list { margin: 8px 0 0; padding-left: 1.2em; }
+.more-list li { margin: 5px 0; }

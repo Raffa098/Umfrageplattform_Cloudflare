@@ -278,7 +278,7 @@ async function consentScreen() {
       <ul class="facts" style="--i:3">
         ${L.facts.map(([ic, t, d]) => `<li><span class="fact-ic">${ICONS[ic]}</span><span><b>${t}</b><span>${d}</span></span></li>`).join('')}
       </ul>
-      <details class="more" style="--i:4"><summary>${L.moreInfo}</summary><p>${L.moreText}</p>
+      <details class="more" style="--i:4"><summary>${L.moreInfo}</summary><ul class="more-list">${L.moreList.map((t) => `<li>${t}</li>`).join('')}</ul>
         ${cfg.privacy_extra ? `<p style="white-space:pre-line">${esc(cfg.privacy_extra)}</p>` : ''}
         ${cfg.contact ? `<p><b>${L.contact}:</b> ${esc(cfg.contact)}</p>` : ''}</details>
       ${cfg.open_test ? `
