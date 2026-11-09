@@ -265,6 +265,7 @@ export function createJourney(host, L, opts = {}) {
 
     // Welt: 0 Wald · 1 Stadt mit Universität · 2 Raketenstation · 3 antikes Forum
     el.dataset.world = String(levelOf(n));
+    el.classList.toggle('past-summit', n >= 3); // Gipfelkreuz ab Frage 4 ausblenden
     fill.style.width = `${(n / TOTAL) * 100}%`;
 
     const target = n * PPA;
