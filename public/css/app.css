@@ -362,6 +362,16 @@ h1, h2, p { margin: 0; }
 .prize summary { cursor: pointer; font-weight: 650; color: var(--text); }
 .done .closing { max-width: 36ch; white-space: pre-line; }
 .warn-small { font-size: .84rem; color: var(--muted); margin-top: 8px; }
+
+/* Motivationsseite: angenehm heller grüner Hintergrund (in Hell und Dunkel), Akzente bleiben orange */
+body { transition: background-color .55s ease, color .55s ease; }
+body.mot-bg {
+  --bg: #e3f4e8; --surface: #f4fbf6; --text: #14382a; --muted: #3f6a56; --faint: #6c917f; --border: #bfe3cc;
+  --blob1: rgba(110, 200, 150, .38); --blob2: rgba(196, 236, 168, .38); --blob3: rgba(100, 210, 190, .3);
+  --warm: #d4561f; --warm-2: #f0894a; --on-warm: #ffffff; --brand: #0d7a5f; --brand-soft: #d3efe0; --ring: rgba(13, 122, 95, .35);
+  background: var(--bg); color: var(--text);
+}
+body.mot-bg .btn-warm { box-shadow: 0 12px 26px -12px var(--warm); }
 .topbar .brand { white-space: nowrap; font-size: .9rem; }
 .topbar .logo { flex: none; }
 .test-badge { padding: 3px 8px; font-size: .64rem; }

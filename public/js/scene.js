@@ -123,28 +123,103 @@ const panel = (x) => `<g transform="translate(${x} ${GY})"><rect class="pole" x=
 const antenna = (x) => `<g transform="translate(${x} ${GY})"><rect class="pole" x="-1" y="-62" width="2" height="62"/>
   <path class="ant" d="M-7 -50 H7 M-5 -38 H5 M-3 -26 H3"/><circle class="blink tw-light" cx="0" cy="-64" r="2.2"/></g>`;
 
-// ---------------------------------------------------------------- Antikes griechisches Forum (Professor)
-function temple(cx) {
-  const cols = Array.from({ length: 6 }, (_, i) => cx - 76 + i * 30.4);
-  return `<g class="temple">
-    <rect class="mb-dark" x="${cx - 78}" y="80" width="156" height="44"/>
-    <rect class="mb-step" x="${cx - 100}" y="${GY - 3}" width="200" height="5" rx="1"/><rect class="mb-step" x="${cx - 94}" y="${GY - 8}" width="188" height="5" rx="1"/><rect class="mb-step" x="${cx - 88}" y="${GY - 13}" width="176" height="5" rx="1"/>
-    ${cols.map((x) => `<rect class="mb-col" x="${x.toFixed(1)}" y="80" width="9" height="${GY - 13 - 80}" rx="1.2"/><rect class="mb-cap" x="${(x - 1.6).toFixed(1)}" y="77.5" width="12.2" height="3.6" rx="1"/><path class="mb-flute" d="M${(x + 3).toFixed(1)} 83 V${GY - 16} M${(x + 6).toFixed(1)} 83 V${GY - 16}"/>`).join('')}
-    <rect class="mb" x="${cx - 90}" y="71" width="180" height="7" rx="1"/>
-    <path class="mb-trig" d="M${cx - 80} 71 v7 M${cx - 62} 71 v7 M${cx - 44} 71 v7 M${cx - 26} 71 v7 M${cx - 8} 71 v7 M${cx + 10} 71 v7 M${cx + 28} 71 v7 M${cx + 46} 71 v7 M${cx + 64} 71 v7 M${cx + 80} 71 v7"/>
-    <path class="mb" d="M${cx - 96} 71 L${cx} 42 L${cx + 96} 71Z"/><path class="mb-dark" d="M${cx - 78} 69 L${cx} 47 L${cx + 78} 69Z"/>
-    <circle class="gold" cx="${cx}" cy="40.5" r="2.6"/></g>`;
+// ---------------------------------------------------------------- Antikes Forum (Professor): aktives Zentrum des Wissensaustauschs
+// Theater mit geschwungenen Sitzstufen (wie das Odeon des Herodes Atticus), aber gepflegt und lebendig:
+// Publikum, Redner auf der Bühne, Gesprächsgruppen mit Sprechblasen, Fassade mit beleuchteten Bögen,
+// Feuerschalen, Wimpelgirlande, Eulen-Banner (Weisheit) und aufsteigende Ideen-Funken.
+const rand = (seed) => { let r = seed; return () => ((r = (r * 9301 + 49297) % 233280) / 233280); };
+const quad = (y0, yc, y1, t) => (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * yc + t * t * y1;
+const CLO = ['a', 'b', 'c', 'd', 'e', 'f'];
+
+function person(x, y, c, s, d, stand, animated = true) {
+  const body = stand
+    ? `<rect class="pp pp-${c}" x="-2.3" y="-8.6" width="4.6" height="8.6" rx="1.8"/><circle class="pk pk-${s}" cx="0" cy="-10.8" r="2.2"/>`
+    : `<rect class="pp pp-${c}" x="-2" y="-4.4" width="4" height="4.4" rx="1.6"/><circle class="pk pk-${s}" cx="0" cy="-6.3" r="1.9"/>`;
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><g${animated ? ' class="ppl"' : ''} style="animation-delay:-${d.toFixed(1)}s">${body}</g></g>`;
 }
 
-const column = (x, h, broken) => `<g transform="translate(${x} ${GY})">
-  <rect class="mb-col" x="-4.5" y="${-h}" width="9" height="${h}" rx="1"/><rect class="mb-cap" x="-6.5" y="${-h - (broken ? 0 : 3)}" width="13" height="${broken ? 2.5 : 3.6}" rx="1"/>
-  ${broken ? `<path class="mb-chip" d="M-4.5 ${-h} l3 -5 l2.5 3 l2.5 -4 l2.5 6Z"/><rect class="mb-col" x="9" y="-6" width="12" height="6" rx="1.5"/>` : ''}
-  <rect class="mb-cap" x="-6.5" y="-2.5" width="13" height="2.5" rx="1"/></g>`;
+const bubble = (x, y, d) => `<g transform="translate(${x} ${y})"><rect class="sb-b" x="-8" y="-5" width="16" height="9" rx="3"/><path class="sb-b" d="M-3 4 L-5.4 8 L1 4Z"/>
+  <circle class="sb-d" cx="-3.6" cy="-0.5" r="1" style="animation-delay:${d}s"/><circle class="sb-d" cx="0" cy="-0.5" r="1" style="animation-delay:${(d + 0.25).toFixed(2)}s"/><circle class="sb-d" cx="3.6" cy="-0.5" r="1" style="animation-delay:${(d + 0.5).toFixed(2)}s"/></g>`;
 
-const statue = (x) => `<g transform="translate(${x} ${GY})"><rect class="mb-step" x="-9" y="-9" width="18" height="9" rx="1"/>
-  <path class="statue" d="M-4.5 -9 Q-5 -22 -1.5 -25 L1.5 -25 Q5 -22 4.5 -9Z"/><circle class="statue" cx="0" cy="-29" r="3.8"/><path class="statue" d="M3 -22 L9 -27" stroke-width="2.4" stroke-linecap="round"/></g>`;
+const brazier = (x) => `<g transform="translate(${x} ${GY - 4})"><circle class="brz-glow" cx="0" cy="-16" r="11"/><rect class="pole" x="-1" y="-12" width="2" height="12"/>
+  <path class="brz" d="M-4.4 -12 H4.4 L2.9 -8 H-2.9Z"/><path class="flame-b" d="M0 -23 Q-4.4 -17 -2.7 -12.4 H2.7 Q4.4 -17 0 -23Z"/></g>`;
 
-const amphora = (x) => `<g transform="translate(${x} ${GY})"><path class="amph" d="M-3.5 -14 Q-6.5 -8 -3.5 0 H3.5 Q6.5 -8 3.5 -14Z"/><rect class="amph" x="-2" y="-18" width="4" height="4.5" rx="1"/><path class="amph-h" d="M-3.4 -15.5 q-4.5 0 -3 5 M3.4 -15.5 q4.5 0 3 5"/></g>`;
+const banner = (x) => `<g transform="translate(${x} ${GY - 5})"><rect class="pole" x="-.8" y="-46" width="1.6" height="46"/><g class="flag-sway"><path class="bn" d="M.8 -45 h15 v23 l-7.5 -5.5 l-7.5 5.5Z"/>
+  <circle class="owl-e" cx="5.6" cy="-36" r="2.5"/><circle class="owl-e" cx="11" cy="-36" r="2.5"/><circle class="owl-p" cx="5.6" cy="-36" r="1"/><circle class="owl-p" cx="11" cy="-36" r="1"/>
+  <path class="owl-b" d="M8.3 -34.2 l-1.3 2.2 h2.6Z"/><path class="owl-w" d="M3 -31.5 q-1 4.5 2.6 6 M13.6 -31.5 q1 4.5 -2.6 6"/></g></g>`;
+
+const spark = (x, y, d) => `<g transform="translate(${x} ${y})"><path class="spark" d="M0 -2.4 L.7 -.7 L2.4 0 L.7 .7 L0 2.4 L-.7 .7 L-2.4 0 L-.7 -.7Z" style="animation-delay:-${d}s"/></g>`;
+
+function garland(x1, y1, x2, y2, sag) {
+  const xc = (x1 + x2) / 2, yc = (y1 + y2) / 2 + sag * 2;
+  const cols = ['#e0463a', '#f2c14e', '#3f86c9', '#ffffff', '#5da35c'];
+  let flags = '';
+  for (let i = 1; i <= 12; i++) {
+    const t = i / 13;
+    const x = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * xc + t * t * x2;
+    const y = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * yc + t * t * y2;
+    flags += `<path d="M${(x - 2.7).toFixed(1)} ${y.toFixed(1)} h5.4 l-2.7 5.6Z" fill="${cols[i % 5]}"/>`;
+  }
+  return `<path class="gar" d="M${x1} ${y1} Q${xc} ${yc} ${x2} ${y2}"/>${flags}`;
+}
+
+// Fassade aus hellem Kalkstein mit drei Bogenreihen; einige Bögen sind warm beleuchtet
+function facade(x0) {
+  const w = 58, h = 86;
+  let arches = '', lit = '';
+  for (let s = 0; s < 3; s++) {
+    for (let k = 0; k < 3; k++) {
+      const x = x0 + 5.5 + k * 17.5, y = GY - h + 7 + s * 27;
+      arches += `<path class="arch" d="M${x} ${y + 21} V${y + 8} a5.5 5.5 0 0 1 11 0 V${y + 21}Z"/>`;
+      if ((s + k) % 2 === 0) lit += `<path class="arch-lit" d="M${x + 1.6} ${y + 21} V${y + 8.5} a3.9 3.9 0 0 1 7.8 0 V${y + 21}Z" style="animation-delay:-${(s * 3 + k) * 0.7}s"/>`;
+    }
+  }
+  return `<g><rect class="lime" x="${x0}" y="${GY - h}" width="${w}" height="${h}" rx="1.5"/>
+    <path class="lime-line" d="M${x0} ${GY - h + 29} H${x0 + w} M${x0} ${GY - h + 56} H${x0 + w}"/>${arches}${lit}
+    <rect class="lime-cap" x="${x0 - 2.5}" y="${GY - h - 3.5}" width="${w + 5}" height="4.5" rx="1.2"/></g>`;
+}
+
+function forum(cx) {
+  const ROWS = 7;
+  const geo = (i) => ({ h: 52 + i * 10, yEnd: GY - 24 - i * 8.2, yMid: GY - 15 - i * 6.6 });
+  const top = geo(ROWS - 1), bot = geo(0);
+  const rnd = rand(11);
+  let seats = '', crowd = '';
+  for (let i = 0; i < ROWS; i++) {
+    const g = geo(i), yc = 2 * g.yMid - g.yEnd;
+    const d = `M${cx - g.h} ${g.yEnd} Q${cx} ${yc} ${cx + g.h} ${g.yEnd}`;
+    seats += `<path class="seat-sh" d="${d}" transform="translate(0 3.4)"/><path class="seat" d="${d}"/>`;
+    if (i === 0) continue; // vorderste Reihe bleibt frei
+    const n = 5 + i * 2;
+    for (let k = 0; k < n; k++) {
+      if (rnd() < 0.36) continue;
+      const t = (k + 0.5) / n;
+      const x = cx - g.h + 2 * g.h * t;
+      const y = quad(g.yEnd, yc, g.yEnd, t) - 1.3;
+      crowd += person(x, y, CLO[Math.floor(rnd() * 6)], 1 + Math.floor(rnd() * 3), rnd() * 3, false, k % 3 === 0);
+    }
+  }
+  const bowl = `<path class="bowl" d="M${cx - top.h} ${top.yEnd} Q${cx} ${2 * top.yMid - top.yEnd} ${cx + top.h} ${top.yEnd} L${cx + bot.h + 5} ${GY - 6} L${cx - bot.h - 5} ${GY - 6}Z"/>`;
+  const ox = cx - 6;
+  const orator = `<g transform="translate(${ox} ${GY - 4}) scale(1.25)">
+    <rect class="pp pp-w" x="-2.7" y="-9.6" width="5.4" height="9.6" rx="2"/><rect class="toga-band" x="-2.7" y="-6.4" width="5.4" height="1.3"/>
+    <circle class="pk pk-1" cx="0" cy="-12" r="2.5"/><path class="laurel" d="M-2.7 -13.6 q2.7 -2.2 5.4 0"/>
+    <rect class="scroll-p" x="-5" y="-7" width="2.5" height="3.4" rx="1"/>
+    <g class="orator-arm"><rect class="pk pk-1" x="1.5" y="-9.2" width="1.6" height="5.8" rx=".8"/></g></g>`;
+  const lectern = `<rect class="mb" x="${cx + 5}" y="${GY - 15}" width="9" height="11" rx="1"/><rect class="mb-cap" x="${cx + 3.5}" y="${GY - 16.6}" width="12" height="2.6" rx="1"/>`;
+  const sparks = [[-58, 70, 0], [-30, 56, 1.2], [-4, 64, 2.1], [24, 52, 0.7], [52, 66, 1.7], [76, 58, 2.6]].map(([dx, y, d]) => spark(cx + dx, y, d)).join('');
+  const groupA = [[-12, 'b', 1], [-4, 'e', 2], [4, 'c', 3]].map(([dx, c, s], i) => person(944 + dx, GY - 3, c, s, i * 0.9, true)).join('') + bubble(944, GY - 25, 0);
+  const groupB = [[0, 'd', 2], [8, 'f', 1]].map(([dx, c, s], i) => person(cx - 38 + dx, GY - 3, c, s, i * 1.1 + 0.4, true)).join('') + bubble(cx - 34, GY - 26, 0.6);
+
+  return `<g class="forum">
+    ${facade(cx + 104)}
+    ${bowl}${seats}${crowd}
+    ${garland(cx - top.h, top.yEnd - 5, cx + 106, GY - 87, 12)}
+    <ellipse class="stage" cx="${cx}" cy="${GY - 4}" rx="${bot.h + 10}" ry="7"/><ellipse class="stage-rim" cx="${cx}" cy="${GY - 4}" rx="${bot.h + 10}" ry="7"/>
+    ${brazier(cx - 66)}${brazier(cx + 66)}${banner(cx - 78)}
+    ${lectern}${orator}${groupA}${groupB}${sparks}
+  </g>`;
+}
 
 // Rakete im Hintergrund (Effekt am Master-Meilenstein): startet hinter den Hügeln, Rauchspur + Flamme
 function launchRocket() {
@@ -184,9 +259,8 @@ export function sceneSVG() {
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
-    ${olive(938, 0.9, 1)}${column(956, 34, false)}${column(978, 20, true)}
-    ${temple(1096)}
-    ${cypress(1216, 1, 0.4)}${statue(1240)}${amphora(1008)}${olive(1272, 1.05, 2)}${cypress(1298, 1.15, 1.6)}
+    ${forum(1100)}
+    ${cypress(922, 1, 0.4)}${olive(1290, 1.05, 2)}
 
     <rect class="path" x="-60" y="${GY + 1}" width="1520" height="8" rx="4"/>
     <path class="path-dash" d="M-60 ${GY + 5} H1460"/>`;

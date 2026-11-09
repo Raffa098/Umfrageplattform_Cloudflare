@@ -104,4 +104,36 @@
 
 /* Meilensteine: Start · Punkte · Ziel */
 .lad-node { white-space: nowrap; }
-.lad-node:first-of-type small { margin-left: 0; }
+
+/* ============================================================ Forum: aktives Zentrum des Wissensaustauschs */
+.journey { --seat: #f1eada; --seat-sh: #cdc2a8; --bowl: #ddd3ba; --stage: #cf9068; --stage-rim: #ead9bc; --lime: #e2d8bf; --lime-cap: #f1eada; --arch: #4d4238; --arch-lit: #ffd596; --brz: #6b5a46; --flame: #ffb347; --bn: #2f6fb5; }
+:root[data-theme="dark"] .journey { --seat: #a29bb0; --seat-sh: #4a4558; --bowl: #625c72; --stage: #7d5658; --stage-rim: #a58d86; --lime: #8d8699; --lime-cap: #a79fb5; --arch: #2b2733; --arch-lit: #ffc978; --bn: #3d6fb0; }
+.seat { fill: none; stroke: var(--seat); stroke-width: 5.4; stroke-linecap: round; }
+.seat-sh { fill: none; stroke: var(--seat-sh); stroke-width: 5.4; stroke-linecap: round; }
+.bowl { fill: var(--bowl); }
+.stage { fill: var(--stage); } .stage-rim { fill: none; stroke: var(--stage-rim); stroke-width: 1.4; }
+.lime { fill: var(--lime); } .lime-cap { fill: var(--lime-cap); } .lime-line { stroke: rgba(0, 0, 0, .12); stroke-width: 1; fill: none; }
+.arch { fill: var(--arch); }
+.arch-lit { fill: var(--arch-lit); opacity: .85; animation: archlit 3.4s ease-in-out infinite alternate; }
+@keyframes archlit { from { opacity: .55; } to { opacity: 1; } }
+.pp-a { fill: #f4f0e6; } .pp-b { fill: #4c86c8; } .pp-c { fill: #cc5a41; } .pp-d { fill: #5da35c; } .pp-e { fill: #e3b34d; } .pp-f { fill: #8f67bb; } .pp-w { fill: #f8f4ea; }
+.pk-1 { fill: #f0b68c; } .pk-2 { fill: #d9a07a; } .pk-3 { fill: #b7794f; }
+.toga-band { fill: #c8453a; } .laurel { stroke: #5da35c; stroke-width: 1.2; fill: none; } .scroll-p { fill: #efe2c0; stroke: #c9b583; stroke-width: .5; }
+.ppl { transform-box: fill-box; transform-origin: 50% 100%; animation: ppl 2.6s ease-in-out infinite alternate; }
+@keyframes ppl { from { transform: translateY(0); } to { transform: translateY(-1.1px) rotate(2.2deg); } }
+.orator-arm { transform-box: fill-box; transform-origin: 50% 0; animation: speak 1.5s ease-in-out infinite alternate; }
+@keyframes speak { from { transform: rotate(-28deg); } to { transform: rotate(-125deg); } }
+.sb-b { fill: #fff; stroke: rgba(0, 0, 0, .14); stroke-width: .6; }
+.sb-d { fill: #8a94a8; animation: sbd 1.3s ease-in-out infinite; }
+@keyframes sbd { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+.brz { fill: var(--brz); }
+.flame-b { fill: var(--flame); transform-box: fill-box; transform-origin: 50% 100%; animation: flick .16s ease-in-out infinite alternate; }
+@keyframes flick { from { transform: scale(.9, .84); } to { transform: scale(.88, 1.12); } }
+.brz-glow { fill: rgba(255, 190, 90, .22); animation: glowp 1.9s ease-in-out infinite alternate; }
+@keyframes glowp { from { opacity: .55; } to { opacity: 1; } }
+.bn { fill: var(--bn); } .owl-e { fill: #fff; } .owl-p { fill: #1f2d3d; } .owl-b { fill: #f2c14e; } .owl-w { stroke: #fff; stroke-width: 1.2; fill: none; stroke-linecap: round; }
+.flag-sway { transform-box: fill-box; transform-origin: 0 0; animation: flagsway 3s ease-in-out infinite alternate; }
+@keyframes flagsway { from { transform: skewY(-2deg); } to { transform: skewY(2.5deg); } }
+.gar { fill: none; stroke: rgba(60, 50, 40, .55); stroke-width: .8; }
+.spark { fill: #ffd466; transform-box: fill-box; transform-origin: center; opacity: 0; animation: sparkup 3.8s ease-in infinite; }
+@keyframes sparkup { 0% { opacity: 0; transform: translateY(8px) scale(.4); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px) scale(1.15) rotate(90deg); } }

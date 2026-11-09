@@ -232,6 +232,7 @@ async function loadConfig(lang, group = '') {
 
 // Testfreigabe: lokale Sitzung verwerfen und von vorn beginnen
 function restart() {
+  document.body.classList.remove('mot-bg');
   const lang = S.lang || URL_LANG || 'de';
   S = { lang };
   saveState();
@@ -445,6 +446,7 @@ async function questionScreen(item) {
 async function interstitial(slot, answered) {
   setTreatmentVisible(false);
   const m = cfg.motivation[slot];
+  document.body.classList.add('mot-bg'); // heller grüner Hintergrund nur auf der Motivationsseite
   await enter(`
     <section class="mot stagger">
       <div class="mot-art" style="--i:0" aria-hidden="true">
@@ -462,6 +464,7 @@ async function interstitial(slot, answered) {
     S.seen = [...(S.seen || []), answered];
     saveState();
     ev('interstitial_done', null, { slot, ms: Math.round(performance.now() - t0) });
+    document.body.classList.remove('mot-bg');
     await leave();
     questionScreen(cfg.items[answered]);
   }, { once: true });
