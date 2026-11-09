@@ -52,9 +52,9 @@ export function xmasSVG() {
     <circle cx="0" cy="-66" r="1.3" fill="#c7d8cf"/><circle cx="0" cy="-58" r="1.3" fill="#c7d8cf"/><circle cx="0" cy="-50" r="1.3" fill="#c7d8cf"/>
     <circle cx="-13.2" cy="-105" r="3.4" fill="#e9b58b"/><circle cx="13.2" cy="-105" r="3.4" fill="#e9b58b"/>
     <circle cx="0" cy="-105" r="13.4" fill="#f2c29b"/>
-    <path class="xs-hair" d="M-15.6 -106 Q-18 -125 -3 -125.5 Q14 -128 16.4 -108 Q13 -114.6 8.4 -112.4 Q4.4 -118.6 -2 -113.4 Q-8.2 -119.4 -11.6 -111.6 Q-13.8 -110.4 -15.6 -106Z"/>
-    <path class="xs-hair" d="M-6 -125 Q4 -137 15 -124.5 Q8 -128 0 -121Z"/><path class="xs-hair" d="M-14 -112 q-4 6 -2.4 14 q3.6 -4 3.4 -10Z"/><path class="xs-hair" d="M14 -112 q4 6 2.4 14 q-3.6 -4 -3.4 -10Z"/>
-    <path class="xs-beard" d="M-12.6 -101 Q-11 -87.5 0 -85.5 Q11 -87.5 12.6 -101 Q8.4 -95.5 0 -95.5 Q-8.4 -95.5 -12.6 -101Z"/>
+    <path class="xs-hair" d="M-13.4 -107.6 Q-14.6 -118 -6.4 -121.2 Q0 -123.4 7.6 -120.8 Q14.8 -116.6 13.4 -107.6 Q11.6 -111.2 8.6 -111.6 Q5 -114.4 0 -111.4 Q-5 -114 -8.6 -111 Q-11.6 -110.4 -13.4 -107.6Z"/>
+    <path class="xs-hair" d="M-9 -120 Q-7 -134 6 -133 Q16 -131.5 17 -122 Q10 -126.4 3 -121.4 Q-3 -123 -9 -120Z"/>
+    <path class="xs-hair" d="M-2 -131 Q4 -141 12 -134 Q7 -135.6 3 -130Z"/>
     <path d="M-8.2 -107.2 q2.5 -2.7 5 0 M3.2 -107.2 q2.5 -2.7 5 0" fill="none" stroke="#3a2a22" stroke-width="1.5" stroke-linecap="round"/>
     <path class="xs-hair-b" d="M-9 -111 q3 -1.6 6 0 M3 -111 q3 -1.6 6 0" fill="none" stroke="#c24a24" stroke-width="1.6" stroke-linecap="round"/>
     <circle cx="0" cy="-102" r="1.7" fill="#e9a982"/>
