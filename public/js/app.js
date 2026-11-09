@@ -213,7 +213,26 @@ function langScreen() {
 async function loadConfig(lang, group = '') {
   cfg = await api(`/api/config?lang=${lang}${group ? `&group=${group}` : ''}`, { auth: false });
   applyDefaultTheme(cfg.default_theme);
+  // Testfreigabe: Neustart jederzeit möglich (Teilnahme wiederholen)
+  const rb = document.getElementById('restartBtn');
+  rb.hidden = !cfg.open_test;
+  rb.title = rb.ariaLabel = L.restart;
 }
+
+// Testfreigabe: lokale Sitzung verwerfen und von vorn beginnen
+function restart() {
+  const lang = S.lang || URL_LANG || 'de';
+  S = { lang };
+  saveState();
+  queue = [];
+  journey = null;
+  timing = null;
+  $treat.innerHTML = '';
+  document.getElementById('testBadge').hidden = true;
+  setLang(lang);
+  return consentScreen();
+}
+document.getElementById('restartBtn').addEventListener('click', restart);
 
 async function consentScreen() {
   try {
@@ -234,12 +253,27 @@ async function consentScreen() {
       <details class="more" style="--i:4"><summary>${L.moreInfo}</summary><p>${L.moreText}</p>
         ${cfg.privacy_extra ? `<p style="white-space:pre-line">${esc(cfg.privacy_extra)}</p>` : ''}
         ${cfg.contact ? `<p><b>${L.contact}:</b> ${esc(cfg.contact)}</p>` : ''}</details>
+      ${cfg.open_test ? `
+      <div class="pick" style="--i:5">
+        <p class="pick-title">${L.pickTitle}</p>
+        <div class="pick-grid" role="radiogroup" aria-label="${L.pickTitle}">
+          ${['random', 'control', 'gamification', 'motivation'].map((g) => `<button type="button" class="pick-opt" role="radio" aria-checked="${g === 'random'}" data-g="${g}">${L.pickNames[g]}</button>`).join('')}
+        </div>
+        <p class="warn-small">${L.pickHint}</p>
+      </div>` : ''}
       <label class="check" style="--i:5"><input type="checkbox" id="agree"><span class="box" aria-hidden="true"></span><span>${L.consentCheck}</span></label>
     </section>
     <div class="actions"><button class="btn btn-primary" id="startBtn" disabled>${L.start}<span class="arrow" aria-hidden="true">→</span></button></div>`);
 
   const agree = $screen.querySelector('#agree');
   const btn = $screen.querySelector('#startBtn');
+  let pickedGroup = null; // nur bei Testfreigabe; sonst ordnet der Server zu
+  $screen.querySelector('.pick-grid')?.addEventListener('click', (e) => {
+    const b = e.target.closest('.pick-opt');
+    if (!b) return;
+    pickedGroup = b.dataset.g === 'random' ? null : b.dataset.g;
+    $screen.querySelectorAll('.pick-opt').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
+  });
   agree.addEventListener('change', () => {
     btn.disabled = !agree.checked;
     if (agree.checked) btn.classList.add('ready');
@@ -252,7 +286,7 @@ async function consentScreen() {
         method: 'POST',
         auth: false,
         body: {
-          lang: S.lang, consent: true, source: SOURCE,
+          lang: S.lang, consent: true, source: SOURCE, group: pickedGroup,
           device: {
             mobile: matchMedia('(pointer: coarse)').matches,
             w: innerWidth, h: innerHeight,
@@ -550,10 +584,12 @@ async function finishScreen(already) {
           <p class="warn-small">${L.prizeNote}</p>
           ${prize.terms ? `<details><summary>${L.prizeTerms}</summary><p style="white-space:pre-line">${esc(prize.terms)}</p></details>` : ''}
         </div>` : ''}
+      ${cfg?.open_test ? `<button type="button" class="btn btn-warm" id="againBtn" style="--i:6;margin-top:18px;max-width:360px">${L.again}</button>` : ''}
       ${redirect ? `<a class="btn btn-ghost" style="--i:6" href="${esc(redirect)}" rel="noopener">${L.backToPlatform}<span class="arrow" aria-hidden="true">→</span></a>` : ''}
     </section>`);
   ev('finish_shown', null, { already });
   flush();
+  $screen.querySelector('#againBtn')?.addEventListener('click', restart, { once: true });
   const copyBtn = $screen.querySelector('#copyBtn');
   copyBtn?.addEventListener('click', async () => {
     try {

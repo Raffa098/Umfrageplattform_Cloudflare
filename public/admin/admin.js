@@ -164,6 +164,8 @@ $('#ovVersion').addEventListener('change', loadOverview);
 // ------------------------------------------------------------ Einstellungen
 function updateHeader() {
   $('#studyState').textContent = `${settings.study_active ? 'Aktiv' : 'Pausiert'}${settings.test_mode ? ' · Testmodus' : ''} · ${settings.experiment_version}`;
+  const ot = $('#openTestBanner');
+  ot.hidden = !settings.open_test;
   const b = $('#frozenBanner');
   b.hidden = !frozen;
   b.className = 'banner warn';
@@ -184,6 +186,7 @@ function fillSettings() {
   const s = settings;
   f.study_active.checked = s.study_active;
   f.test_mode.checked = s.test_mode;
+  f.open_test.checked = s.open_test;
   f.experiment_version.value = s.experiment_version;
   f.sf_de.value = s.speeding_factor.de;
   f.sf_en.value = s.speeding_factor.en;
@@ -219,6 +222,7 @@ $('#setForm').addEventListener('submit', async (e) => {
   const body = {
     study_active: f.study_active.checked,
     test_mode: f.test_mode.checked,
+    open_test: f.open_test.checked,
     experiment_version: f.experiment_version.value.trim(),
     speeding_factor: { de: Number(f.sf_de.value), en: Number(f.sf_en.value) },
     consistency: { rule: f.c_rule.value, min_diff: Number(f.c_min.value) },

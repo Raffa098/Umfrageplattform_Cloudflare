@@ -1,6 +1,11 @@
 export const STRINGS = {
   de: {
     brand: 'Anonymous Survey',
+    pickTitle: 'Testmodus: Szenario wählen',
+    pickHint: 'Nur zu Testzwecken – deine Teilnahme wird als Testdaten gespeichert.',
+    pickNames: { random: 'Zufall', control: 'Kontrolle', gamification: 'Gamification', motivation: 'Motivation' },
+    restart: 'Neu starten',
+    again: 'Noch einmal teilnehmen (Test)',
     themeToggle: 'Hell/Dunkel umschalten',
     motionToggle: 'Bewegung reduzieren',
     xManipulation: 'Kurze Rückfragen',
@@ -68,6 +73,11 @@ export const STRINGS = {
   },
   en: {
     brand: 'Anonymous Survey',
+    pickTitle: 'Test mode: choose a scenario',
+    pickHint: 'For testing only – your participation is stored as test data.',
+    pickNames: { random: 'Random', control: 'Control', gamification: 'Gamification', motivation: 'Motivation' },
+    restart: 'Restart',
+    again: 'Take part again (test)',
     themeToggle: 'Toggle light/dark',
     motionToggle: 'Reduce motion',
     xManipulation: 'A few quick questions',

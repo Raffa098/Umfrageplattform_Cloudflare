@@ -452,3 +452,21 @@ h1, h2, p { margin: 0; }
 .topbar .logo { flex: none; }
 .test-badge { padding: 3px 8px; font-size: .64rem; }
 @media (max-width: 360px) { .topbar .brand { font-size: .8rem; } .iconbtn { width: 36px; height: 36px; } }
+
+/* Testfreigabe: Szenario-Wahl */
+.pick { margin-top: 18px; padding: 14px; border-radius: 18px; background: var(--warm-soft); border: 1.5px dashed var(--warm); }
+.pick-title { font-weight: 750; font-size: .92rem; margin: 0 0 10px; }
+.pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pick-opt {
+  all: unset; box-sizing: border-box; min-height: 46px; border-radius: 12px; display: grid; place-items: center; cursor: pointer; font-weight: 700; font-size: .92rem;
+  background: var(--surface); border: 1.5px solid var(--border); color: var(--text); transition: background .2s, border-color .2s, transform .2s var(--spring);
+}
+.pick-opt:active { transform: scale(.96); }
+.pick-opt:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.pick-opt[aria-checked="true"] { background: var(--warm); border-color: var(--warm); color: var(--on-warm); }
+
+/* Kopfzeile darf nie breiter als der Bildschirm werden (Testfreigabe: Plakette + 3 Knöpfe) */
+.topbar { min-width: 0; }
+.topbar .brand { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: .84rem; }
+.tools { flex: none; margin-left: 0; gap: 5px; }
+@media (max-width: 440px) { .iconbtn { width: 36px; height: 36px; border-radius: 11px; } .iconbtn svg { width: 18px; height: 18px; } }

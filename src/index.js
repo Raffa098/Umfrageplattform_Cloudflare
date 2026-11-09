@@ -17,6 +17,7 @@ const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey'];
 export const DEFAULT_SETTINGS = {
   study_active: true,
   test_mode: false,
+  open_test: false, // Testfreigabe: Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen (Daten = Testdaten)
   experiment_version: 'v1-pilot',
   speeding_factor: { de: 0.3, en: 0.3 }, // Sekunden pro Wort
   consistency: { rule: 'same_side', min_diff: 3 },
@@ -143,7 +144,8 @@ async function getConfig(env, url) {
   const group = GROUPS.includes(url.searchParams.get('group')) ? url.searchParams.get('group') : null;
   const s = await getSettings(env);
   return json({
-    active: s.study_active,
+    active: s.study_active || s.open_test,
+    open_test: !!s.open_test,
     version: s.experiment_version,
     total: TOTAL,
     items: publicItems(lang, s.catalog_overrides),
@@ -201,9 +203,10 @@ async function createSession(request, env) {
   if (!LANGS.includes(b.lang)) throw new HttpError(400, 'invalid_lang');
   if (b.consent !== true) throw new HttpError(400, 'consent_required');
   const s = await getSettings(env);
-  if (!s.study_active && !s.test_mode) throw new HttpError(503, 'study_paused');
-  const isTest = s.test_mode ? 1 : 0;
-  const group = await assignGroup(env, s.experiment_version, isTest);
+  if (!s.study_active && !s.test_mode && !s.open_test) throw new HttpError(503, 'study_paused');
+  // Testfreigabe: Gruppenwahl durch Teilnehmende nur, wenn im Admin eingeschaltet; Daten sind dann immer Testdaten
+  const isTest = s.test_mode || s.open_test ? 1 : 0;
+  const group = s.open_test && GROUPS.includes(b.group) ? b.group : await assignGroup(env, s.experiment_version, isTest);
   const source = typeof b.source === 'string' ? b.source.replace(/[^\w.\-:]/g, '').slice(0, 64) || null : null;
   if (!isTest) await ensureSnapshot(env, s);
   const id = await insertParticipant(env, s, { group, lang: b.lang, isTest, source, device: isObj(b.device) ? b.device : {} });
@@ -707,6 +710,7 @@ async function adminPutSettings(request, env) {
 
   if ('study_active' in b) next.study_active = !!b.study_active;
   if ('test_mode' in b) next.test_mode = !!b.test_mode;
+  if ('open_test' in b) next.open_test = !!b.open_test;
   if ('experiment_version' in b) {
     const v = str(b.experiment_version, 40);
     if (!v || !/^[\w.\-]+$/.test(v)) bad('experiment_version');

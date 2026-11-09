@@ -39,6 +39,7 @@
       <button role="tab" data-tab="preview">Testmodus</button>
       <button role="tab" data-tab="audit">Protokoll</button>
     </nav>
+    <div id="openTestBanner" class="banner warn" hidden><b>Testfreigabe ist EIN:</b> Teilnehmende können die Gruppe selbst wählen und mehrfach teilnehmen. Alle Teilnahmen zählen als Testdaten. Vor dem echten Start in den Einstellungen ausschalten.</div>
     <div id="frozenBanner" class="banner" hidden></div>
     <div class="banner info">Der Fragenkatalog ist ein <b>vorläufiger Testkatalog</b> und kein validiertes Instrument. Wissenschaftliche Regeln (Schwellen, Konsistenzregel, Ausschlusskriterien) vor der Erhebung festlegen.</div>
 
@@ -70,6 +71,8 @@
           <h2>Experiment</h2>
           <label class="toggle"><input type="checkbox" name="study_active"><span></span>Studie aktiv (neue Teilnahmen möglich)</label>
           <label class="toggle"><input type="checkbox" name="test_mode"><span></span>Alle neuen öffentlichen Teilnahmen als Test markieren</label>
+          <label class="toggle"><input type="checkbox" name="open_test"><span></span><b>Testfreigabe:</b>&nbsp;Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen</label>
+          <p class="hint">Nur zu Testzwecken. Solange eingeschaltet, werden alle neuen Teilnahmen als <b>Testdaten</b> markiert (nicht in Übersicht und Export, außer „Testdaten einbeziehen“). Vor dem echten Start unbedingt ausschalten.</p>
           <label class="field"><span>Experimentversion</span><input name="experiment_version" pattern="[\w.\-]+" maxlength="40" required></label>
           <p class="hint">Mit dem ersten echten Teilnehmenden wird die Konfiguration der Version dokumentiert (Snapshot) und gesperrt: Motivationstexte, Fragentexte, Zusatzfragen und Reise-Animation lassen sich dann nur mit einer neuen Version ändern.</p>
         </div>
