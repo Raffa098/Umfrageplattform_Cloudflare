@@ -123,16 +123,24 @@ async function audit(env, action, detail) {
 const visibleExtras = (s, grp) => s.extras.filter((e) => e.visible && e.groups.includes(grp));
 const publicExtra = (e, lang) => ({
   id: e.id, section: e.section, kind: e.kind, required: e.required, ordinal: e.ordinal,
-  min: e.min ?? null, max: e.max ?? null, text: e[lang].text, options: e[lang].options,
+  min: e.min ?? null, max: e.max ?? null, show_if: e.show_if ?? null, text: e[lang].text, options: e[lang].options,
 });
 
+// Bedingte Zusatzfrage (show_if): nur gefragt, wenn die Bezugsantwort vorhanden und <= max ist
+const extraApplies = (e, values) => {
+  if (!e.show_if) return true;
+  const v = values[e.show_if.item];
+  return v !== undefined && v !== '' && Number(v) <= e.show_if.max;
+};
+
 async function extrasState(env, p, s) {
-  const { results } = await env.DB.prepare('SELECT item_id FROM extra_answers WHERE participant_id = ?').bind(p.id).all();
+  const { results } = await env.DB.prepare('SELECT item_id, value FROM extra_answers WHERE participant_id = ?').bind(p.id).all();
+  const values = Object.fromEntries(results.map((r) => [r.item_id, r.value]));
   const have = new Set(results.map((r) => r.item_id));
   const items = visibleExtras(s, p.grp);
   const sections = {};
   for (const sec of SECTIONS) {
-    const its = items.filter((e) => e.section === sec);
+    const its = items.filter((e) => e.section === sec && extraApplies(e, values));
     sections[sec] = { total: its.length, done: its.every((e) => have.has(e.id)) };
   }
   return { items, sections, allDone: SECTIONS.every((sec) => sections[sec].done) };
@@ -339,8 +347,11 @@ async function postExtras(request, env) {
   const s = await getSettings(env);
   const items = visibleExtras(s, p.grp).filter((e) => e.section === b.section);
   const given = isObj(b.answers) ? b.answers : {};
+  const { results: stored } = await env.DB.prepare('SELECT item_id, value FROM extra_answers WHERE participant_id = ?').bind(p.id).all();
+  const known = { ...Object.fromEntries(stored.map((r) => [r.item_id, r.value])), ...Object.fromEntries(Object.entries(given).map(([k, v]) => [k, String(v ?? '').trim()])) };
   const rows = [];
   for (const e of items) {
+    if (!extraApplies(e, known)) continue; // Bedingung nicht erfüllt: nicht gefragt, keine Zeile
     const raw = given[e.id] === undefined || given[e.id] === null ? '' : String(given[e.id]).trim();
     if (raw === '') {
       if (e.required) throw new HttpError(400, 'required_missing', { item: e.id });
@@ -559,9 +570,9 @@ const KPI_DEFS = [
   { id: 'consistency', name: 'Consistency (Q6/Q10)', definition: 'Q10 invertiert (6 − Q10) und mit Q6 verglichen; Regel und Schwelle laut Konfiguration; fehlend = NA.', denominator: 'Personen mit Antwort auf Q6 und Q10', export: 'derived_person.csv: consistency_flag, q06, q10, q10_inverted' },
   { id: 'comprehension', name: 'Comprehension (Q9)', definition: 'Auffällig (1), wenn die Antwort nicht korrekt ist (A); fehlend = NA.', denominator: 'Personen mit Antwort auf Q9', export: 'derived_person.csv: comprehension_flag, q09_choice' },
   { id: 'reach', name: 'Fortschritt / Abbruchstelle', definition: 'Personen mit mindestens k beantworteten Hauptfragen.', denominator: 'Starts', export: 'responses_long.csv: answered; derived_person.csv: n_answered' },
-  { id: 'manipulation', name: 'Manipulationschecks', definition: 'Mittelwert (Skala 1–5) bzw. Verteilung je Item und Gruppe. Kein Nachweis kausaler Wirkung; nicht unkritisch als Kontrollvariable verwenden.', denominator: 'beantwortete Items je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
+  { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (akademische Laufbahn, Punkte), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Ausgewertet wird der Anteil je Antwort und Gruppe; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
   { id: 'control', name: 'Kontextvariablen', definition: 'Verteilung je Gruppe (z. B. Semester, Umfrageerfahrung, Teilnahmegrund); Fehlwerte werden getrennt gezählt.', denominator: 'beantwortete Items je Gruppe (n) und Fehlwerte (NA)', export: 'checks_and_covariates.csv: check_type = control' },
-  { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut).', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
+  { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut). Bei 1 oder 2 folgt die Nachfrage F2 (Grund der Unzufriedenheit), sonst nicht gefragt (NA).', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
   { id: 'quality', name: 'Datenqualität', definition: 'Fehlende Hauptantworten, technische Speicherfehler (save_error), Wiederholungs-Verdacht (Browser hatte schon einen Abschluss), Geräteklasse, Sprache.', denominator: 'Starts bzw. erwartete Antworten (Starts × 15)', export: 'participants.csv: device_class, language; events.csv: event_type = save_error / consent' },
 ];
 
@@ -907,7 +918,7 @@ async function adminExport(env, url) {
       let sec = null;
       try { sec = JSON.parse(e.data || '{}').section; } catch { /* ignorieren */ }
       const key = `${e.participant_id}|${sec}`;
-      if (sec && !ctx.shownExtras.has(key)) ctx.shownExtras.set(key, e.created_at);
+      if (sec && !ctx.shownExtras.has(key)) ctx.shownExtras.set(key, iso(e.client_ts) ?? e.created_at);
     }
   }
   if (level === 'events') ctx.events = await loadEvents(env, f, s, null);
@@ -970,6 +981,11 @@ function validateExtras(arr) {
     const groups = Array.isArray(e.groups) ? e.groups.filter((g) => GROUPS.includes(g)) : [];
     if (!groups.length) bad(`${id}.groups`);
     const out = { id, section: e.section, kind: e.kind, required: !!e.required, visible: !!e.visible, ordinal: !!e.ordinal, groups };
+    if (isObj(e.show_if)) {
+      const max = clampInt(e.show_if.max, 1, 4);
+      if (!ids.has(String(e.show_if.item)) || String(e.show_if.item) === id || max === null) bad(`${id}.show_if`);
+      out.show_if = { item: String(e.show_if.item), max };
+    }
     if (e.kind === 'number') {
       const min = clampInt(e.min, -1000, 100000), max = clampInt(e.max, -1000, 100000);
       if (min === null || max === null || min > max) bad(`${id}.range`);

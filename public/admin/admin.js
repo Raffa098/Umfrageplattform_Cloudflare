@@ -294,15 +294,27 @@ async function loadOverview() {
     <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GLAB[g]}</th>${a.blocks.map((b) => `<td>${pct(b)}</td>`).join('')}</tr>`).join('')}</tbody>`;
 
   // Manipulationschecks: Mittelwerte als Balken (nur ordinale Items)
+  const mc = d.extras_meta.filter((m) => m.section === 'manipulation' && !m.ordinal && m.kind === 'choice');
   const mm = d.extras_meta.filter((m) => m.section === 'manipulation' && m.ordinal);
-  if (mm.length) {
+  if (mc.length) {
+    // Einfachauswahl: Anteil je Antwortoption und Gruppe (erwartet: höchste Quote bei der eigenen Bedingung)
+    const m = mc[0];
+    const share = (g, k) => { const x = d.extras[m.id]?.[g]; return x?.n ? (x.dist[k] || 0) / x.n : null; };
+    const short = (t) => (t.length > 26 ? `${t.slice(0, 25)}…` : t);
+    barChart($('#chManip'), {
+      cats: m.options.map((o, i) => ({ label: `${i + 1} · ${short(o)}` })), series: GSERIES, yMax: 1, fmt: (v) => `${Math.round(v * 100)} %`,
+      values: m.options.map((_, i) => Object.fromEntries(G.map((g) => [g, share(g, i + 1)]))),
+      tip: m.options.map((o, i) => Object.fromEntries(G.map((g) => [g, `${GLAB[g]}: ${d.extras[m.id]?.[g]?.dist[i + 1] || 0} von ${d.extras[m.id]?.[g]?.n || 0} – ${o}`]))),
+      aria: 'Anteil der gewählten Antworten im Manipulationscheck je Gruppe',
+    });
+  } else if (mm.length) {
     barChart($('#chManip'), {
       cats: mm.map((m) => ({ label: m.id })), series: GSERIES, yMax: 5, fmt: (v) => v.toFixed(1),
       values: mm.map((m) => Object.fromEntries(G.map((g) => [g, d.extras[m.id]?.[g]?.mean ?? null]))),
       tip: mm.map((m) => Object.fromEntries(G.map((g) => [g, `${GLAB[g]}: Ø ${d.extras[m.id]?.[g]?.mean ?? 'NA'} (n=${d.extras[m.id]?.[g]?.n ?? 0}) – ${m.text}`]))),
       aria: 'Mittelwerte der Manipulationschecks je Gruppe',
     });
-  } else $('#chManip').innerHTML = '<p class="muted">Keine ordinalen Manipulationschecks konfiguriert.</p>';
+  } else $('#chManip').innerHTML = '<p class="muted">Kein Manipulationscheck konfiguriert.</p>';
   extrasTable('#ovManip', d, 'manipulation');
   extrasTable('#ovControl', d, 'control');
   extrasTable('#ovFeedback', d, 'feedback');
@@ -457,6 +469,7 @@ function extraRow(e, isNew = false) {
   const d = document.createElement('div');
   d.className = 'xe';
   d.dataset.kind = e.kind;
+  if (e.show_if) d.dataset.showIf = JSON.stringify(e.show_if);
   d.innerHTML = `
     <div class="xe-head">
       <label class="field"><span>ID</span><input data-f="id" value="${esc(e.id)}" ${isNew ? '' : 'readonly'} maxlength="16" pattern="[A-Za-z][A-Za-z0-9_]*" required></label>
@@ -473,6 +486,7 @@ function extraRow(e, isNew = false) {
       <label class="toggle"><input type="checkbox" data-f="visible" ${e.visible ? 'checked' : ''}><span></span>Sichtbar</label>
       <label class="toggle"><input type="checkbox" data-f="required" ${e.required ? 'checked' : ''}><span></span>Pflicht</label>
       <label class="toggle"><input type="checkbox" data-f="ordinal" ${e.ordinal ? 'checked' : ''}><span></span>Ø sinnvoll (Skala)</label>
+      ${e.show_if ? `<span class="chip" title="Wird nur gefragt, wenn die Antwort auf ${esc(e.show_if.item)} höchstens ${e.show_if.max} ist">nur wenn ${esc(e.show_if.item)} ≤ ${e.show_if.max}</span>` : ''}
       <span class="xe-groups">Gruppen: ${Object.entries(GROUPS).map(([g, n]) => `<label><input type="checkbox" data-g="${g}" ${e.groups.includes(g) ? 'checked' : ''}> ${n}</label>`).join('')}</span>
     </div>`;
   d.querySelector('[data-f=section]').value = e.section;
@@ -527,6 +541,7 @@ $('#qForm').addEventListener('submit', async (e) => {
       en: { text: v('text_en').value, options: kind !== 'number' ? unlines(v('opts_en').value) : [] },
     };
     if (kind === 'number') { x.min = Number(v('min').value); x.max = Number(v('max').value); }
+    if (d.dataset.showIf) x.show_if = JSON.parse(d.dataset.showIf);
     return x;
   });
   const msg = $('#qMsg');

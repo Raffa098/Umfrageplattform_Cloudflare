@@ -3,6 +3,7 @@
 //          | 'feedback' (letzte Seite vor dem Abschluss: Smiley-Bewertung, im Admin ein-/ausschaltbar)
 // kind: 'choice' (Optionen, Wert = 1..n) | 'number' (ganze Zahl min..max) | 'smiley' (5 Gesichter, Wert 1..5)
 // ordinal: Mittelwert im Dashboard sinnvoll (z. B. 5-Punkte-Zustimmung)
+// show_if: { item, max } – Frage erscheint nur, wenn die Antwort auf 'item' <= max ist (z. B. Nachfrage bei den zwei schlechtesten Smileys)
 
 export const SECTIONS = ['manipulation', 'control', 'feedback'];
 export const ALL_GROUPS = ['control', 'gamification', 'motivation'];
@@ -19,18 +20,20 @@ const scale = (id, section, de, en, required) => ({
 });
 
 export const DEFAULT_EXTRAS = [
-  scale('M1', 'manipulation',
-    'Ich wusste während der Umfrage jederzeit, wie weit ich schon gekommen war.',
-    'During the survey I always knew how far along I was.', true),
-  scale('M2', 'manipulation',
-    'Die Umfrage hatte spielerische Elemente (z. B. eine Reise mit Etappen).',
-    'The survey had playful elements (e.g. a journey with stages).', true),
-  scale('M3', 'manipulation',
-    'Ich habe während der Umfrage motivierende Hinweise oder Ermutigungen gesehen.',
-    'During the survey I saw motivating notes or words of encouragement.', true),
-  scale('M4', 'manipulation',
-    'Die Gestaltung der Umfrage hat mich motiviert, die Fragen sorgfältig zu lesen.',
-    'The design of the survey motivated me to read the questions carefully.', true),
+  // Ein einziger, einfacher Check: nennt die eigene Erfahrung. Je eine Aussage für Gamification und Motivation (nicht verwechselbar,
+  // ohne Begriffe der jeweils anderen Gruppe) plus eine neutrale Antwort, die man mit keiner der beiden Bedingungen verbindet.
+  // Kodierung: 1 = Gamification-Aussage, 2 = Motivations-Aussage, 3 = neutral
+  {
+    id: 'M1', section: 'manipulation', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
+    de: { text: 'Was trifft auf deine Erfahrung in dieser Umfrage am ehesten zu?', options: [
+      'Ich habe während der Umfrage eine akademische Laufbahn durchlebt und Punkte gesammelt.',
+      'Ich wurde zwischendurch mit Worten ermutigt, die Fragen sorgfältig zu beantworten.',
+      'Weder noch: Es gab nur die Fragen, ohne weitere Besonderheiten.'] },
+    en: { text: 'Which of these best describes your experience in this survey?', options: [
+      'During the survey I went through an academic career and collected points.',
+      'In between, I was encouraged with words to answer the questions carefully.',
+      'Neither: there were only the questions, nothing else.'] },
+  },
   {
     id: 'C1', section: 'control', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS,
     de: { text: 'Wie oft nimmst du an Online-Umfragen teil?', options: ['Heute zum ersten Mal', 'Selten (weniger als einmal im Monat)', 'Mehrmals im Monat', 'Mehrmals pro Woche'] },
@@ -52,7 +55,13 @@ export const DEFAULT_EXTRAS = [
   // Letzte Seite vor dem Abschluss: Smiley-Bewertung (Pflicht = aus, im Admin änderbar; Sichtbar = aus blendet die Seite aus)
   {
     id: 'F1', section: 'feedback', kind: 'smiley', required: false, visible: true, ordinal: true, groups: ALL_GROUPS,
-    de: { text: 'Wie hat Ihnen diese Umfrage gefallen?', options: ['Gar nicht gut', 'Eher nicht gut', 'Geht so', 'Eher gut', 'Sehr gut'] },
+    de: { text: 'Wie hat dir diese Umfrage gefallen?', options: ['Gar nicht gut', 'Eher nicht gut', 'Geht so', 'Eher gut', 'Sehr gut'] },
     en: { text: 'How did you like this survey?', options: ['Not at all', 'Not really', 'So-so', 'Quite good', 'Very good'] },
+  },
+  // Nachfrage nur bei den zwei schlechtesten Smileys (show_if): was hat nicht gefallen?
+  {
+    id: 'F2', section: 'feedback', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', max: 2 },
+    de: { text: 'Was hat dir vor allem nicht gefallen?', options: ['Das Design', 'Die Fragen waren zu lang', 'Die Fragen waren schwer zu verstehen', 'Die Umfrage erschien mir sinnlos', 'Es hat zu lange gedauert', 'Technische Probleme', 'Etwas anderes'] },
+    en: { text: 'What did you mainly dislike?', options: ['The design', 'The questions were too long', 'The questions were hard to understand', 'The survey seemed pointless', 'It took too long', 'Technical problems', 'Something else'] },
   },
 ];

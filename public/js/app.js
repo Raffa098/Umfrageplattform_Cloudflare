@@ -562,7 +562,7 @@ function extraHTML(e) {
         ${e.options.map((o, i) => `<button type="button" class="opt" role="radio" aria-checked="false" data-v="${i + 1}"><span class="opt-label">${esc(o)}</span><span class="opt-dot" aria-hidden="true"></span></button>`).join('')}
       </div>`;
   }
-  return `<section class="xq" data-q="${e.id}"><h2 id="h-${e.id}">${esc(e.text)}${tag}</h2>${body}</section>`;
+  return `<section class="xq${e.show_if ? ' cond' : ''}" data-q="${e.id}"${e.show_if ? ' hidden' : ''}><h2 id="h-${e.id}">${esc(e.text)}${tag}</h2>${body}</section>`;
 }
 
 async function extrasScreen(section) {
@@ -577,9 +577,17 @@ async function extrasScreen(section) {
   ev('extras_shown', null, { section });
 
   const vals = {};
+  // Bedingte Nachfrage (show_if), z. B. nur bei den zwei schlechtesten Smileys
+  const shown = (e) => !e.show_if || (vals[e.show_if.item] !== undefined && Number(vals[e.show_if.item]) <= e.show_if.max);
+  const syncCond = () => items.filter((e) => e.show_if).forEach((e) => {
+    const sec = $screen.querySelector(`.xq[data-q="${e.id}"]`);
+    const on = shown(e);
+    if (on && sec.hidden) { sec.hidden = false; sec.classList.add('cond-in'); setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }
+    if (!on && !sec.hidden) { sec.hidden = true; sec.classList.remove('cond-in'); delete vals[e.id]; sec.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', 'false')); }
+  });
   const btn = $screen.querySelector('#xBtn');
   const refresh = (user) => {
-    const ok = items.every((e) => !e.required || (vals[e.id] ?? '') !== '');
+    const ok = items.every((e) => !shown(e) || !e.required || (vals[e.id] ?? '') !== '');
     const was = !btn.disabled;
     btn.disabled = !ok;
     if (ok) { btn.classList.add('ready'); if (user && !was) revealNext(btn); }
@@ -596,6 +604,7 @@ async function extrasScreen(section) {
       const lab = grp.parentElement.querySelector('.sm-label');
       if (lab) lab.textContent = b.getAttribute('aria-label'); // gewählte Bewertung als Text darunter
     }
+    syncCond();
     refresh(true);
   });
   $screen.querySelectorAll('input.num').forEach((inp) => inp.addEventListener('input', () => {
