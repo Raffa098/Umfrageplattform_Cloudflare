@@ -668,26 +668,6 @@ async function completeSurvey() {
   return errorScreen(completeSurvey);
 }
 
-// Der Sänger "singt" als Untertitel: We wish you a merry Christmas (kein Ton). Bei reduzierter Bewegung steht der ganze Vers still da.
-const LYRICS = ['We wish you a merry Christmas,', 'We wish you a merry Christmas,', 'We wish you a merry Christmas', 'and a happy new year!'];
-function singLyrics(el) {
-  if (!el) return;
-  if (isReduced()) { el.textContent = '♪ We wish you a merry Christmas and a happy new year! ♪'; return; }
-  let i = 0;
-  const show = () => {
-    if (!el.isConnected) return;
-    el.classList.remove('on');
-    setTimeout(() => {
-      if (!el.isConnected) return;
-      el.textContent = `♪ ${LYRICS[i]} ♪`;
-      el.classList.add('on');
-      i = (i + 1) % LYRICS.length;
-      setTimeout(show, i === 0 ? 3200 : 2100);
-    }, 280);
-  };
-  show();
-}
-
 async function finishScreen(already) {
   flush();
   markDone();
@@ -704,7 +684,7 @@ async function finishScreen(already) {
       </div>
       <h1 style="--i:1">${already ? L.alreadyTitle : L.doneTitle}</h1>
       <p class="lead closing" style="--i:2">${esc(already ? L.alreadyText : (cfg?.closing_text || L.doneText))}</p>
-      ${cfg?.christmas ? `<div class="xmas" style="--i:3" aria-hidden="true">${xmasSVG()}</div><p class="xmas-lyric" style="--i:3" aria-hidden="true"></p><p class="xmas-cap" style="--i:3">${L.xmas}</p>` : ''}
+      ${cfg?.christmas ? `<div class="xmas" style="--i:3" aria-hidden="true">${xmasSVG()}</div><p class="xmas-cap" style="--i:3">${L.xmas}</p>` : ''}
       ${code ? `
         <p class="code-label" style="--i:3">${L.codeLabel}</p>
         <div class="code-box" style="--i:3">
@@ -723,7 +703,6 @@ async function finishScreen(already) {
       <a class="privacy-link" style="--i:6" href="/datenschutz.html?lang=${S.lang}" target="_blank" rel="noopener">${L.privacyBtn}</a>
       ${redirect ? `<a class="btn btn-ghost" style="--i:6" href="${esc(redirect)}" rel="noopener">${L.backToPlatform}<span class="arrow" aria-hidden="true">→</span></a>` : ''}
     </section>`);
-  singLyrics($screen.querySelector('.xmas-lyric'));
   ev('finish_shown', null, { already });
   flush();
   $screen.querySelector('#againBtn')?.addEventListener('click', restart, { once: true });

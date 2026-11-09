@@ -42,7 +42,7 @@
 .xs-strum { transform-box: fill-box; transform-origin: 0 0; animation: xsStrum .38s ease-in-out infinite alternate; }
 @keyframes xsStrum { from { transform: rotate(-9deg); } to { transform: rotate(11deg); } }
 
-/* Untertitel zum Lied des Sängers */
-.xmas-lyric { min-height: 1.5em; margin: 12px 0 0; font-style: italic; font-weight: 650; color: var(--text); opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s ease; }
-.xmas-lyric.on { opacity: 1; transform: none; }
-:root[data-motion="reduced"] .xmas-lyric { opacity: 1; transform: none; }
+/* Kleines Feuerwerk im Hintergrund */
+.xs-fw { transform-box: fill-box; transform-origin: center; opacity: 0; animation: xsBurst 4.4s ease-out infinite; }
+.xs-fw line { stroke-width: 1.8; stroke-linecap: round; }
+@keyframes xsBurst { 0% { opacity: 0; transform: scale(.15); } 8% { opacity: 1; } 55% { opacity: .95; transform: scale(1); } 100% { opacity: 0; transform: scale(1.18); } }

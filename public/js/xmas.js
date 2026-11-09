@@ -116,6 +116,17 @@ export function xmasSVG() {
     <g class="xs-arm-r"><path d="M14 -86 Q30 -85 28 -75.5" fill="none" stroke="#1f5a3f" stroke-width="8.4" stroke-linecap="round"/><circle cx="28" cy="-74.5" r="4.7" fill="#f2c29b"/></g>
   </g></g>`;
 
+// Kleine Feuerwerke hinter Hügeln, Baum und Sänger (rein dekorativ; bei reduzierter Bewegung unsichtbar)
+  const burst = (cx, cy, col, delay) => {
+    let s = '';
+    for (let k = 0; k < 12; k++) {
+      const a = (Math.PI * 2 * k) / 12, c = Math.cos(a), si = Math.sin(a);
+      s += `<line x1="${(c * 7).toFixed(1)}" y1="${(si * 7).toFixed(1)}" x2="${(c * 17).toFixed(1)}" y2="${(si * 17).toFixed(1)}" stroke="${col}"/><circle cx="${(c * 22).toFixed(1)}" cy="${(si * 22).toFixed(1)}" r="1.3" fill="${col}"/>`;
+    }
+    return `<g transform="translate(${cx} ${cy})"><g class="xs-fw" style="animation-delay:${delay}s">${s}</g></g>`;
+  };
+  const fireworks = burst(42, 22, '#ffd34d', 0) + burst(176, 4, '#7fd4ff', 1.4) + burst(216, 34, '#ff8fc9', 2.7) + burst(110, -4, '#b9ff9f', 3.5);
+
   return `<svg viewBox="0 -18 360 198" role="img" focusable="false" aria-hidden="true">
     <defs>
       <linearGradient id="xs-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1633"/><stop offset=".7" stop-color="#26376a"/><stop offset="1" stop-color="#3b4f8a"/></linearGradient>
@@ -123,6 +134,7 @@ export function xmasSVG() {
     </defs>
     <rect y="-18" width="360" height="198" fill="url(#xs-sky)"/>
     <g>${stars}</g>
+    ${fireworks}
     <circle cx="322" cy="30" r="26" fill="url(#xs-moon)"/><circle cx="322" cy="30" r="12" fill="#fff4cf"/>
     <path d="M0 132 Q70 112 150 128 T300 122 T360 126 V180 H0Z" fill="#c9d8ee"/>
     <path d="M0 148 Q90 138 180 148 T360 146 V180 H0Z" fill="#eef4fc"/>
