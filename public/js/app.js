@@ -562,7 +562,7 @@ function extraHTML(e) {
         ${e.options.map((o, i) => `<button type="button" class="opt" role="radio" aria-checked="false" data-v="${i + 1}"><span class="opt-label">${esc(o)}</span><span class="opt-dot" aria-hidden="true"></span></button>`).join('')}
       </div>`;
   }
-  return `<section class="xq${e.show_if ? ' cond' : ''}" data-q="${e.id}"${e.show_if ? ' hidden' : ''}><h2 id="h-${e.id}">${esc(e.text)}${tag}</h2>${body}</section>`;
+  return `<section class="xq${e.show_if ? ' cond' : ''}" data-q="${e.id}"${e.show_if ? ' hidden style="display:none"' : ''}><h2 id="h-${e.id}">${esc(e.text)}${tag}</h2>${body}</section>`;
 }
 
 async function extrasScreen(section) {
@@ -578,12 +578,12 @@ async function extrasScreen(section) {
 
   const vals = {};
   // Bedingte Nachfrage (show_if), z. B. nur bei den zwei schlechtesten Smileys
-  const shown = (e) => !e.show_if || (vals[e.show_if.item] !== undefined && Number(vals[e.show_if.item]) <= e.show_if.max);
+  const shown = (e) => !e.show_if || (vals[e.show_if.item] !== undefined && (e.show_if.max == null || Number(vals[e.show_if.item]) <= e.show_if.max) && (e.show_if.min == null || Number(vals[e.show_if.item]) >= e.show_if.min));
   const syncCond = () => items.filter((e) => e.show_if).forEach((e) => {
     const sec = $screen.querySelector(`.xq[data-q="${e.id}"]`);
     const on = shown(e);
-    if (on && sec.hidden) { sec.hidden = false; sec.classList.add('cond-in'); setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }
-    if (!on && !sec.hidden) { sec.hidden = true; sec.classList.remove('cond-in'); delete vals[e.id]; sec.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', 'false')); }
+    if (on && sec.hidden) { sec.hidden = false; sec.style.display = ''; sec.classList.add('cond-in'); setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }
+    if (!on && !sec.hidden) { sec.hidden = true; sec.style.display = 'none'; sec.classList.remove('cond-in'); delete vals[e.id]; sec.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', 'false')); }
   });
   const btn = $screen.querySelector('#xBtn');
   const refresh = (user) => {

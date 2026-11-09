@@ -486,7 +486,7 @@ function extraRow(e, isNew = false) {
       <label class="toggle"><input type="checkbox" data-f="visible" ${e.visible ? 'checked' : ''}><span></span>Sichtbar</label>
       <label class="toggle"><input type="checkbox" data-f="required" ${e.required ? 'checked' : ''}><span></span>Pflicht</label>
       <label class="toggle"><input type="checkbox" data-f="ordinal" ${e.ordinal ? 'checked' : ''}><span></span>Ø sinnvoll (Skala)</label>
-      ${e.show_if ? `<span class="chip" title="Wird nur gefragt, wenn die Antwort auf ${esc(e.show_if.item)} höchstens ${e.show_if.max} ist">nur wenn ${esc(e.show_if.item)} ≤ ${e.show_if.max}</span>` : ''}
+      ${e.show_if ? `<span class="chip" title="Wird nur gefragt, wenn die Antwort auf ${esc(e.show_if.item)} ${e.show_if.max != null ? `höchstens ${e.show_if.max}` : `mindestens ${e.show_if.min}`} ist">nur wenn ${esc(e.show_if.item)} ${e.show_if.max != null ? `≤ ${e.show_if.max}` : `≥ ${e.show_if.min}`}</span>` : ''}
       <span class="xe-groups">Gruppen: ${Object.entries(GROUPS).map(([g, n]) => `<label><input type="checkbox" data-g="${g}" ${e.groups.includes(g) ? 'checked' : ''}> ${n}</label>`).join('')}</span>
     </div>`;
   d.querySelector('[data-f=section]').value = e.section;

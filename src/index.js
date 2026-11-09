@@ -130,7 +130,9 @@ const publicExtra = (e, lang) => ({
 const extraApplies = (e, values) => {
   if (!e.show_if) return true;
   const v = values[e.show_if.item];
-  return v !== undefined && v !== '' && Number(v) <= e.show_if.max;
+  if (v === undefined || v === '') return false;
+  const n = Number(v);
+  return (e.show_if.max == null || n <= e.show_if.max) && (e.show_if.min == null || n >= e.show_if.min);
 };
 
 async function extrasState(env, p, s) {
@@ -572,7 +574,7 @@ const KPI_DEFS = [
   { id: 'reach', name: 'Fortschritt / Abbruchstelle', definition: 'Personen mit mindestens k beantworteten Hauptfragen.', denominator: 'Starts', export: 'responses_long.csv: answered; derived_person.csv: n_answered' },
   { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (akademische Laufbahn, Punkte), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Ausgewertet wird der Anteil je Antwort und Gruppe; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
   { id: 'control', name: 'Kontextvariablen', definition: 'Verteilung je Gruppe (z. B. Semester, Umfrageerfahrung, Teilnahmegrund); Fehlwerte werden getrennt gezählt.', denominator: 'beantwortete Items je Gruppe (n) und Fehlwerte (NA)', export: 'checks_and_covariates.csv: check_type = control' },
-  { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut). Bei 1 oder 2 folgt die Nachfrage F2 (Grund der Unzufriedenheit), sonst nicht gefragt (NA).', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
+  { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut). Bei 1–2 folgt F2 (was nicht gefallen hat), bei 4–5 folgt F3 (was besonders gefallen hat), bei 3 keine Nachfrage; nicht gestellte Nachfragen sind NA.', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
   { id: 'quality', name: 'Datenqualität', definition: 'Fehlende Hauptantworten, technische Speicherfehler (save_error), Wiederholungs-Verdacht (Browser hatte schon einen Abschluss), Geräteklasse, Sprache.', denominator: 'Starts bzw. erwartete Antworten (Starts × 15)', export: 'participants.csv: device_class, language; events.csv: event_type = save_error / consent' },
 ];
 
@@ -982,9 +984,10 @@ function validateExtras(arr) {
     if (!groups.length) bad(`${id}.groups`);
     const out = { id, section: e.section, kind: e.kind, required: !!e.required, visible: !!e.visible, ordinal: !!e.ordinal, groups };
     if (isObj(e.show_if)) {
-      const max = clampInt(e.show_if.max, 1, 4);
-      if (!ids.has(String(e.show_if.item)) || String(e.show_if.item) === id || max === null) bad(`${id}.show_if`);
-      out.show_if = { item: String(e.show_if.item), max };
+      const max = e.show_if.max == null ? null : clampInt(e.show_if.max, 1, 5);
+      const min = e.show_if.min == null ? null : clampInt(e.show_if.min, 1, 5);
+      if (!ids.has(String(e.show_if.item)) || String(e.show_if.item) === id || (max === null && min === null)) bad(`${id}.show_if`);
+      out.show_if = { item: String(e.show_if.item), ...(max !== null ? { max } : {}), ...(min !== null ? { min } : {}) };
     }
     if (e.kind === 'number') {
       const min = clampInt(e.min, -1000, 100000), max = clampInt(e.max, -1000, 100000);

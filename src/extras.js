@@ -3,7 +3,7 @@
 //          | 'feedback' (letzte Seite vor dem Abschluss: Smiley-Bewertung, im Admin ein-/ausschaltbar)
 // kind: 'choice' (Optionen, Wert = 1..n) | 'number' (ganze Zahl min..max) | 'smiley' (5 Gesichter, Wert 1..5)
 // ordinal: Mittelwert im Dashboard sinnvoll (z. B. 5-Punkte-Zustimmung)
-// show_if: { item, max } – Frage erscheint nur, wenn die Antwort auf 'item' <= max ist (z. B. Nachfrage bei den zwei schlechtesten Smileys)
+// show_if: { item, max?, min? } – Frage erscheint nur, wenn die Antwort auf 'item' <= max bzw. >= min ist (Nachfragen zu den Smileys)
 
 export const SECTIONS = ['manipulation', 'control', 'feedback'];
 export const ALL_GROUPS = ['control', 'gamification', 'motivation'];
@@ -58,10 +58,16 @@ export const DEFAULT_EXTRAS = [
     de: { text: 'Wie hat dir diese Umfrage gefallen?', options: ['Gar nicht gut', 'Eher nicht gut', 'Geht so', 'Eher gut', 'Sehr gut'] },
     en: { text: 'How did you like this survey?', options: ['Not at all', 'Not really', 'So-so', 'Quite good', 'Very good'] },
   },
-  // Nachfrage nur bei den zwei schlechtesten Smileys (show_if): was hat nicht gefallen?
+  // Nachfrage nur bei den zwei schlechtesten Smileys (show_if max 2): was hat nicht gefallen? Bei den zwei besten: F3. Bei "Geht so": keine Nachfrage.
   {
     id: 'F2', section: 'feedback', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', max: 2 },
     de: { text: 'Was hat dir vor allem nicht gefallen?', options: ['Das Design', 'Die Fragen waren zu lang', 'Die Fragen waren schwer zu verstehen', 'Die Umfrage erschien mir sinnlos', 'Es hat zu lange gedauert', 'Technische Probleme', 'Etwas anderes'] },
     en: { text: 'What did you mainly dislike?', options: ['The design', 'The questions were too long', 'The questions were hard to understand', 'The survey seemed pointless', 'It took too long', 'Technical problems', 'Something else'] },
+  },
+  // Nachfrage nur bei den zwei besten Smileys (show_if min 4): was hat besonders gefallen?
+  {
+    id: 'F3', section: 'feedback', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', min: 4 },
+    de: { text: 'Was hat dir besonders gut gefallen?', options: ['Das Design', 'Die Fragen waren interessant', 'Die Fragen waren gut verständlich', 'Die Länge war genau richtig', 'Der Ablauf war abwechslungsreich', 'Die Umfrage erschien mir sinnvoll', 'Etwas anderes'] },
+    en: { text: 'What did you particularly like?', options: ['The design', 'The questions were interesting', 'The questions were easy to understand', 'The length was just right', 'The flow was varied', 'The survey seemed worthwhile', 'Something else'] },
   },
 ];
