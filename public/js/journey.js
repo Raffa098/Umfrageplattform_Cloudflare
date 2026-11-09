@@ -7,7 +7,7 @@
 // Die Szene ist ein langer Streifen, der pro Frage um STEP verschoben wird, die Figur läuft an fester Stelle.
 
 import { isReduced as reduced } from './prefs.js';
-import { sceneSVG, STEP } from './scene.js';
+import { sceneSVG, worldShift } from './scene.js';
 
 const PAR_MID = 14;    // Parallaxe Hügel
 const PAR_FAR = 7;     // Parallaxe Berge
@@ -259,7 +259,7 @@ export function createJourney(host, L, opts = {}) {
     el.classList.toggle('instant', !motion);
     const tr = motion ? `transform ${WALK_MS}ms ${EASE}` : 'none';
     fill.style.transitionDuration = motion ? `${WALK_MS}ms` : '0ms';
-    for (const g of worlds) { g.style.transition = tr; g.style.transform = `translateX(${-n * STEP}px)`; }
+    for (const g of worlds) { g.style.transition = tr; g.style.transform = `translateX(${-worldShift(n)}px)`; }
     far.style.transition = tr; far.style.transform = `translateX(${-n * PAR_MID}px)`;
     far2.style.transition = tr; far2.style.transform = `translateX(${-n * PAR_FAR}px)`;
 

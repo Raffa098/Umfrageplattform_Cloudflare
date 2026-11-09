@@ -1,9 +1,12 @@
 // SVG-Szene der Fortschrittsreise. Welt-Streifen (x = Weltkoordinate, Figur steht bei x = CX + Fragen * STEP):
-//   Wald (Start) · Stadt mit Universität (x≈390, Bachelor nach Q5) · Raketenstation (x≈690, Master nach Q10)
-//   · antikes griechisches Forum (x≈990, Professor nach Q15)
+//   Wald (Start) · Stadt mit Universität (x≈390, Bachelor nach Q5) · Kirmes "Libori" (x≈560–740)
+//   · Raketenstation (x≈840, Master nach Q10) · antikes griechisches Forum (x≈1140, Professor nach Q15)
 // Keine Beschriftungen in der Szene.
 
 export const STEP = 60;   // Pixel pro Frage
+const LIBORI_EXTRA = 150; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
+// Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 je STEP pro Frage, Q5–10 mit Libori-Abschnitt (länger)
+export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5;
 export const CX = 90;     // feste x-Position der Figur im Bild
 export const GY = 132;    // Bodenlinie
 
@@ -232,37 +235,124 @@ function launchRocket() {
   </g></g>`;
 }
 
+// ---------------------------------------------------------------- Kirmes "Libori": Eingangsbogen, Riesenrad, Buden, Langos-Stand
+const awning = (x, y, w, c1, c2) => {
+  const n = 6, sw = (w + 6) / n;
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const x0 = x - 3 + i * sw;
+    s += `<path d="M${x0.toFixed(1)} ${y} h${sw.toFixed(1)} v5 q${(-sw / 2).toFixed(1)} 3.4 ${(-sw).toFixed(1)} 0Z" fill="${i % 2 ? c2 : c1}"/>`;
+  }
+  return s;
+};
+
+function booth(x, w, c1, c2, wares, label) {
+  return `<g><rect x="${x}" y="${GY - 12}" width="${w}" height="12" fill="#8a5a2f"/><rect x="${x}" y="${GY - 12}" width="${w}" height="2.4" fill="#b07a45"/>
+    <rect x="${x + 2}" y="${GY - 31}" width="${w - 4}" height="19.4" fill="#f4e9cf"/>
+    <rect x="${x - 1}" y="${GY - 33}" width="2" height="33" fill="#6a4524"/><rect x="${x + w - 1}" y="${GY - 33}" width="2" height="33" fill="#6a4524"/>
+    ${awning(x, GY - 33, w, c1, c2)}${wares}
+    ${label ? `<rect x="${x + 4}" y="${GY - 29}" width="${w - 8}" height="7" rx="1.5" fill="#3b2a1a"/><text class="lib-sign" x="${x + w / 2}" y="${GY - 23.6}" text-anchor="middle">${label}</text>` : ''}</g>`;
+}
+
+const balloon = (x, y, c, d) => `<g class="lib-bal" style="animation-delay:-${d}s"><path d="M${x} ${y + 5} q-1.5 8 1 14" fill="none" stroke="#8a8a8a" stroke-width=".5"/><ellipse cx="${x}" cy="${y}" rx="3.1" ry="3.7" fill="${c}"/><path d="M${x - .6} ${y + 3.7} h1.2l-.6 1.1Z" fill="${c}"/></g>`;
+
+function wheel(cx, cy, r) {
+  const spokes = [];
+  const gond = [];
+  const cols = ['#e0463a', '#f2c14e', '#3f86c9', '#5da35c'];
+  for (let i = 0; i < 8; i++) {
+    const a = (Math.PI * 2 * i) / 8, x = Math.cos(a) * r, y = Math.sin(a) * r;
+    spokes.push(`<path d="M0 0 L${x.toFixed(1)} ${y.toFixed(1)}" />`);
+    gond.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><g class="lib-gond"><path d="M0 0 V3" stroke="#555" stroke-width=".7"/><path d="M-3.2 3 h6.4 v4.4 q-3.2 1.6 -6.4 0Z" fill="${cols[i % 4]}"/><rect x="-3.2" y="3" width="6.4" height="1.3" fill="#fff" opacity=".6"/></g></g>`);
+  }
+  const lights = Array.from({ length: 16 }, (_, i) => {
+    const a = (Math.PI * 2 * i) / 16;
+    return `<circle class="lib-light" cx="${(Math.cos(a) * r).toFixed(1)}" cy="${(Math.sin(a) * r).toFixed(1)}" r="1.2" style="animation-delay:-${(i * 0.25).toFixed(2)}s"/>`;
+  }).join('');
+  return `<g transform="translate(${cx} ${cy})">
+    <path d="M0 0 L-17 ${GY - cy} M0 0 L17 ${GY - cy}" stroke="#6b7384" stroke-width="2.6" stroke-linecap="round"/><path d="M-13 ${GY - cy - 12} H13" stroke="#6b7384" stroke-width="1.2"/>
+    <g class="lib-wheel"><circle r="${r}" fill="none" stroke="#9aa3b4" stroke-width="2"/><circle r="${r * 0.55}" fill="none" stroke="#9aa3b4" stroke-width="1"/>
+      <g stroke="#9aa3b4" stroke-width="1" fill="none">${spokes.join('')}</g>${lights}${gond.join('')}</g>
+    <circle r="3" fill="#e0463a" stroke="#fff" stroke-width="1"/></g>`;
+}
+
+function libori() {
+  const x0 = 556; // Eingangsbogen
+  const arch = `<g><rect x="${x0}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/><rect x="${x0 + 40.6}" y="${GY - 50}" width="3.4" height="50" fill="#7a2a2a"/>
+    <path d="M${x0 - 2} ${GY - 50} Q${x0 + 22} ${GY - 62} ${x0 + 46} ${GY - 50}" fill="none" stroke="#e8b93f" stroke-width="2.4"/>
+    <rect x="${x0 - 3}" y="${GY - 48}" width="50" height="14" rx="3" fill="#b3262f" stroke="#e8b93f" stroke-width="1.6"/>
+    <text class="lib-name" x="${x0 + 22}" y="${GY - 37.4}" text-anchor="middle">Libori</text>
+    ${[0, 1, 2, 3, 4, 5].map((i) => `<circle class="lib-light" cx="${x0 + 3 + i * 8}" cy="${GY - 48 + (i % 2) * 0}" r="1.1" style="animation-delay:-${i * 0.3}s"/>`).join('')}</g>`;
+  const rnd2 = rand(5);
+  const sweets = [0, 1, 2, 3].map((i) => `<circle cx="${608 + i * 6.2}" cy="${GY - 15}" r="2.4" fill="${['#ff7aa8', '#ffd34d', '#7fd4ff', '#b9ff9f'][i]}"/>`).join('');
+  const prizes = [0, 1, 2].map((i) => `<rect x="${672 + i * 7.6}" y="${GY - 20}" width="5.6" height="7.6" rx="1.4" fill="${['#e0463a', '#3f86c9', '#f2c14e'][i]}"/>`).join('');
+  // Langos-Stand: goldene Teigfladen auf der Theke, Dampf, Verkäufer
+  const langos = [0, 1, 2].map((i) => `<ellipse cx="${712 + i * 7.5}" cy="${GY - 13.2}" rx="3.6" ry="1.5" fill="#e2a64b"/><ellipse cx="${712 + i * 7.5}" cy="${GY - 13.8}" rx="2.4" ry=".9" fill="#f3c872"/>`).join('');
+  const steam = [0, 1, 2].map((i) => `<circle class="steam" cx="${714 + i * 7}" cy="${GY - 18}" r="1.9" style="animation-delay:-${i * 0.9}s"/>`).join('');
+  const vendor = person(726, GY - 12, 'e', 2, 0.5, true);
+  const guest = person(754 - 12, GY - 2, 'b', 1, 1.4, true) + person(754 - 3, GY - 2, 'f', 3, 0.8, true);
+  void rnd2;
+  return `<g class="libori">
+    ${wheel(652, GY - 44, 32)}
+    ${arch}
+    ${booth(604, 30, '#e0463a', '#ffffff', sweets, 'Süßes')}
+    ${booth(668, 30, '#3f86c9', '#ffffff', prizes + balloon(682, GY - 40, '#e0463a', 0) + balloon(688, GY - 42, '#f2c14e', 1) + balloon(694, GY - 39, '#3f86c9', 2), 'Lose')}
+    ${booth(704, 40, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
+    ${vendor}${guest}
+    ${garland(x0 + 44, GY - 52, 652, GY - 74, 5)}${garland(652, GY - 74, 744, GY - 33, 7)}
+  </g>`;
+}
+
+// Tesla (rot) auf der vorderen Rakete: steht auf einer kleinen Plattform an der Nase und ist mit zwei Seilen an der Rakete festgebunden
+function tesla(cx) {
+  const py = GY - 103; // Plattform direkt unter der Nasenspitze (bleibt im sichtbaren Bildausschnitt)
+  return `<g class="tesla">
+    <path class="rope" d="M${cx - 11} ${py + 1} Q${cx - 15} ${GY - 93} ${cx - 10} ${GY - 84}"/><path class="rope" d="M${cx + 11} ${py + 1} Q${cx + 15} ${GY - 93} ${cx + 10} ${GY - 84}"/>
+    <rect x="${cx - 12}" y="${py}" width="24" height="2.4" rx="1" fill="#6b7384"/>
+    <g transform="translate(${cx} ${py}) scale(.78)"><g class="tesla-car">
+      <path d="M-14 -2 Q-14.6 -5.4 -10.6 -6.2 L-4.6 -7.4 Q-1 -11.6 4.4 -11.6 L8.4 -7.6 L12.6 -6.6 Q15.2 -5.8 15 -2Z" fill="#c8202f"/>
+      <path d="M-2.4 -7.6 Q0.4 -10.2 4.2 -10.2 L7 -7.8Z" fill="#cfe8f5"/>
+      <path d="M-13 -4.6 H14.4" stroke="#8d1520" stroke-width=".6"/>
+      <circle cx="-8" cy="-1.4" r="3.1" fill="#1b1b1f"/><circle cx="-8" cy="-1.4" r="1.2" fill="#aeb6c4"/>
+      <circle cx="8.4" cy="-1.4" r="3.1" fill="#1b1b1f"/><circle cx="8.4" cy="-1.4" r="1.2" fill="#aeb6c4"/>
+      <circle cx="14.6" cy="-4.4" r="1" fill="#fff7c2"/>
+      <text class="tesla-t" x="-1.5" y="-3.2" text-anchor="middle">T</text>
+    </g></g></g>`;
+}
+
 // ---------------------------------------------------------------- Szene
 export function sceneSVG() {
   const forest = [[6, 1.05, 'p'], [38, 1.35, 'p'], [72, 0.9, 'o'], [114, 1.2, 'p'], [148, 0.85, 'p'], [184, 1.25, 'o'],
     [222, 1.0, 'p'], [256, 1.3, 'p'], [294, 0.95, 'o'], [318, 0.8, 'p']];
-  const city = [[262, 38, 66, 'a'], [300, 34, 52, 'b'], [536, 40, 84, 'b'], [580, 34, 62, 'c']];
+  const city = [[262, 38, 66, 'a'], [300, 34, 52, 'b']];
   const stars = [[24, 18], [60, 40], [96, 14], [140, 30], [182, 12], [220, 38], [252, 20], [290, 50], [332, 16], [348, 44], [120, 54]];
   const motes = [[40, 70, 1.6, 0], [120, 40, 1.2, 2], [190, 85, 1.8, 4], [250, 55, 1.3, 1], [310, 90, 1.5, 3], [80, 100, 1.1, 5]]
     .map(([x, y, r, d]) => `<circle class="mote" cx="${x}" cy="${y}" r="${r}" style="animation-delay:-${d}s"/>`).join('');
 
   const back = `
     <rect class="g-forest" x="-60" y="${GY - 4}" width="400" height="40"/>
-    <rect class="g-city" x="330" y="${GY - 4}" width="300" height="40"/>
-    <rect class="g-space" x="620" y="${GY - 4}" width="290" height="40"/>
-    <rect class="g-greek" x="900" y="${GY - 4}" width="560" height="40"/>
+    <rect class="g-city" x="330" y="${GY - 4}" width="440" height="40"/>
+    <rect class="g-space" x="770" y="${GY - 4}" width="290" height="40"/>
+    <rect class="g-greek" x="1050" y="${GY - 4}" width="700" height="40"/>
 
     ${forest.map(([x, s, t], i) => (t === 'p' ? pine : oak)(x, s, (i * 0.7) % 5)).join('')}
 
     ${city.map(([x, w, h, v], i) => building(x, w, h, v, 17 + i * 31)).join('')}
     ${university(430)}
-    ${lamp(334)}${lamp(528)}${lamp(612)}${oak(560, 0.8, 1.2)}
+    ${lamp(334)}${lamp(550)}${libori()}${lamp(752)}
 
+    <g transform="translate(150 0)">
     ${hangar(598)}
-    ${gantry(722, 18)}${rocket(766)}
+    ${gantry(722, 18)}${rocket(766)}${tesla(766)}
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
     ${forum(1100)}
     ${cypress(922, 1, 0.4)}${olive(1290, 1.05, 2)}
+    </g>
 
-    <rect class="path" x="-60" y="${GY + 1}" width="1520" height="8" rx="4"/>
-    <path class="path-dash" d="M-60 ${GY + 5} H1460"/>`;
+    <rect class="path" x="-60" y="${GY + 1}" width="1760" height="8" rx="4"/>
+    <path class="path-dash" d="M-60 ${GY + 5} H1700"/>`;
 
   const front = [16, 130, 210, 300].map(tuft).join('');
 

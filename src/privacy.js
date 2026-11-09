@@ -34,7 +34,7 @@ Die Daten werden ausschließlich für die wissenschaftliche Auswertung dieses Ex
 Die Umfrage wird über die Plattform Cloudflare (Cloudflare Workers und die Datenbank Cloudflare D1) betrieben. Beim Aufruf der Seite verarbeitet der Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. die IP-Adresse), um die Seite auszuliefern und abzusichern. Wir selbst speichern diese Daten nicht in unserer Umfragedatenbank und werten sie nicht aus. [Auftragsverarbeitungsvertrag, Datenstandort und eine mögliche Übermittlung in Drittländer prüfen und hier beschreiben.]
 
 ## 6. Speicherung im Browser
-Damit du nach einem Neuladen an derselben Stelle weitermachen kannst, speichert die Umfrage in deinem Browser (Local Storage) deine Sitzungs-ID, die Sprache, den Fortschritt und – falls du sie einstellst – dein Farbschema sowie die Einstellung „Bewegung reduzieren“. Es werden keine Tracking-Cookies verwendet. Du kannst diese Daten jederzeit über die Einstellungen deines Browsers löschen.
+Damit du nach einem Neuladen an derselben Stelle weitermachen kannst, speichert die Umfrage in deinem Browser (Local Storage) deine Sitzungs-ID, die Sprache, den Fortschritt und – falls du es einstellst – dein Farbschema. Es werden keine Tracking-Cookies verwendet. Du kannst diese Daten jederzeit über die Einstellungen deines Browsers löschen.
 
 ## 7. Freiwilliges Gewinnspiel
 Nach Abschluss erhältst du einen zufälligen Teilnahme-Code. Wenn du am Gewinnspiel teilnehmen möchtest, schreibst du uns freiwillig selbst eine E-Mail mit diesem Code an die angegebene Kontaktadresse. Dabei verarbeiten wir deine E-Mail-Adresse und den Code ausschließlich, um das Gewinnspiel durchzuführen. Der Code wird getrennt von deinen Umfrageantworten gespeichert; wir ordnen ihn deinen Antworten nicht zu. [Zweck, Rechtsgrundlage, Löschfrist und Teilnahmebedingungen für die E-Mail-Verarbeitung ergänzen.]
@@ -82,7 +82,7 @@ The data are used exclusively for the scientific analysis of this experiment. Th
 The survey is operated via the Cloudflare platform (Cloudflare Workers and the Cloudflare D1 database). When you open the page, the hosting provider processes technically necessary connection data (e.g. the IP address) in order to deliver and secure the page. We ourselves do not store these data in our survey database and do not analyse them. [Check the data processing agreement, data location and any transfer to third countries and describe them here.]
 
 ## 6. Storage in your browser
-So that you can continue where you left off after a reload, the survey stores your session ID, language, progress and – if you set them – your colour scheme and the “reduce motion” setting in your browser (Local Storage). No tracking cookies are used. You can delete these data at any time in your browser settings.
+So that you can continue where you left off after a reload, the survey stores your session ID, language, progress and – if you set it – your colour scheme in your browser (Local Storage). No tracking cookies are used. You can delete these data at any time in your browser settings.
 
 ## 7. Voluntary prize draw
 After completing the survey you receive a random participation code. If you want to take part in the prize draw, you voluntarily send us an e-mail with this code to the contact address given. We process your e-mail address and the code solely to run the prize draw. The code is stored separately from your survey answers; we do not link it to your answers. [Add purpose, legal basis, retention period and terms of participation for the e-mail processing.]
