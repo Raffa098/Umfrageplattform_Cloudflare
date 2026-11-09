@@ -468,3 +468,4 @@ export function sceneSVG() {
     <rect x="0" y="0" width="360" height="160" fill="url(#jg-vig)" pointer-events="none"/>
   </svg>`;
 }
+// Stand: Libori mit Tor-Karussell (Version 3)
