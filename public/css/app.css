@@ -499,3 +499,6 @@ h1, h2, p { margin: 0; }
 .more-list li { margin: 5px 0; }
 
 .hero-lang { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; }
+
+.lang-welcome { font-size: clamp(1.7rem, 7vw, 2.3rem); margin: 0 0 6px; }
+.lang-ask { font-size: 1.05rem; margin: 0 0 22px; }
