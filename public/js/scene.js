@@ -294,6 +294,20 @@ function carousel(cx) {
     <circle cx="${cx}" cy="${GY - 49.5}" r="1.8" fill="#ffe08a"/></g>`;
 }
 
+// Bude im seitlichen Profil: geschlossene Seitenwand mit Holzbrettern und Fenster, schräges Dach, Laterne
+function sideBooth(x) {
+  const d = 20;
+  const slats = [4, 8, 12, 16].map((k) => `<path d="M${x + k} ${GY - 11} V${GY}" stroke="#6a4524" stroke-width=".5"/>`).join('');
+  return `<g class="lib-side">
+    <rect x="${x}" y="${GY - 27}" width="${d}" height="27" fill="#a2703d"/><rect x="${x}" y="${GY - 27}" width="${d}" height="2" fill="#7e5429"/>
+    <path d="M${x} ${GY - 11} H${x + d}" stroke="#6a4524" stroke-width=".7"/>${slats}
+    <rect x="${x + 5}" y="${GY - 22}" width="10" height="9" rx="1" fill="#f4e9cf" stroke="#6a4524" stroke-width=".7"/><path d="M${x + 10} ${GY - 22} V${GY - 13} M${x + 5} ${GY - 17.5} H${x + 15}" stroke="#6a4524" stroke-width=".5"/>
+    <path d="M${x - 4} ${GY - 27} L${x + d + 4} ${GY - 33} V${GY - 29.5} L${x - 4} ${GY - 23.5}Z" fill="#e0463a"/>
+    <path d="M${x + 1} ${GY - 26.2} l3 -.7 v3.4 l-3 .7Z M${x + 9} ${GY - 28.2} l3 -.7 v3.4 l-3 .7Z M${x + 17} ${GY - 30.2} l3 -.7 v3.4 l-3 .7Z" fill="#ffffff" opacity=".9"/>
+    <path d="M${x + d + 2} ${GY - 31} V${GY - 22}" stroke="#6a4524" stroke-width="1"/><circle class="lib-light" cx="${x + d + 2}" cy="${GY - 20.6}" r="2" style="animation-delay:-.6s"/>
+  </g>`;
+}
+
 function libori() {
   const x0 = 655; // hoher Eingangsbogen in der Mitte der Kirmes; man sieht das Karussell durch das Tor
   const arch = `<g><rect x="${x0}" y="${GY - 70}" width="3.4" height="70" fill="#7a2a2a"/><rect x="${x0 + 42.6}" y="${GY - 70}" width="3.4" height="70" fill="#7a2a2a"/>
@@ -309,7 +323,7 @@ function libori() {
   const mugs = [0, 1, 2].map((k) => `<g transform="translate(${800 + k * 7.6} ${GY - 21})"><rect x="0" y="2" width="5" height="7.4" rx="1" fill="#e2a64b" opacity=".95"/><rect x="0" y="0.2" width="5" height="3" rx="1.4" fill="#fffdf2"/><path d="M5 3.6 h1.6 v3.4 h-1.6" fill="none" stroke="#c9d3df" stroke-width=".8"/></g>`).join('');
   const keg = `<g transform="translate(838 ${GY})"><ellipse cx="0" cy="-7.4" rx="5.6" ry="7.4" fill="#8a5a2f"/><path d="M-5.4 -11 H5.4 M-5.6 -4 H5.6" stroke="#c9a66b" stroke-width="1"/><circle cx="0" cy="-7.4" r="1.2" fill="#f2c14e"/></g>`;
   return `<g class="libori">
-    ${carousel(679)}
+    ${carousel(664)}${sideBooth(704)}
     ${booth(lx, 36, '#f2c14e', '#ffffff', langos + steam, 'Langos')}
     ${person(lx + 24, GY - 12, 'e', 2, 0.5, true)}
     ${person(lx - 6, GY - 2, 'c', 2, 0.3, true)}${person(lx - 15, GY - 2, 'a', 1, 1.6, true)}
@@ -405,7 +419,7 @@ export function sceneSVG() {
 
     ${city.map(([x, w, h, v], i) => building(x, w, h, v, 17 + i * 31)).join('')}
     ${university(430)}
-    ${lamp(334)}${lamp(542)}${libori()}${lamp(846)}
+    ${lamp(334)}${oak(552, 0.9, 1.3)}${pine(566, 0.95, 2.2)}${lamp(542)}${libori()}${pine(864, 1, 0.8)}${oak(880, 0.9, 3.1)}${lamp(846)}
 
     <g transform="translate(250 0)">
     ${hangar(646)}
