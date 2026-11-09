@@ -203,7 +203,7 @@ function langScreen() {
   setTreatmentVisible(false);
   return show(`
     <section class="hero hero-lang stagger">
-      <h1 class="lang-welcome" style="--i:0">Welcome to our survey</h1>
+      <h1 class="lang-welcome" style="--i:0">Welcome to Our Survey</h1>
       <p class="muted lang-ask" style="--i:0">Please choose a language</p>
       <div class="lang-grid" style="--i:1" role="group" aria-label="Sprache · Language">
         ${['de', 'en'].map((l) => `
