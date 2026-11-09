@@ -1,10 +1,10 @@
 // SVG-Szene der Fortschrittsreise. Welt-Streifen (x = Weltkoordinate, Figur steht bei x = CX + Fragen * STEP):
 //   Wald (Start) · Stadt mit Universität (x≈390, Bachelor nach Q5) · Kirmes "Libori" (x≈550–830)
-//   · Raketenstation (x≈1016, Master nach Q10) · antikes griechisches Forum (x≈1316, Professor nach Q15)
+//   · Raketenstation (x≈1016, Master nach Q10, Figur stoppt leicht davor) · antikes griechisches Forum (x≈1290, Professor nach Q15)
 // Keine Beschriftungen in der Szene.
 
 export const STEP = 60;   // Pixel pro Frage
-const LIBORI_EXTRA = 326; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
+const LIBORI_EXTRA = 300; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
 // Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 je STEP pro Frage, Q5–10 mit Libori-Abschnitt (länger)
 export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5;
 export const CX = 90;     // feste x-Position der Figur im Bild
@@ -263,7 +263,7 @@ function forum(cx) {
 function launchRocket() {
   const puffs = [[-16, 0], [-7, -1.2], [3, -0.6], [12, -1.8], [19, 0.4]]
     .map(([x, d], i) => `<circle class="fxr-puff" cx="${x}" cy="${GY - 4}" r="${7 + (i % 2) * 3}" style="animation-delay:${(i * 0.12).toFixed(2)}s"/>`).join('');
-  return `<g transform="translate(298 124) scale(.5) translate(0 ${-GY})"><g class="fxr">
+  return `<g transform="translate(240 124) scale(.5) translate(0 ${-GY})"><g class="fxr">
     <rect class="fxr-trail" x="-5" y="${GY - 8 - 520}" width="10" height="520" rx="5"/>
     ${puffs}
     <g class="fxr-lift">${rocket(0)}
@@ -461,7 +461,7 @@ export function sceneSVG() {
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
-    ${forum(1066)}
+    ${forum(1040)}
     ${cypress(922, 1, 0.4)}${olive(1290, 1.05, 2)}
     </g>
 
