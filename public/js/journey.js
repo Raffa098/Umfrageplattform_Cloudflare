@@ -25,6 +25,8 @@ const levelOf = (n) => (n >= 15 ? 3 : n >= 10 ? 2 : n >= 5 ? 1 : 0);
 
 // ---------------------------------------------------------------- Icons
 const I = {
+  dot: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 5h11l-2.2 4L17 13H6"/></svg>',
   star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
   student: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.7-4 3.6-6 7.5-6s6.8 2 7.5 6"/></svg>',
   cap: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5"/><path d="M22 9v6"/></svg>',
@@ -41,6 +43,13 @@ export function createJourney(host, L, opts = {}) {
   const EASE = EASINGS[opts.easing] || EASINGS.standard;
   const CONFETTI = opts.confetti !== false;
   const PPA = Number(opts.points_per_answer) || 50;
+  // Meilensteine unter der Szene: nur Start · Punkte · Ziel (keine Titel/Weltnamen)
+  const MILESTONES = [
+    { icon: I.dot, label: L.jStart },
+    { icon: I.star, label: `${5 * PPA} ${L.points}` },
+    { icon: I.star, label: `${10 * PPA} ${L.points}` },
+    { icon: I.flag, label: L.goal },
+  ];
 
   const el = document.createElement('div');
   el.className = 'journey';
@@ -49,7 +58,7 @@ export function createJourney(host, L, opts = {}) {
     <div class="j-scene">${sceneSVG()}
       <div class="j-hud">
         <div class="j-pill j-pts-pill"><span class="j-ic gold">${I.star}</span><b class="j-pts">0</b><span class="j-unit">${L.points}</span></div>
-        <div class="j-pill j-rank-pill" title="${L.ranks[0]}"><span class="j-ic j-rank-ic">${RANK_ICONS[0]}</span></div>
+        <div class="j-pill j-rank-pill"><span class="j-ic j-rank-ic">${RANK_ICONS[0]}</span><b class="j-rank">${L.ranks[0]}</b></div>
       </div>
       <div class="j-plus" aria-hidden="true">+${PPA}</div>
       <div class="j-ach" role="status" aria-live="polite"><span class="ach-ic">${I.cap}</span><span class="ach-txt"><b></b><small></small></span></div>
@@ -58,7 +67,7 @@ export function createJourney(host, L, opts = {}) {
     </div>
     <div class="j-ladder" aria-hidden="true">
       <div class="lad-line"><i class="lad-fill"></i></div>
-      ${RANK_ICONS.map((ic, i) => `<div class="lad-node${i === 0 ? ' on' : ''}" data-i="${i}"><span class="lad-dot">${ic}</span></div>`).join('')}
+      ${MILESTONES.map((m, i) => `<div class="lad-node${i === 0 ? ' on' : ''}" data-i="${i}"><span class="lad-dot">${m.icon}</span><small>${m.label}</small></div>`).join('')}
     </div>`;
   host.appendChild(el);
 
@@ -69,7 +78,7 @@ export function createJourney(host, L, opts = {}) {
   const char = q('.j-char');
   const fill = q('.lad-fill');
   const ptsEl = q('.j-pts'), ptsPill = q('.j-pts-pill');
-  const rankIc = q('.j-rank-ic'), rankPill = q('.j-rank-pill');
+  const rankIc = q('.j-rank-ic'), rankPill = q('.j-rank-pill'), rankEl = q('.j-rank');
   const nodes = [...el.querySelectorAll('.lad-node')];
   const plus = q('.j-plus');
   const ach = q('.j-ach');
@@ -208,7 +217,7 @@ export function createJourney(host, L, opts = {}) {
     lvl = l;
     char.dataset.level = String(l);
     rankIc.innerHTML = RANK_ICONS[l];
-    rankPill.title = L.ranks[l];
+    rankEl.textContent = L.ranks[l];
     el.dataset.level = String(l);
     nodes.forEach((nd) => nd.classList.toggle('on', Number(nd.dataset.i) <= l));
     if (pulse) { rankPill.classList.remove('bump'); void rankPill.offsetWidth; rankPill.classList.add('bump'); }

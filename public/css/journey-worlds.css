@@ -102,8 +102,6 @@
 .fw-flash { transform-box: fill-box; transform-origin: center; animation: fwFlash .5s ease-out both; }
 @keyframes fwFlash { from { transform: scale(.2); opacity: .95; } to { transform: scale(1.8); opacity: 0; } }
 
-/* Rang-Symbol und Rangleiste ohne Beschriftung */
-.j-rank-pill { padding: 5px; }
-.j-ladder { margin-top: 12px; }
-.lad-line { left: 18px; right: 18px; }
-.lad-node { width: 36px; }
+/* Meilensteine: Start · Punkte · Ziel */
+.lad-node { white-space: nowrap; }
+.lad-node:first-of-type small { margin-left: 0; }
