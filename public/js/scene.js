@@ -61,21 +61,44 @@ function mountains() {
 
 // ---------------------------------------------------------------- Stadt mit Universität (Bachelor)
 function university(cx) {
-  const cols = [0, 1, 2, 3, 4, 5].map((i) => `<rect class="uni-col" x="${cx - 80 + i * 30}" y="78" width="10" height="45" rx="1.5"/>`).join('');
+  // Moderner Hochschulbau (nach dem Vorbild der Universität Paderborn): auskragender Obergeschoss-Block aus Aluminiumpaneelen
+  // mit dreigeschossiger Lamellenfassade, Schriftzug unter der Auskragung, schlanke Stütze, Klinker-Erdgeschoss mit Lamellenfenstern, Hecke.
+  const L = cx - 96, W = 196;
+  const rowY = [GY - 90, GY - 74, GY - 58];
+  const slatsFor = (y) => {
+    let d = '';
+    for (let x = L + 10; x < L + 116; x += 3.1) d += `M${x.toFixed(1)} ${y + 0.8} V${y + 13.2}`;
+    return `<path class="u2-slat" d="${d}"/>`;
+  };
+  const rows = rowY.map((y) => `<rect class="u2-glass" x="${L + 8}" y="${y}" width="108" height="14"/>${slatsFor(y)}`).join('');
+  const seams = [0, 1, 2, 3, 4, 5].map((k) => `M${L + 118} ${GY - 90 + k * 9.4}H${L + W}`).join('');
+  const brickLines = [0, 1, 2, 3].map((k) => `M${L + 16} ${GY - 24 + k * 6}H${L + W - 4}`).join('');
+  const panes = [0, 1, 2, 3].map((k) => `<rect class="u2-win" x="${L + 56 + k * 9}" y="${GY - 25}" width="7" height="10"/>`).join('');
+  let louv = '';
+  for (let k = 0; k < 7; k++) louv += `<rect class="u2-louv" x="${L + 118 + k * 9}" y="${GY - 19}" width="8" height="12"/>`;
+  let hedge = '';
+  for (let x = L - 2; x < L + W + 6; x += 8) hedge += `<circle class="u2-hedge" cx="${x}" cy="${GY - 1.2}" r="${3.6 + (x % 3) * 0.5}"/>`;
   return `<g class="uni">
-    <rect class="uni-step" x="${cx - 106}" y="${GY - 3}" width="212" height="5" rx="1"/>
-    <rect class="uni-step2" x="${cx - 98}" y="${GY - 8}" width="196" height="5" rx="1"/>
-    <rect class="uni-wall" x="${cx - 90}" y="74" width="180" height="50"/>
-    ${cols}
-    <path class="uni-door" d="M${cx - 9} 124 V108 a9 9 0 0 1 18 0 V124Z"/>
-    <rect class="uni-beam" x="${cx - 96}" y="71" width="192" height="10" rx="1"/>
-    <rect x="${cx - 62}" y="72.4" width="124" height="7.2" rx="1.4" fill="#2b2250"/>
-    <text class="uni-sign" x="${cx}" y="78.2" text-anchor="middle">Universität Paderborn</text>
-    <path class="uni-roof" d="M${cx - 102} 71 L${cx} 38 L${cx + 102} 71Z"/>
-    <circle class="uni-crest" cx="${cx}" cy="58" r="7"/>
-    <path class="uni-crest-in" d="M${cx} 53.6 l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z"/>
-    <rect class="pole" x="${cx - 0.8}" y="15" width="1.6" height="24"/>
-    <path class="uni-flag" d="M${cx + 1} 16 q8 -3 16 0 t16 0 v10 q-8 -3 -16 0 t-16 0Z"/>
+    <rect class="u2-pillar" x="${L - 5}" y="${GY - 36}" width="3.4" height="36" rx="1.4"/>
+    <rect class="u2-brick" x="${L + 16}" y="${GY - 33}" width="${W - 20}" height="33"/>
+    <path class="u2-brick-l" d="${brickLines}"/>
+    <rect class="u2-band" x="${L + 16}" y="${GY - 31}" width="${W - 20}" height="2.6"/>
+    <rect class="u2-glass" x="${L + 16}" y="${GY - 28}" width="32" height="26"/>
+    <path class="u2-hslat" d="M${L + 17} ${GY - 25}H${L + 47}M${L + 17} ${GY - 21}H${L + 47}M${L + 17} ${GY - 17}H${L + 47}M${L + 17} ${GY - 13}H${L + 47}M${L + 17} ${GY - 9}H${L + 47}M${L + 17} ${GY - 5}H${L + 47}"/>
+    ${panes}
+    <rect class="u2-band" x="${L + 54}" y="${GY - 26.6}" width="38" height="1.4"/><rect class="u2-band" x="${L + 54}" y="${GY - 14.6}" width="38" height="1.4"/>
+    <rect class="u2-win" x="${L + 100}" y="${GY - 18}" width="10" height="17"/>
+    <rect class="u2-band" x="${L + 114}" y="${GY - 21.4}" width="${W - 118}" height="1.6"/>${louv}
+    <rect class="u2-panel" x="${L}" y="${GY - 94}" width="${W}" height="60" rx="1.2"/>
+    <path class="u2-seam" d="${seams}"/>
+    ${rows}
+    <path class="u2-mull" d="M${L + 8} ${GY - 76}H${L + 116}M${L + 8} ${GY - 60}H${L + 116}"/>
+    <rect class="u2-fascia" x="${L + 8}" y="${GY - 44}" width="108" height="9"/>
+    <text class="u2-text" x="${L + 11}" y="${GY - 37.4}">UNIVERSITÄT PADERBORN</text>
+    <rect class="u2-soffit" x="${L - 2}" y="${GY - 35}" width="${W + 4}" height="3.6" rx="1"/>
+    <rect class="pole" x="${cx + 52}" y="${GY - 118}" width="1.6" height="25"/>
+    <path class="uni-flag" d="M${cx + 53.6} ${GY - 117} q8 -3 16 0 t16 0 v10 q-8 -3 -16 0 t-16 0Z"/>
+    ${hedge}
   </g>`;
 }
 
