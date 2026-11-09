@@ -60,13 +60,13 @@ export const DEFAULT_EXTRAS = [
   },
   // Nachfrage nur bei den zwei schlechtesten Smileys (show_if max 2): was hat nicht gefallen? Bei den zwei besten: F3. Bei "Geht so": keine Nachfrage.
   {
-    id: 'F2', section: 'feedback', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', max: 2 },
+    id: 'F2', section: 'feedback', kind: 'choice', required: false, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', max: 2 },
     de: { text: 'Was hat dir vor allem nicht gefallen?', options: ['Das Design', 'Die Fragen waren zu lang', 'Die Fragen waren schwer zu verstehen', 'Die Umfrage erschien mir sinnlos', 'Es hat zu lange gedauert', 'Technische Probleme', 'Etwas anderes'] },
     en: { text: 'What did you mainly dislike?', options: ['The design', 'The questions were too long', 'The questions were hard to understand', 'The survey seemed pointless', 'It took too long', 'Technical problems', 'Something else'] },
   },
   // Nachfrage nur bei den zwei besten Smileys (show_if min 4): was hat besonders gefallen?
   {
-    id: 'F3', section: 'feedback', kind: 'choice', required: true, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', min: 4 },
+    id: 'F3', section: 'feedback', kind: 'choice', required: false, visible: true, ordinal: false, groups: ALL_GROUPS, show_if: { item: 'F1', min: 4 },
     de: { text: 'Was hat dir besonders gut gefallen?', options: ['Das Design', 'Die Fragen waren interessant', 'Die Fragen waren gut verständlich', 'Die Länge war genau richtig', 'Der Ablauf war abwechslungsreich', 'Die Umfrage erschien mir sinnvoll', 'Etwas anderes'] },
     en: { text: 'What did you particularly like?', options: ['The design', 'The questions were interesting', 'The questions were easy to understand', 'The length was just right', 'The flow was varied', 'The survey seemed worthwhile', 'Something else'] },
   },
