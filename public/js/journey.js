@@ -46,8 +46,8 @@ export function createJourney(host, L, opts = {}) {
   // Meilensteine unter der Szene: nur Start · Punkte · Ziel (keine Titel/Weltnamen)
   const MILESTONES = [
     { icon: I.dot, label: L.jStart },
-    { icon: I.star, label: '', cls: 'pts' },  // nur das Punkte-Zeichen (Stern), keine Zahl und kein Text
-    { icon: I.star, label: '', cls: 'pts' },
+    { icon: I.dot, label: '' }, // nur ein einfacher Punkt als Zeichen, keine Zahl und kein Text
+    { icon: I.dot, label: '' },
     { icon: I.flag, label: L.goal },
   ];
 

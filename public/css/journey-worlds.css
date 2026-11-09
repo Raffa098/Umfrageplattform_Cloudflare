@@ -140,8 +140,3 @@
 
 /* Banner im Forum: Schriftzug UPB */
 .bn-t { fill: #fff; font: 800 6.4px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .04em; }
-
-/* Punkte-Meilensteine: nur ein goldener Stern als Zeichen (wie in der Punkte-Anzeige), ohne Beschriftung */
-.lad-node.pts .lad-dot { color: #d79a2b; border-color: #e9c26a; }
-.lad-node.pts .lad-dot svg { fill: currentColor; stroke: none; }
-.lad-node.pts.on .lad-dot { background: linear-gradient(140deg, #ffd466, #f2a93b); border-color: transparent; color: #fff; box-shadow: 0 10px 20px -10px #f2a93b; }
