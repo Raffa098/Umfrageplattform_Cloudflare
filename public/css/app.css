@@ -497,3 +497,5 @@ h1, h2, p { margin: 0; }
 
 .more-list { margin: 8px 0 0; padding-left: 1.2em; }
 .more-list li { margin: 5px 0; }
+
+.hero-lang { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; }

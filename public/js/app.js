@@ -202,20 +202,8 @@ const MOT_ICONS = [
 function langScreen() {
   setTreatmentVisible(false);
   return show(`
-    <section class="hero stagger">
-      <div class="hero-art" aria-hidden="true" style="--i:0">
-        <svg viewBox="0 0 120 120">
-          <path class="ha-path ha-a" d="M60 104 C60 80 60 70 60 62 C60 48 36 44 30 22"/>
-          <path class="ha-path ha-b" d="M60 62 C60 48 84 44 90 22"/>
-          <circle class="ha-node ha-n0" cx="60" cy="104" r="6"/>
-          <circle class="ha-node ha-n1" cx="30" cy="22" r="7"/>
-          <circle class="ha-node ha-n2" cx="90" cy="22" r="7"/>
-          <circle class="ha-dot" r="4"><animateMotion dur="3.6s" repeatCount="indefinite" path="M60 104 C60 80 60 70 60 62 C60 48 84 44 90 22"/></circle>
-        </svg>
-      </div>
-      <h1 style="--i:1">${STRINGS.de.brand}<span class="sub">${STRINGS.de.langTitle} · ${STRINGS.de.langSub}</span></h1>
-      <p class="muted" style="--i:2">${STRINGS.de.langPrompt}</p>
-      <div class="lang-grid" style="--i:3">
+    <section class="hero hero-lang stagger">
+      <div class="lang-grid" style="--i:1" role="group" aria-label="Sprache · Language">
         ${['de', 'en'].map((l) => `
           <button type="button" class="lang" data-l="${l}">
             <span class="lang-code">${l.toUpperCase()}</span>
