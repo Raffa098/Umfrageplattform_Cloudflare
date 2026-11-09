@@ -78,7 +78,8 @@ code { font: .84rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; ba
 .phone iframe { width: 100%; height: 100%; border: 0; border-radius: 34px; background: var(--bg); }
 
 .banner { margin: 0 0 14px; padding: 12px 16px; border-radius: 14px; font-size: .9rem; background: var(--surface-3); color: var(--muted); border: 1px solid var(--border); }
-.banner.warn { background: var(--warm-soft); color: var(--text); border-color: var(--warm); }
+.banner.warn { background: #fcebdf; color: var(--text); border-color: #d9622a; }
+:root[data-theme="dark"] .banner.warn { background: rgba(240, 138, 75, .15); border-color: #f08a4b; }
 .banner.info b { color: var(--text); }
 .qd { margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 4px 16px; }
 .qd summary { display: flex; align-items: center; gap: 12px; padding: 12px 0; cursor: pointer; list-style-position: inside; }

@@ -155,6 +155,7 @@ async function loadOverview() {
     <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GROUPS[g]}</th>${a.blocks.map((b) => `<td>${pct(b)}</td>`).join('')}</tr>`).join('')}</tbody>`;
   extrasTable('#ovManip', d, 'manipulation');
   extrasTable('#ovControl', d, 'control');
+  extrasTable('#ovFeedback', d, 'feedback');
   $('#ovUpdated').textContent = `Stand ${new Date(d.generated_at).toLocaleTimeString('de-DE')}`;
 }
 $('#ovRefresh').addEventListener('click', loadOverview);
@@ -274,13 +275,13 @@ function extraRow(e, isNew = false) {
   d.innerHTML = `
     <div class="xe-head">
       <label class="field"><span>ID</span><input data-f="id" value="${esc(e.id)}" ${isNew ? '' : 'readonly'} maxlength="16" pattern="[A-Za-z][A-Za-z0-9_]*" required></label>
-      <label class="field"><span>Abschnitt</span><select data-f="section"><option value="manipulation">Manipulationscheck</option><option value="control">Kontrollfrage</option></select></label>
-      <span class="chip">${e.kind === 'number' ? 'Zahl' : 'Auswahl'}</span>
+      <label class="field"><span>Abschnitt</span><select data-f="section"><option value="manipulation">Manipulationscheck</option><option value="control">Kontrollfrage</option><option value="feedback">Abschlussfrage (Smiley)</option></select></label>
+      <span class="chip">${e.kind === 'number' ? 'Zahl' : e.kind === 'smiley' ? 'Smiley (5)' : 'Auswahl'}</span>
       <div class="xe-actions"><button type="button" class="btn-sm" data-act="up" aria-label="nach oben">↑</button><button type="button" class="btn-sm" data-act="down" aria-label="nach unten">↓</button><button type="button" class="btn-sm danger" data-act="del">Löschen</button></div>
     </div>
     <div class="grid-2">${['de', 'en'].map((l) => `<div>
       <label class="field"><span>Fragetext (${l.toUpperCase()})</span><textarea data-f="text_${l}" rows="2" maxlength="400">${esc(e[l].text)}</textarea></label>
-      ${e.kind === 'choice' ? `<label class="field"><span>Optionen (${l.toUpperCase()}), eine pro Zeile</span><textarea data-f="opts_${l}" rows="${Math.max(3, e[l].options.length)}">${esc(lines(e[l].options))}</textarea></label>` : ''}
+      ${e.kind !== 'number' ? `<label class="field"><span>${e.kind === 'smiley' ? `Beschriftung der 5 Gesichter (${l.toUpperCase()}), von traurig bis glücklich` : `Optionen (${l.toUpperCase()}), eine pro Zeile`}</span><textarea data-f="opts_${l}" rows="${Math.max(3, e[l].options.length)}">${esc(lines(e[l].options))}</textarea></label>` : ''}
     </div>`).join('')}</div>
     ${e.kind === 'number' ? `<div class="row"><label class="field"><span>Minimum</span><input type="number" data-f="min" value="${e.min ?? 0}"></label><label class="field"><span>Maximum</span><input type="number" data-f="max" value="${e.max ?? 100}"></label></div>` : ''}
     <div class="xe-flags">
@@ -337,8 +338,8 @@ $('#qForm').addEventListener('submit', async (e) => {
       id: v('id').value.trim(), section: v('section').value, kind,
       visible: v('visible').checked, required: v('required').checked, ordinal: v('ordinal').checked,
       groups: $$('[data-g]', d).filter((c) => c.checked).map((c) => c.dataset.g),
-      de: { text: v('text_de').value, options: kind === 'choice' ? unlines(v('opts_de').value) : [] },
-      en: { text: v('text_en').value, options: kind === 'choice' ? unlines(v('opts_en').value) : [] },
+      de: { text: v('text_de').value, options: kind !== 'number' ? unlines(v('opts_de').value) : [] },
+      en: { text: v('text_en').value, options: kind !== 'number' ? unlines(v('opts_en').value) : [] },
     };
     if (kind === 'number') { x.min = Number(v('min').value); x.max = Number(v('max').value); }
     return x;

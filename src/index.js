@@ -649,7 +649,7 @@ function validateExtras(arr) {
     if (!/^[A-Za-z][A-Za-z0-9_]{0,15}$/.test(id) || /^Q\d+$/i.test(id) || ids.has(id)) bad(`${i}.id`);
     ids.add(id);
     if (!SECTIONS.includes(e.section)) bad(`${id}.section`);
-    if (!['choice', 'number'].includes(e.kind)) bad(`${id}.kind`);
+    if (!['choice', 'number', 'smiley'].includes(e.kind)) bad(`${id}.kind`);
     const groups = Array.isArray(e.groups) ? e.groups.filter((g) => GROUPS.includes(g)) : [];
     if (!groups.length) bad(`${id}.groups`);
     const out = { id, section: e.section, kind: e.kind, required: !!e.required, visible: !!e.visible, ordinal: !!e.ordinal, groups };
@@ -663,6 +663,7 @@ function validateExtras(arr) {
       if (!text || text.length > 400) bad(`${id}.${l}.text`);
       let options = Array.isArray(e[l]?.options) ? e[l].options.map((o) => String(o).trim()).filter(Boolean) : [];
       if (e.kind === 'choice' && (options.length < 2 || options.length > 10 || options.some((o) => o.length > 120))) bad(`${id}.${l}.options`);
+      if (e.kind === 'smiley' && (options.length !== 5 || options.some((o) => o.length > 60))) bad(`${id}.${l}.options`); // genau 5 Gesichter
       if (e.kind === 'number') options = [];
       out[l] = { text, options };
     }

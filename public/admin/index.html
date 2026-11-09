@@ -61,6 +61,8 @@
       <div class="table-wrap"><table id="ovManip"></table></div>
       <h2>Kontrollvariablen</h2>
       <div class="table-wrap"><table id="ovControl"></table></div>
+      <h2>Zufriedenheit mit der Umfrage <small>(Smiley-Bewertung, 1 = Gar nicht gut … 5 = Sehr gut)</small></h2>
+      <div class="table-wrap"><table id="ovFeedback"></table></div>
       <p class="note">Speeding: Anteil der 13 Speeding-Fragen mit Antwortzeit unter Faktor × Wortzahl. Bogus, Consistency und Comprehension: Anteil der Personen mit auffälliger Antwort. Die inferenzstatistische Auswertung (Logit, Marginaleffekte, Wald-Test) erfolgt mit dem Export in R, Python oder Stata.</p>
     </section>
 
@@ -150,8 +152,8 @@
       <form id="qForm">
         <h2>Hauptfragen <small>(15 Fragen · feste Reihenfolge · Texte DE/EN editierbar; Typ und Messrolle sind fest)</small></h2>
         <div id="mainQs"></div>
-        <h2>Manipulationschecks &amp; Kontrollfragen <small>(nach den 15 Hauptfragen)</small></h2>
-        <p class="hint">Manipulationschecks erscheinen zuerst, danach die Kontrollfragen. Idealerweise sehen alle Gruppen dieselben Items. Optionen: eine pro Zeile (DE und EN gleiche Anzahl). 5-Punkte-Skalen mit „Ø sinnvoll“ werden kompakt als 1–5 angezeigt.</p>
+        <h2>Manipulationschecks, Kontrollfragen &amp; Smiley-Abschlussfrage <small>(nach den 15 Hauptfragen)</small></h2>
+        <p class="hint"><b>Smiley-Frage ein-/ausschalten:</b> bei „F1“ den Schalter „Sichtbar“ umlegen (und „Pflicht“ nach Wunsch). Reihenfolge: Manipulationschecks, Kontrollfragen (Pflicht), Smiley-Frage, Abschluss. Idealerweise sehen alle Gruppen dieselben Items. Optionen: eine pro Zeile (DE und EN gleiche Anzahl). 5-Punkte-Skalen mit „Ø sinnvoll“ werden kompakt als 1–5 angezeigt.</p>
         <div id="extraQs"></div>
         <div class="btn-row"><button class="btn-sm" type="button" id="addChoice">+ Auswahlfrage</button><button class="btn-sm" type="button" id="addNumber">+ Zahlenfrage</button></div>
         <div class="save-bar"><p id="qMsg" class="msg-line" hidden></p><button class="btn btn-primary" type="submit">Fragen speichern</button></div>

@@ -232,7 +232,6 @@ async function loadConfig(lang, group = '') {
 
 // Testfreigabe: lokale Sitzung verwerfen und von vorn beginnen
 function restart() {
-  document.body.classList.remove('mot-bg');
   const lang = S.lang || URL_LANG || 'de';
   S = { lang };
   saveState();
@@ -446,7 +445,6 @@ async function questionScreen(item) {
 async function interstitial(slot, answered) {
   setTreatmentVisible(false);
   const m = cfg.motivation[slot];
-  document.body.classList.add('mot-bg'); // heller grüner Hintergrund nur auf der Motivationsseite
   await enter(`
     <section class="mot stagger">
       <div class="mot-art" style="--i:0" aria-hidden="true">
@@ -464,7 +462,6 @@ async function interstitial(slot, answered) {
     S.seen = [...(S.seen || []), answered];
     saveState();
     ev('interstitial_done', null, { slot, ms: Math.round(performance.now() - t0) });
-    document.body.classList.remove('mot-bg');
     await leave();
     questionScreen(cfg.items[answered]);
   }, { once: true });
@@ -473,16 +470,32 @@ async function interstitial(slot, answered) {
 // ---------------------------------------------------------------- Zusatzfragen (Manipulationschecks, Kontrollfragen)
 async function afterMain() {
   setTreatmentVisible(false);
-  const sections = ['manipulation', 'control'];
+  const sections = ['manipulation', 'control', 'feedback']; // feedback = Smiley-Bewertung, direkt vor dem Abschluss
   const next = sections.find((s) => cfg.extras.some((e) => e.section === s) && !(S.extrasDone || []).includes(s));
   if (next) return extrasScreen(next);
   return completeSurvey();
 }
 
+// Smiley-Bewertung: 5 Gesichter von traurig bis sehr glücklich
+const FACE_COLORS = ['#f26b5b', '#f4a259', '#f6d55c', '#b5df6a', '#5ec27a'];
+const MOUTHS = [
+  '<path d="M15 35 Q24 25 33 35" />',
+  '<path d="M16 34 Q24 29 32 34" />',
+  '<path d="M16.5 32 H31.5" />',
+  '<path d="M15 29 Q24 38 33 29" />',
+  '<path d="M13 28 H35 Q35 41.5 24 41.5 Q13 41.5 13 28Z" class="mouth-open"/><path d="M15.5 28.8 H32.5" class="teeth"/>',
+];
+const BROWS = ['<path class="brow" d="M11.5 13.5 L19.5 16.5 M36.5 13.5 L28.5 16.5" />', '', '', '', ''];
+const SMILEYS = FACE_COLORS.map((c, i) => `<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="face" cx="24" cy="24" r="22" fill="${c}"/>${BROWS[i]}<circle class="eye" cx="17" cy="20" r="2.6"/><circle class="eye" cx="31" cy="20" r="2.6"/><g class="mouth">${MOUTHS[i]}</g></svg>`);
+
 function extraHTML(e) {
   const tag = e.required ? '' : `<span class="opt-tag">${L.optional}</span>`;
   let body;
-  if (e.kind === 'number') {
+  if (e.kind === 'smiley') {
+    body = `<div class="smileys" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
+        ${e.options.map((o, i) => `<button type="button" class="sm" role="radio" aria-checked="false" aria-label="${esc(o)}" data-v="${i + 1}">${SMILEYS[i]}</button>`).join('')}
+      </div><p class="sm-label" aria-live="polite">&nbsp;</p>`;
+  } else if (e.kind === 'number') {
     body = `<input class="num" type="number" inputmode="numeric" pattern="[0-9]*" min="${e.min}" max="${e.max}" step="1" placeholder="${L.numberHint}" data-id="${e.id}" aria-labelledby="h-${e.id}">`;
   } else if (e.options.length === 5 && e.ordinal) {
     body = `<div class="scale" role="radiogroup" aria-labelledby="h-${e.id}" data-id="${e.id}">
@@ -499,7 +512,8 @@ function extraHTML(e) {
 
 async function extrasScreen(section) {
   const items = cfg.extras.filter((e) => e.section === section);
-  const head = section === 'manipulation' ? [L.xManipulation, L.xManipulationSub] : [L.xControl, L.xControlSub];
+  const head = section === 'manipulation' ? [L.xManipulation, L.xManipulationSub]
+    : section === 'feedback' ? [L.xFeedback, L.xFeedbackSub] : [L.xControl, L.xControlSub];
   await enter(`
     <div class="xhead stagger"><p class="kicker" style="--i:0">${L.noteKicker}</p><h1 style="--i:1">${head[0]}</h1><p style="--i:2">${head[1]}</p></div>
     <div class="xlist">${items.map(extraHTML).join('')}</div>
@@ -521,6 +535,11 @@ async function extrasScreen(section) {
     const grp = b.closest('[data-id]');
     vals[grp.dataset.id] = b.dataset.v;
     grp.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
+    if (grp.classList.contains('smileys')) {
+      grp.classList.add('has-sel');
+      const lab = grp.parentElement.querySelector('.sm-label');
+      if (lab) lab.textContent = b.getAttribute('aria-label'); // gewählte Bewertung als Text darunter
+    }
     refresh(true);
   });
   $screen.querySelectorAll('input.num').forEach((inp) => inp.addEventListener('input', () => {
