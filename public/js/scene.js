@@ -265,7 +265,7 @@ function forum(cx) {
 function launchRocket() {
   const puffs = [[-16, 0], [-7, -1.2], [3, -0.6], [12, -1.8], [19, 0.4]]
     .map(([x, d], i) => `<circle class="fxr-puff" cx="${x}" cy="${GY - 4}" r="${7 + (i % 2) * 3}" style="animation-delay:${(i * 0.12).toFixed(2)}s"/>`).join('');
-  return `<g transform="translate(240 124) scale(.5) translate(0 ${-GY})"><g class="fxr">
+  return `<g transform="translate(187 124) scale(.5) translate(0 ${-GY})"><g class="fxr">
     <rect class="fxr-trail" x="-5" y="${GY - 8 - 520}" width="10" height="520" rx="5"/>
     ${puffs}
     <g class="fxr-lift">${rocket(0)}
