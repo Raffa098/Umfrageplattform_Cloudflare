@@ -196,6 +196,7 @@ function fillSettings() {
   f.j_walk.value = s.journey.walk_ms;
   f.j_ease.value = s.journey.easing;
   f.j_conf.checked = s.journey.confetti;
+  f.j_pts.value = s.journey.points_per_answer;
   f.default_theme.value = s.default_theme;
   f.contact_de.value = s.contact.de;
   f.contact_en.value = s.contact.en;
@@ -227,7 +228,7 @@ $('#setForm').addEventListener('submit', async (e) => {
     speeding_factor: { de: Number(f.sf_de.value), en: Number(f.sf_en.value) },
     consistency: { rule: f.c_rule.value, min_diff: Number(f.c_min.value) },
     abandon_after_min: Number(f.abandon.value),
-    journey: { walk_ms: Number(f.j_walk.value), easing: f.j_ease.value, confetti: f.j_conf.checked },
+    journey: { walk_ms: Number(f.j_walk.value), easing: f.j_ease.value, confetti: f.j_conf.checked, points_per_answer: Number(f.j_pts.value) },
     default_theme: f.default_theme.value,
     motivation: { de: mot('de'), en: mot('en') },
     contact: { de: f.contact_de.value, en: f.contact_en.value },

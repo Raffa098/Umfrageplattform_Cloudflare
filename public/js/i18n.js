@@ -1,6 +1,14 @@
 export const STRINGS = {
   de: {
     brand: 'Anonymous Survey',
+    points: 'Punkte',
+    ranks: ['Student', 'Bachelor', 'Master', 'Professor'],
+    ach: [
+      null,
+      { t: 'Bachelor geschafft!', s: 'Etappe 1 · willkommen in der Stadt' },
+      { t: 'Master geschafft!', s: 'Etappe 2 · auf zum Campus' },
+      { t: 'Professor!', s: 'Ziel erreicht – Glückwunsch' },
+    ],
     pickTitle: 'Testmodus: Szenario wählen',
     pickHint: 'Nur zu Testzwecken – deine Teilnahme wird als Testdaten gespeichert.',
     pickNames: { random: 'Zufall', control: 'Kontrolle', gamification: 'Gamification', motivation: 'Motivation' },
@@ -73,6 +81,14 @@ export const STRINGS = {
   },
   en: {
     brand: 'Anonymous Survey',
+    points: 'points',
+    ranks: ['Student', 'Bachelor', 'Master', 'Professor'],
+    ach: [
+      null,
+      { t: 'Bachelor achieved!', s: 'Stage 1 · welcome to the city' },
+      { t: 'Master achieved!', s: 'Stage 2 · on to campus' },
+      { t: 'Professor!', s: 'Goal reached – congratulations' },
+    ],
     pickTitle: 'Test mode: choose a scenario',
     pickHint: 'For testing only – your participation is stored as test data.',
     pickNames: { random: 'Random', control: 'Control', gamification: 'Gamification', motivation: 'Motivation' },

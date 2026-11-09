@@ -54,6 +54,16 @@ function setLang(l) {
   t.title = t.ariaLabel = L.themeToggle;
 }
 
+// Nach der Antwort den "Weiter"-Knopf sicher in den sichtbaren Bereich scrollen (auch über Safari-Leiste/Home-Bereich)
+function revealNext(btn) {
+  requestAnimationFrame(() => {
+    const r = btn.getBoundingClientRect();
+    const vh = window.visualViewport?.height || innerHeight;
+    const inset = 28;
+    if (r.bottom > vh - inset) window.scrollBy({ top: r.bottom - vh + inset + 12, behavior: isReduced() ? 'auto' : 'smooth' });
+  });
+}
+
 // Schalter für Darkmode und reduzierte Bewegung (Barrierefreiheit); Nutzerwahl wird gemerkt
 const motionBtn = document.getElementById('motionBtn');
 const syncMotionBtn = () => motionBtn.setAttribute('aria-pressed', String(isReduced()));
@@ -383,7 +393,7 @@ async function questionScreen(item) {
     if (timing.first === null) timing.first = performance.now();
     selected = v;
     optsEl.querySelectorAll('.opt').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
-    if (btn.disabled) { btn.disabled = false; btn.classList.add('ready'); }
+    if (btn.disabled) { btn.disabled = false; btn.classList.add('ready'); revealNext(btn); }
     ev('answer_select', item.id, { v });
   });
 
@@ -495,10 +505,11 @@ async function extrasScreen(section) {
 
   const vals = {};
   const btn = $screen.querySelector('#xBtn');
-  const refresh = () => {
+  const refresh = (user) => {
     const ok = items.every((e) => !e.required || (vals[e.id] ?? '') !== '');
+    const was = !btn.disabled;
     btn.disabled = !ok;
-    if (ok) btn.classList.add('ready');
+    if (ok) { btn.classList.add('ready'); if (user && !was) revealNext(btn); }
   };
   $screen.querySelector('.xlist').addEventListener('click', (ev2) => {
     const b = ev2.target.closest('[data-v]');
@@ -506,13 +517,13 @@ async function extrasScreen(section) {
     const grp = b.closest('[data-id]');
     vals[grp.dataset.id] = b.dataset.v;
     grp.querySelectorAll('[data-v]').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
-    refresh();
+    refresh(true);
   });
   $screen.querySelectorAll('input.num').forEach((inp) => inp.addEventListener('input', () => {
     const e = items.find((x) => x.id === inp.dataset.id);
     const n = inp.value === '' ? '' : Number(inp.value);
     vals[e.id] = n !== '' && Number.isInteger(n) && n >= e.min && n <= e.max ? String(n) : '';
-    refresh();
+    refresh(true);
   }));
   refresh();
 

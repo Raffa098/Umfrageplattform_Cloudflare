@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS = {
   },
   extras: DEFAULT_EXTRAS,
   catalog_overrides: {},
-  journey: { walk_ms: 1300, easing: 'standard', confetti: true },
+  journey: { walk_ms: 1300, easing: 'standard', confetti: true, points_per_answer: 50 }, // Punkte: fix pro beantworteter Frage
   default_theme: 'system',
   contact: { de: '', en: '' },
   privacy_extra: { de: '', en: '' },
@@ -755,7 +755,9 @@ async function adminPutSettings(request, env) {
     if (w === null) bad('journey.walk_ms');
     const easing = b.journey.easing ?? next.journey.easing;
     if (!['standard', 'linear', 'soft'].includes(easing)) bad('journey.easing');
-    next.journey = { walk_ms: w, easing, confetti: b.journey.confetti === undefined ? next.journey.confetti : !!b.journey.confetti };
+    const pts = b.journey.points_per_answer === undefined ? next.journey.points_per_answer : clampInt(b.journey.points_per_answer, 1, 1000);
+    if (pts === null) bad('journey.points_per_answer');
+    next.journey = { walk_ms: w, easing, confetti: b.journey.confetti === undefined ? next.journey.confetti : !!b.journey.confetti, points_per_answer: pts };
   }
   if ('default_theme' in b) {
     if (!['system', 'light', 'dark'].includes(b.default_theme)) bad('default_theme');

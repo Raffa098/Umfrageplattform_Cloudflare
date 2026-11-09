@@ -144,9 +144,11 @@ h1, h2, p { margin: 0; }
 
 /* ============================================================ Buttons */
 .actions {
-  position: sticky; bottom: 0; z-index: 5; margin: auto -16px 0;
-  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--bg) 65%, transparent);
+  /* Kein festes Anheften am unteren Rand: auf dem iPhone verschwindet ein solcher Knopf unter Safari-Leiste und Home-Bereich.
+     Stattdessen im normalen Fluss unter dem Inhalt, mit großem Abstand nach unten; app.js scrollt ihn nach der Antwort ins Bild. */
+  margin-top: auto;
+  padding: 20px 0 calc(40px + env(safe-area-inset-bottom));
+  scroll-margin-bottom: calc(24px + env(safe-area-inset-bottom));
 }
 .btn {
   all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -294,98 +296,6 @@ h1, h2, p { margin: 0; }
   transform: translate(-50%, 30px); opacity: 0; transition: transform .35s var(--spring), opacity .25s; pointer-events: none;
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
-
-/* ============================================================ Fortschrittsreise */
-.journey { padding: 10px 10px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
-.journey[data-world="1"] { --sky: #dbe9f8; --hill-1: #b8cde6; --hill-2: #cddcef; }
-.journey[data-world="2"] { --sky: #ebe4f8; --hill-1: #cbc0e8; --hill-2: #ddd5f2; }
-:root[data-theme="dark"] .journey[data-world="1"] { --sky: #0f1d33; --hill-1: #1b2c47; --hill-2: #16253d; }
-:root[data-theme="dark"] .journey[data-world="2"] { --sky: #1b1533; --hill-1: #2c2350; --hill-2: #241d44; }
-.j-scene { position: relative; aspect-ratio: 9 / 4; max-height: 30vh; width: 100%; border-radius: 16px; overflow: hidden; isolation: isolate; }
-.j-svg { display: block; width: 100%; height: 100%; }
-.j-svg .sky { fill: var(--sky); transition: fill 1.1s ease; }
-.hill-1 { fill: var(--hill-1); transition: fill 1.1s ease; }
-.hill-2 { fill: var(--hill-2); transition: fill 1.1s ease; }
-.sun { fill: var(--sun); }
-.sun-halo { fill: var(--sun); opacity: .22; animation: halo 4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
-@keyframes halo { to { transform: scale(1.18); opacity: .1; } }
-.star { fill: var(--star); animation: twinkle 3s ease-in-out infinite alternate; }
-@keyframes twinkle { to { opacity: .25; } }
-.cloud { fill: var(--cloud); animation: drift 80s linear infinite; }
-@keyframes drift { from { transform: translateX(-60px); } to { transform: translateX(430px); } }
-.g-forest { fill: var(--g-forest); } .g-city { fill: var(--g-city); } .g-uni { fill: var(--g-uni); }
-.path { fill: var(--path); }
-.trunk { fill: var(--trunk); } .leaf-a { fill: var(--leaf-a); } .leaf-b { fill: var(--leaf-b); }
-.sway { transform-box: fill-box; transform-origin: 50% 100%; animation: sway 4.8s ease-in-out infinite alternate; }
-@keyframes sway { from { transform: rotate(-1.8deg); } to { transform: rotate(1.8deg); } }
-.bld-a { fill: var(--bld-a); } .bld-b { fill: var(--bld-b); } .bld-c { fill: var(--bld-c); }
-.win { fill: var(--win); } .win.lit { fill: var(--win-lit); }
-.lamp-pole { fill: var(--lamp); } .lamp-bulb { fill: var(--win-lit); } .lamp-glow { fill: var(--lamp-glow); }
-.uni-wall { fill: var(--uni-wall); } .uni-col { fill: var(--uni-col); } .uni-roof, .uni-beam { fill: var(--uni-roof); }
-.uni-door { fill: var(--uni-door); } .uni-step, .uni-step2 { fill: var(--uni-col); opacity: .55; }
-.uni-text { fill: #fff; font: 800 8.5px system-ui, sans-serif; letter-spacing: .12em; }
-.uni-flag { fill: var(--warm); transform-box: fill-box; transform-origin: 0 50%; animation: wave 1.6s ease-in-out infinite alternate; }
-@keyframes wave { to { transform: scaleX(.86) skewY(5deg); } }
-.tuft { fill: var(--tuft); }
-.ms-pole { fill: var(--lamp); }
-.ms-pennant { fill: var(--warm); transition: fill .4s; }
-.ms-text { fill: #fff; font: 800 6px system-ui, sans-serif; }
-.ms.reached .ms-pennant { fill: var(--ok); }
-.ms-flag { transform-box: fill-box; transform-origin: 0 50%; }
-.ms.pop .ms-flag { animation: flagpop .9s var(--spring); }
-@keyframes flagpop { 0% { transform: scale(.3); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
-
-/* Figur */
-.c-shadow { fill: rgba(0, 0, 0, .14); }
-.c-skin { fill: var(--skin); } .c-skin-b { fill: var(--skin-b); } .c-hair { fill: var(--hair); } .c-eye { fill: #1c1c1c; }
-.c-shirt { fill: var(--shirt); } .c-pants { fill: var(--pants); } .c-pants-b { fill: var(--pants-b); } .c-pack { fill: var(--pack); }
-.c-limb { transform-box: fill-box; transform-origin: 50% 10%; }
-.c-body { animation: breathe 3.2s ease-in-out infinite; }
-@keyframes breathe { 50% { transform: translateY(-.6px); } }
-.j-char.walking .c-body { animation: bob .23s ease-in-out infinite alternate; }
-.j-char.walking .c-leg-f { animation: swing .46s ease-in-out infinite alternate; }
-.j-char.walking .c-leg-b { animation: swing .46s ease-in-out infinite alternate-reverse; }
-.j-char.walking .c-arm-f { animation: swing-arm .46s ease-in-out infinite alternate-reverse; }
-.j-char.walking .c-arm-b { animation: swing-arm .46s ease-in-out infinite alternate; }
-@keyframes swing { from { transform: rotate(28deg); } to { transform: rotate(-28deg); } }
-@keyframes swing-arm { from { transform: rotate(34deg); } to { transform: rotate(-34deg); } }
-@keyframes bob { to { transform: translateY(-1.8px); } }
-.j-char.cheer .c-arm-f, .j-char.cheer .c-arm-b { animation: cheer .45s ease-in-out 8 alternate both; }
-.j-char.cheer .c-arm-b { animation-delay: .1s; }
-.j-char.cheer .c-body { animation: hop .45s ease-in-out 8 alternate; }
-@keyframes cheer { from { transform: rotate(150deg); } to { transform: rotate(195deg); } }
-@keyframes hop { to { transform: translateY(-5px); } }
-
-.j-toast {
-  position: absolute; left: 50%; top: 10px; z-index: 2; white-space: nowrap; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis;
-  padding: 7px 14px; border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 700; font-size: .82rem;
-  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .35); transform: translate(-50%, -150%); transition: transform .5s var(--spring);
-}
-.j-toast.show { transform: translate(-50%, 0); }
-.j-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-.j-confetti i {
-  position: absolute; top: -10px; left: var(--x); width: 6px; height: 10px; border-radius: 2px; background: var(--c);
-  animation: fall 2.3s var(--d) cubic-bezier(.2, .6, .4, 1) both;
-}
-@keyframes fall {
-  from { transform: translate(0, 0) rotate(0); opacity: 1; }
-  to { transform: translate(var(--dx), 230px) rotate(var(--r)); opacity: 0; }
-}
-.j-meta { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 4px 8px; font-size: .9rem; }
-.j-label { font-weight: 700; }
-.j-label b { color: var(--brand); font-variant-numeric: tabular-nums; }
-.j-world-name { font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.j-track { position: relative; height: 8px; margin: 0 10px; border-radius: 99px; background: var(--surface-3); }
-.j-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--ok), var(--brand)); transition: width 1.2s cubic-bezier(.45, .05, .3, 1); }
-.j-node { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 3px solid var(--border-strong); transition: border-color .4s, background .4s, transform .5s var(--spring); }
-.j-node.on { border-color: var(--brand); background: var(--brand); transform: translate(-50%, -50%) scale(1.12); }
-.j-ticks { position: relative; height: 18px; margin: 6px 10px 0; font-size: .72rem; color: var(--muted); font-weight: 650; }
-.j-ticks span { position: absolute; transform: translateX(-50%); }
-.j-ticks span:nth-child(1) { left: 0; transform: none; }
-.j-ticks span:nth-child(2) { left: 33.33%; }
-.j-ticks span:nth-child(3) { left: 66.66%; }
-.j-ticks span:nth-child(4) { left: 100%; transform: translateX(-100%); }
-.journey.instant .j-fill, .journey.instant .j-node { transition: none; }
 
 /* ============================================================ Breitere Bildschirme */
 @media (min-width: 700px) {
