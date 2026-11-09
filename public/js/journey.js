@@ -43,6 +43,7 @@ export function createJourney(host, L, opts = {}) {
   const EASE = EASINGS[opts.easing] || EASINGS.standard;
   const CONFETTI = opts.confetti !== false;
   const PPA = Number(opts.points_per_answer) || 50;
+  const SHOW_PTS = opts.show_points === true; // Punktanzeige nur auf ausdrückliche Einstellung (sonst kein Eindruck, Tempo bringe Punkte)
   // Meilensteine unter der Szene: nur Start · Punkte · Ziel (keine Titel/Weltnamen)
   const MILESTONES = [
     { icon: I.dot, label: L.jStart },
@@ -81,6 +82,7 @@ export function createJourney(host, L, opts = {}) {
   const rankIc = q('.j-rank-ic'), rankPill = q('.j-rank-pill'), rankEl = q('.j-rank');
   const nodes = [...el.querySelectorAll('.lad-node')];
   const plus = q('.j-plus');
+  if (!SHOW_PTS) { ptsPill.style.display = 'none'; plus.style.display = 'none'; }
   const ach = q('.j-ach');
   const confetti = q('.j-confetti');
   const capsLayer = q('.j-caps');
@@ -282,7 +284,7 @@ export function createJourney(host, L, opts = {}) {
       if (newLvl === 3 && !animate) char.classList.add('cheer');
       if (newLvl < 3) char.classList.remove('cheer');
     }
-    svg.setAttribute('aria-label', `${L.journeyAria.replace('{n}', n)} · ${n * PPA} ${L.points} · ${L.ranks[lvl]}`);
+    svg.setAttribute('aria-label', `${L.journeyAria.replace('{n}', n)}${SHOW_PTS ? ` · ${n * PPA} ${L.points}` : ''} · ${L.ranks[lvl]}`);
   }
 
   return { el, setProgress, celebrate: () => levelUp(3) };

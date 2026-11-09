@@ -385,6 +385,7 @@ function fillSettings() {
   f.j_ease.value = s.journey.easing;
   f.j_conf.checked = s.journey.confetti;
   f.j_pts.value = s.journey.points_per_answer;
+  f.j_showpts.checked = !!s.journey.show_points;
   f.default_theme.value = s.default_theme;
   f.christmas_scene.checked = s.christmas_scene;
   f.contact_de.value = s.contact.de;
@@ -425,7 +426,7 @@ $('#setForm').addEventListener('submit', async (e) => {
     privacy_page: { de: f.pp_de.value, en: f.pp_en.value },
     consistency: { rule: f.c_rule.value, min_diff: Number(f.c_min.value) },
     abandon_after_min: Number(f.abandon.value),
-    journey: { walk_ms: Number(f.j_walk.value), easing: f.j_ease.value, confetti: f.j_conf.checked, points_per_answer: Number(f.j_pts.value) },
+    journey: { walk_ms: Number(f.j_walk.value), easing: f.j_ease.value, confetti: f.j_conf.checked, show_points: f.j_showpts.checked, points_per_answer: Number(f.j_pts.value) },
     default_theme: f.default_theme.value,
     christmas_scene: f.christmas_scene.checked,
     motivation: { de: mot('de'), en: mot('en') },

@@ -43,7 +43,7 @@ export const DEFAULT_SETTINGS = {
   },
   extras: DEFAULT_EXTRAS,
   catalog_overrides: {},
-  journey: { walk_ms: 1300, easing: 'standard', confetti: true, points_per_answer: 50 }, // Punkte: fix pro beantworteter Frage
+  journey: { walk_ms: 1300, easing: 'standard', confetti: true, show_points: false, points_per_answer: 50 }, // Punktanzeige standardmäßig AUS (Tempo-Eindruck vermeiden); Punkte wären fix pro beantworteter Frage
   default_theme: 'system',
   christmas_scene: true, // Weihnachtsszene auf der Abschlussseite (im Admin abschaltbar)
   contact: { de: '', en: '' },
@@ -581,7 +581,7 @@ const KPI_DEFS = [
   { id: 'consistency', name: 'Consistency (Q6/Q10)', definition: 'Q10 invertiert (6 − Q10) und mit Q6 verglichen; Regel und Schwelle laut Konfiguration; fehlend = NA.', denominator: 'Personen mit Antwort auf Q6 und Q10', export: 'derived_person.csv: consistency_flag, q06, q10, q10_inverted' },
   { id: 'comprehension', name: 'Comprehension (Q9)', definition: 'Auffällig (1), wenn die Antwort nicht korrekt ist (A); fehlend = NA.', denominator: 'Personen mit Antwort auf Q9', export: 'derived_person.csv: comprehension_flag, q09_choice' },
   { id: 'reach', name: 'Fortschritt / Abbruchstelle', definition: 'Personen mit mindestens k beantworteten Hauptfragen.', denominator: 'Starts', export: 'responses_long.csv: answered; derived_person.csv: n_answered' },
-  { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (akademische Laufbahn, Punkte), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Ausgewertet wird der Anteil je Antwort und Gruppe; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
+  { id: 'manipulation', name: 'Manipulationscheck', definition: 'Einfachauswahl: 1 = Gamification-Aussage (akademische Laufbahn), 2 = Motivations-Aussage (ermutigende Worte), 3 = neutral. Ausgewertet wird der Anteil je Antwort und Gruppe; erwartet wird die höchste Quote bei der eigenen Bedingung. Kein Nachweis kausaler Wirkung.', denominator: 'beantwortete Checks je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
   { id: 'control', name: 'Kontextvariablen', definition: 'Verteilung je Gruppe (z. B. Semester, Umfrageerfahrung, Teilnahmegrund); Fehlwerte werden getrennt gezählt.', denominator: 'beantwortete Items je Gruppe (n) und Fehlwerte (NA)', export: 'checks_and_covariates.csv: check_type = control' },
   { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut). Bei 1–2 folgt F2 (was nicht gefallen hat), bei 4–5 folgt F3 (was besonders gefallen hat), bei 3 keine Nachfrage; nicht gestellte Nachfragen sind NA.', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
   { id: 'quality', name: 'Datenqualität', definition: 'Fehlende Hauptantworten, technische Speicherfehler (save_error), Wiederholungs-Verdacht (Browser hatte schon einen Abschluss), Geräteklasse, Sprache.', denominator: 'Starts bzw. erwartete Antworten (Starts × 15)', export: 'participants.csv: device_class, language; events.csv: event_type = save_error / consent' },
@@ -872,7 +872,7 @@ async function exportConfig(env, s, profile) {
     note: 'Rohdaten sind das Original; alle Indikatoren sind daraus mit diesen Regeln neu berechenbar. Zeitstempel ISO-8601 (UTC). shown_at der Hauptfragen stammt aus der Uhr des Geräts, submitted_at vom Server.',
     groups: [
       { id: 'control', name_de: 'Kontrolle', treatment: 'Neutraler Kopfbereich ab Q1; keine spielerischen oder motivierenden Hinweise.' },
-      { id: 'gamification', name_de: 'Gamification', treatment: 'Animierte Fortschrittsreise ab Q1 auf jeder Frageseite (Wald → Stadt mit Universität → Raketenstation → antikes Forum); Punkte und Titel nur aus der Zahl beantworteter Fragen.', journey: s.journey },
+      { id: 'gamification', name_de: 'Gamification', treatment: 'Animierte Fortschrittsreise ab Q1 auf jeder Frageseite (Wald → Stadt mit Universität → Raketenstation → antikes Forum); Titel (Student, Bachelor, Master, Professor) nur aus der Zahl beantworteter Fragen; Punktanzeige standardmäßig aus.', journey: s.journey },
       { id: 'motivation', name: 'Motivation', treatment: 'Einmalige Hinweisseiten vor Q1 sowie nach Q5 und Q10; keine Botschaft auf Frageseiten.', interstitials: [{ before_question: 1 }, { after_question: 5 }, { after_question: 10 }], texts: s.motivation },
     ],
     randomization: { method: 'serverseitig; neue Person kommt in die Gruppe mit den wenigsten Teilnahmen der Version (Gleichstand zufällig), getrennt nach Test/Produktiv', stable_per_session: true },
@@ -1112,7 +1112,7 @@ async function adminPutSettings(request, env) {
     if (!['standard', 'linear', 'soft'].includes(easing)) bad('journey.easing');
     const pts = b.journey.points_per_answer === undefined ? next.journey.points_per_answer : clampInt(b.journey.points_per_answer, 1, 1000);
     if (pts === null) bad('journey.points_per_answer');
-    next.journey = { walk_ms: w, easing, confetti: b.journey.confetti === undefined ? next.journey.confetti : !!b.journey.confetti, points_per_answer: pts };
+    next.journey = { walk_ms: w, easing, confetti: b.journey.confetti === undefined ? next.journey.confetti : !!b.journey.confetti, points_per_answer: pts, show_points: b.journey.show_points === undefined ? !!next.journey.show_points : !!b.journey.show_points };
   }
   if ('christmas_scene' in b) next.christmas_scene = !!b.christmas_scene;
   if ('default_theme' in b) {
