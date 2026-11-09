@@ -5,8 +5,10 @@
 
 export const STEP = 60;   // Pixel pro Frage
 const LIBORI_EXTRA = 300; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
-// Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 je STEP pro Frage, Q5–10 mit Libori-Abschnitt (länger)
-export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5;
+// Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 mit Hermannsdenkmal-Abschnitt (länger), Q5–10 mit Libori-Abschnitt (länger)
+const HERMANN_EXTRA = 260; // zusätzlicher Weg zwischen Raketenstation (Q10) und Forum (Q15) für das Hermannsdenkmal
+export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5
+  + HERMANN_EXTRA * Math.max(0, Math.min(n, 15) - 10) / 5;
 export const CX = 90;     // feste x-Position der Figur im Bild
 export const GY = 132;    // Bodenlinie
 
@@ -271,6 +273,29 @@ function launchRocket() {
   </g></g>`;
 }
 
+// ---------------------------------------------------------------- Hermannsdenkmal auf dem Teutoburger Wald (zwischen Raketenstation und Forum)
+function hermann(cx) {
+  const y0 = GY - 30; // Gipfel
+  const trees = [[-62, 9], [-50, 14], [-38, 19], [-26, 24], [-14, 28], [14, 28], [26, 24], [38, 19], [50, 14], [62, 9]]
+    .map(([dx, up], i) => `<circle cx="${cx + dx}" cy="${GY - up - 3}" r="${i % 2 ? 7 : 8.4}" fill="${i % 2 ? '#2b6a47' : '#235a3c'}"/>`).join('');
+  const arches = [-6.5, 0, 6.5].map((dx) => `<path d="M${cx + dx - 2} ${y0 - 5} V${y0 - 12} a2 2 0 0 1 4 0 V${y0 - 5}Z" fill="#4a463f"/>`).join('');
+  return `<g class="hermann">
+    <path d="M${cx - 95} ${GY} C${cx - 62} ${GY} ${cx - 46} ${y0} ${cx} ${y0 - 1} S${cx + 62} ${GY} ${cx + 95} ${GY}Z" fill="#1d4a33"/>
+    ${trees}
+    <rect x="${cx - 14}" y="${y0 - 4}" width="28" height="4" fill="#8b8478"/>
+    <rect x="${cx - 11}" y="${y0 - 22}" width="22" height="18" fill="#a39b8c"/>${arches}
+    <rect x="${cx - 12.5}" y="${y0 - 24.4}" width="25" height="2.6" fill="#7d766a"/>
+    <path d="M${cx - 10} ${y0 - 24.4} Q${cx} ${y0 - 41} ${cx + 10} ${y0 - 24.4}Z" fill="#6f8f86"/>
+    <g transform="translate(${cx} ${y0 - 34})">
+      <rect x="-3" y="-2" width="6" height="3" fill="#8b8478"/>
+      <path d="M-3 -2 L-2.2 -16 L2.2 -16 L3 -2Z" fill="#3f9c86"/><path d="M-2.6 -16 L-2.2 -24 L2.2 -24 L2.6 -16Z" fill="#46ab94"/>
+      <circle cx="0" cy="-26.6" r="2.3" fill="#46ab94"/><path d="M-2.4 -27 Q0 -31.6 2.4 -27Z" fill="#3f9c86"/>
+      <path d="M1.6 -23 L4.6 -31" stroke="#46ab94" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M4.6 -31 L5.8 -47" stroke="#cfe5df" stroke-width="1.1" stroke-linecap="round"/><path d="M3 -32.4 H6.8" stroke="#46ab94" stroke-width="1"/>
+    </g>
+  </g>`;
+}
+
 // ---------------------------------------------------------------- Kirmes "Libori": Eingangsbogen, Riesenrad, Buden, Langos-Stand
 const awning = (x, y, w, c1, c2) => {
   const n = 6, sw = (w + 6) / n;
@@ -455,13 +480,14 @@ export function sceneSVG() {
     ${university(430)}
     ${lamp(334)}${oak(552, 0.9, 1.3)}${pine(566, 0.95, 2.2)}${lamp(542)}${libori()}${pine(864, 1, 0.8)}${oak(880, 0.9, 3.1)}${lamp(846)}
 
+    ${hermann(1300)}
     <g transform="translate(250 0)">
     ${hangar(646)}
     ${gantry(722, 18)}${rocket(766)}${tesla(766)}
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
-    ${forum(1040)}
+    ${forum(1300)}
     ${cypress(922, 1, 0.4)}${olive(1290, 1.05, 2)}
     </g>
 
