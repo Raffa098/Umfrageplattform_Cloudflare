@@ -1,0 +1,15 @@
+name = "umfrageplattform"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Web-App (HTML/CSS/JS) aus ./public, /api/* läuft über den Worker
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "umfrage-experiment-db"
+database_id = "574ce1d7-a5b1-4847-a555-0d7f9f38b6fd"
+migrations_dir = "migrations"

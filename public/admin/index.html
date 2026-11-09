@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Studienleitung · Anonymous Survey</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin">
+  <!-- Anmeldung -->
+  <main id="login" class="login">
+    <form id="loginForm" class="panel">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21v-7"/><path d="M12 14c0-4-6-4-6-10"/><path d="M12 14c0-4 6-4 6-10"/></svg></span>
+      <h1>Studienleitung</h1>
+      <p class="muted">Anonymous Survey · nur für autorisierte Forschende. Bitte Admin-Schlüssel eingeben.</p>
+      <label class="field"><span>Admin-Schlüssel</span><input id="tokenInput" type="password" autocomplete="current-password" required></label>
+      <p id="loginError" class="err" hidden></p>
+      <button class="btn btn-primary" type="submit">Anmelden</button>
+    </form>
+  </main>
+
+  <!-- App -->
+  <div id="app" class="admin-shell" hidden>
+    <header class="admin-head">
+      <div class="admin-title"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21v-7"/><path d="M12 14c0-4-6-4-6-10"/><path d="M12 14c0-4 6-4 6-10"/></svg></span>
+        <div><b>Studienleitung</b><small id="studyState">…</small></div></div>
+      <button class="link" id="logoutBtn" type="button">Abmelden</button>
+    </header>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="overview" aria-selected="true">Übersicht</button>
+      <button role="tab" data-tab="settings">Einstellungen</button>
+      <button role="tab" data-tab="questions">Fragen</button>
+      <button role="tab" data-tab="prize">Gewinnspiel</button>
+      <button role="tab" data-tab="export">Export</button>
+      <button role="tab" data-tab="preview">Testmodus</button>
+      <button role="tab" data-tab="audit">Protokoll</button>
+    </nav>
+    <div id="frozenBanner" class="banner" hidden></div>
+    <div class="banner info">Der Fragenkatalog ist ein <b>vorläufiger Testkatalog</b> und kein validiertes Instrument. Wissenschaftliche Regeln (Schwellen, Konsistenzregel, Ausschlusskriterien) vor der Erhebung festlegen.</div>
+
+    <!-- Übersicht -->
+    <section class="tab" id="tab-overview">
+      <div class="toolbar">
+        <label class="field inline"><span>Version</span><select id="ovVersion"><option value="">Alle</option></select></label>
+        <label class="toggle"><input type="checkbox" id="ovTest"><span></span>Testdaten einbeziehen</label>
+        <span class="live"><i></i><span id="ovUpdated">–</span></span>
+        <button class="btn-sm" id="ovRefresh" type="button">Aktualisieren</button>
+      </div>
+      <div id="mismatchBanner" class="banner warn" hidden>Der Fragenkatalog im Code weicht vom eingefrorenen Stand der aktuellen Version ab. Bitte eine neue Experimentversion vergeben.</div>
+      <div class="tiles" id="ovTiles"></div>
+      <h2>Gruppen &amp; Antwortqualität <small>(Anteil auffällig, weniger = besser)</small></h2>
+      <div class="table-wrap"><table id="ovGroups"></table></div>
+      <h2>Speeding nach Block <small>(explorativ)</small></h2>
+      <div class="table-wrap"><table id="ovBlocks"></table></div>
+      <h2>Manipulationschecks <small>(Ø auf 1–5 bzw. Verteilung, je Gruppe)</small></h2>
+      <div class="table-wrap"><table id="ovManip"></table></div>
+      <h2>Kontrollvariablen</h2>
+      <div class="table-wrap"><table id="ovControl"></table></div>
+      <p class="note">Speeding: Anteil der 13 Speeding-Fragen mit Antwortzeit unter Faktor × Wortzahl. Bogus, Consistency und Comprehension: Anteil der Personen mit auffälliger Antwort. Die inferenzstatistische Auswertung (Logit, Marginaleffekte, Wald-Test) erfolgt mit dem Export in R, Python oder Stata.</p>
+    </section>
+
+    <!-- Einstellungen -->
+    <section class="tab" id="tab-settings" hidden>
+      <form id="setForm" class="grid-2">
+        <div class="panel">
+          <h2>Experiment</h2>
+          <label class="toggle"><input type="checkbox" name="study_active"><span></span>Studie aktiv (neue Teilnahmen möglich)</label>
+          <label class="toggle"><input type="checkbox" name="test_mode"><span></span>Alle neuen öffentlichen Teilnahmen als Test markieren</label>
+          <label class="field"><span>Experimentversion</span><input name="experiment_version" pattern="[\w.\-]+" maxlength="40" required></label>
+          <p class="hint">Mit dem ersten echten Teilnehmenden wird die Konfiguration der Version dokumentiert (Snapshot) und gesperrt: Motivationstexte, Fragentexte, Zusatzfragen und Reise-Animation lassen sich dann nur mit einer neuen Version ändern.</p>
+        </div>
+        <div class="panel">
+          <h2>Messung</h2>
+          <div class="row">
+            <label class="field"><span>Speeding DE (s/Wort)</span><input type="number" name="sf_de" step="0.01" min="0.05" max="2"></label>
+            <label class="field"><span>Speeding EN (s/Wort)</span><input type="number" name="sf_en" step="0.01" min="0.05" max="2"></label>
+          </div>
+          <label class="field"><span>Konsistenzregel (Q6 vs. Q10)</span>
+            <select name="c_rule">
+              <option value="same_side">Beiden zugestimmt (≥4) oder beide abgelehnt (≤2) → auffällig</option>
+              <option value="diff">|Q6 − invertierte Q10| ≥ Schwelle → auffällig</option>
+            </select></label>
+          <div class="row">
+            <label class="field"><span>Schwelle (nur Regel „diff“)</span><input type="number" name="c_min" min="1" max="4"></label>
+            <label class="field"><span>Abbruch nach (Min. inaktiv)</span><input type="number" name="abandon" min="5" max="1440"></label>
+          </div>
+          <p class="hint">Messregeln wirken nur auf die Auswertung – Rohdaten bleiben unverändert und können jederzeit neu berechnet werden.</p>
+        </div>
+        <div class="panel">
+          <h2>Animierte Fortschrittsreise <small>(nur Gamification-Gruppe)</small></h2>
+          <div class="row">
+            <label class="field"><span>Gehdauer pro Frage (ms)</span><input type="number" name="j_walk" min="500" max="4000" step="100"></label>
+            <label class="field"><span>Easing</span><select name="j_ease"><option value="standard">Standard (sanft beschleunigt)</option><option value="soft">Weich</option><option value="linear">Linear</option></select></label>
+          </div>
+          <label class="toggle"><input type="checkbox" name="j_conf"><span></span>Konfetti bei Etappen und am Ziel</label>
+          <p class="hint">Der Fortschritt hängt ausschließlich von beantworteten Fragen ab – nie von Tempo oder Antwortinhalt. Teilnehmende können Bewegung über den Schalter oben rechts selbst reduzieren (Standard: Systemeinstellung).</p>
+        </div>
+        <div class="panel">
+          <h2>Darstellung &amp; Sprache</h2>
+          <label class="field"><span>Standard-Farbschema</span><select name="default_theme"><option value="system">System (Gerät entscheidet)</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
+          <p class="hint">Teilnehmende können jederzeit selbst zwischen Hell und Dunkel wechseln. Die Sprache (DE/EN) wählen Teilnehmende zu Beginn; Links mit <code>?lang=de</code> oder <code>?lang=en</code> überspringen die Auswahl.</p>
+        </div>
+        <div class="panel span-2">
+          <h2>Motivationsseiten <small>(nur Motivationsgruppe · vor Q1, nach Q5, nach Q10)</small></h2>
+          <div class="grid-2" id="motFields"></div>
+        </div>
+        <div class="panel span-2">
+          <h2>Einwilligung, Datenschutz &amp; Abschluss</h2>
+          <div class="row">
+            <label class="field"><span>Kontakt Studienleitung (DE)</span><input name="contact_de" maxlength="500" placeholder="z. B. Name, Hochschule, E-Mail"></label>
+            <label class="field"><span>Kontakt Studienleitung (EN)</span><input name="contact_en" maxlength="500"></label>
+          </div>
+          <div class="row">
+            <label class="field"><span>Zusätzlicher Datenschutzhinweis (DE) – Zweck, Löschfristen …</span><textarea name="priv_de" rows="3" maxlength="3000"></textarea></label>
+            <label class="field"><span>Additional privacy notice (EN)</span><textarea name="priv_en" rows="3" maxlength="3000"></textarea></label>
+          </div>
+          <div class="row">
+            <label class="field"><span>Abschlusstext (DE)</span><textarea name="close_de" rows="3" maxlength="1000"></textarea></label>
+            <label class="field"><span>Closing text (EN)</span><textarea name="close_en" rows="3" maxlength="1000"></textarea></label>
+          </div>
+          <label class="field"><span>Rücksprung-URL nach Abschluss (optional, https)</span><input name="redirect_url" maxlength="500" placeholder="https://plattform.example/complete?code={code}"></label>
+          <p class="hint"><code>{code}</code> wird durch den Abschlusscode ersetzt.</p>
+        </div>
+        <div class="panel span-2">
+          <h2>Freiwilliges Gewinnspiel</h2>
+          <label class="toggle"><input type="checkbox" name="prize_enabled"><span></span>Gewinnspiel-Hinweis auf der Abschlussseite anzeigen</label>
+          <label class="field"><span>Kontakt-E-Mail (Teilnehmende schreiben selbst dorthin)</span><input type="email" name="prize_email" maxlength="200" placeholder="gewinnspiel@beispiel.de"></label>
+          <div class="row">
+            <label class="field"><span>Teilnahmebedingungen &amp; Datenschutz (DE)</span><textarea name="terms_de" rows="4" maxlength="3000"></textarea></label>
+            <label class="field"><span>Terms &amp; privacy (EN)</span><textarea name="terms_en" rows="4" maxlength="3000"></textarea></label>
+          </div>
+          <p class="hint"><b>Keine E-Mail-Adresse wird in der Umfrage abgefragt oder gespeichert.</b> Der Abschlusscode wird auf dem Gerät erzeugt und ohne Verweis auf Antworten gespeichert (nur Datum). Die E-Mail-Kommunikation verarbeitet dennoch personenbezogene Daten: Zweck, Löschfristen und Teilnahmebedingungen müssen rechtlich geprüft werden – diese Plattform ersetzt keine Datenschutzprüfung.</p>
+        </div>
+        <div class="save-bar span-2"><p id="setMsg" class="msg-line" hidden></p><button class="btn btn-primary" type="submit">Einstellungen speichern</button></div>
+      </form>
+    </section>
+
+    <!-- Fragen -->
+    <section class="tab" id="tab-questions" hidden>
+      <form id="qForm">
+        <h2>Hauptfragen <small>(15 Fragen · feste Reihenfolge · Texte DE/EN editierbar; Typ und Messrolle sind fest)</small></h2>
+        <div id="mainQs"></div>
+        <h2>Manipulationschecks &amp; Kontrollfragen <small>(nach den 15 Hauptfragen)</small></h2>
+        <p class="hint">Manipulationschecks erscheinen zuerst, danach die Kontrollfragen. Idealerweise sehen alle Gruppen dieselben Items. Optionen: eine pro Zeile (DE und EN gleiche Anzahl). 5-Punkte-Skalen mit „Ø sinnvoll“ werden kompakt als 1–5 angezeigt.</p>
+        <div id="extraQs"></div>
+        <div class="btn-row"><button class="btn-sm" type="button" id="addChoice">+ Auswahlfrage</button><button class="btn-sm" type="button" id="addNumber">+ Zahlenfrage</button></div>
+        <div class="save-bar"><p id="qMsg" class="msg-line" hidden></p><button class="btn btn-primary" type="submit">Fragen speichern</button></div>
+      </form>
+    </section>
+
+    <!-- Gewinnspiel -->
+    <section class="tab" id="tab-prize" hidden>
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Gültige Codes</h2>
+          <div class="tiles" id="prizeTiles"></div>
+          <p class="hint">Codes sind <b>nicht</b> mit Antworten verknüpft und tragen nur ein Datum, keine Uhrzeit. Die Antworten einer Person lassen sich über den Code nicht auffinden.</p>
+          <a class="btn-sm" id="prizeExport" role="button" tabindex="0">Code-Liste als CSV</a>
+        </div>
+        <div class="panel">
+          <h2>Code prüfen</h2>
+          <form id="prizeCheckForm" class="row">
+            <label class="field"><span>Code aus der E-Mail</span><input id="prizeCode" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="ABCD2345"></label>
+            <button class="btn-sm" type="submit" style="align-self:end;margin-bottom:12px">Prüfen</button>
+          </form>
+          <p id="prizeResult" class="msg-line" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Export -->
+    <section class="tab" id="tab-export" hidden>
+      <form id="expForm" class="panel">
+        <h2>CSV-Export</h2>
+        <div class="row">
+          <label class="field"><span>Ebene</span><select name="level">
+            <option value="person">Personenebene inkl. Zusatzfragen (x_…)</option>
+            <option value="item">Person × Frage (Speeding-Logit)</option>
+            <option value="events">Ereignisprotokoll</option></select></label>
+          <label class="field"><span>Trennzeichen</span><select name="sep"><option value="comma">Komma (R, Python, Stata)</option><option value="semicolon">Semikolon (Excel DE)</option></select></label>
+        </div>
+        <div class="row">
+          <label class="field"><span>Gruppe</span><select name="group"><option value="">Alle</option><option value="control">Kontrolle</option><option value="gamification">Gamification</option><option value="motivation">Motivation</option></select></label>
+          <label class="field"><span>Sprache</span><select name="lang"><option value="">Alle</option><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
+          <label class="field"><span>Version</span><select name="version" id="expVersion"><option value="">Alle</option></select></label>
+        </div>
+        <div class="row">
+          <label class="field"><span>Block (nur Person × Frage)</span><select name="block"><option value="">Alle</option><option>1</option><option>2</option><option>3</option></select></label>
+          <label class="field"><span>Frage (nur Person × Frage)</span><select name="item" id="expItem"><option value="">Alle</option></select></label>
+        </div>
+        <label class="toggle"><input type="checkbox" name="completed_only"><span></span>Nur abgeschlossene Teilnahmen</label>
+        <label class="toggle"><input type="checkbox" name="include_test"><span></span>Testdaten einbeziehen</label>
+        <p id="expMsg" class="msg-line" hidden></p>
+        <button class="btn btn-primary" type="submit">CSV herunterladen</button>
+      </form>
+    </section>
+
+    <!-- Testmodus -->
+    <section class="tab" id="tab-preview" hidden>
+      <div class="preview-wrap">
+        <div class="panel">
+          <h2>Geschützter Testmodus</h2>
+          <p class="muted">Startet eine <b>Testteilnahme</b> mit gewählter Gruppe, optional an Q1/Q6/Q11/Q15. Testdaten sind markiert und standardmäßig aus Übersicht und Export ausgeschlossen. Im öffentlichen Experiment gibt es keine manuelle Gruppenwahl.</p>
+          <div class="row">
+            <label class="field"><span>Gruppe</span><select id="pvGroup"><option value="random">Zufall</option><option value="gamification">Gamification</option><option value="motivation">Motivation</option><option value="control">Kontrolle</option></select></label>
+            <label class="field"><span>Sprache</span><select id="pvLang"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
+            <label class="field"><span>Start bei</span><select id="pvStart"><option value="1">Q1 (Anfang)</option><option value="6">Q6 (Stadt)</option><option value="11">Q11 (Universität)</option><option value="15">Q15 (letzte Frage)</option></select></label>
+          </div>
+          <div class="btn-row"><button class="btn-sm" id="pvReload" type="button">Testteilnahme starten</button><a class="btn-sm" id="pvOpen" target="_blank" rel="noopener" hidden>In neuem Tab öffnen</a></div>
+          <p id="pvInfo" class="msg-line" hidden></p>
+          <h2>Teilnahmelinks</h2>
+          <p class="muted">Für Umfrage-Plattformen den Parameter <code>src</code> anhängen, um die Herkunft auszuwerten:</p>
+          <div class="links" id="pvLinks"></div>
+          <h2>Testdaten</h2>
+          <button class="btn-sm danger" id="purgeBtn" type="button">Alle Testteilnahmen löschen</button>
+          <p id="purgeMsg" class="msg-line" hidden></p>
+        </div>
+        <div class="phone"><iframe id="pvFrame" title="Vorschau der Umfrage"></iframe></div>
+      </div>
+    </section>
+
+    <!-- Protokoll -->
+    <section class="tab" id="tab-audit" hidden>
+      <h2>Experimentversionen <small>(Snapshot beim ersten echten Teilnehmenden)</small></h2>
+      <div class="table-wrap"><table id="versionTable"></table></div>
+      <h2>Änderungsprotokoll</h2>
+      <div class="table-wrap"><table id="auditTable"></table></div>
+    </section>
+  </div>
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
