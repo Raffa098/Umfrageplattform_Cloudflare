@@ -610,8 +610,7 @@ async function finishScreen(already) {
         <div class="code-box" style="--i:3">
           <span class="code" id="code">${esc(code)}</span>
           <button type="button" class="btn-copy" id="copyBtn">${ICONS.copy}<span>${L.copy}</span></button>
-        </div>
-        <p class="muted small" style="--i:4">${L.codeHint}</p>` : `<p class="muted small" style="--i:3">${L.codeLost}</p>`}
+        </div>` : `<p class="muted small" style="--i:3">${L.codeLost}</p>`}
       ${prize ? `
         <div class="prize" style="--i:5">
           <h3>${L.prizeTitle}</h3>
