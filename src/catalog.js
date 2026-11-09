@@ -104,14 +104,19 @@ const RAW = [
 // Wörter = Tokens mit mindestens einem Buchstaben oder einer Ziffer ("€" allein zählt nicht)
 const countWords = (s) => (s || '').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
 
+// words = Passage + Fragetext; words_opt = zusätzlich inklusive aller Antwortoptionen (Pflichtenheft: Speeding-Schwelle "inklusive Antwortoptionen").
+// Welche Variante für das Speeding-Flag gilt, steht in der Konfiguration (word_count_mode).
+const wordCounts = (it) => {
+  const w = (l) => countWords(it[l].passage) + countWords(it[l].text);
+  const o = (l) => countWords((it[l].options || []).join(' '));
+  return { words: { de: w('de'), en: w('en') }, words_opt: { de: w('de') + o('de'), en: w('en') + o('en') } };
+};
+
 export const ITEMS = RAW.map((it, i) => ({
   ...it,
   position: i + 1,
   block: Math.floor(i / 5) + 1,
-  words: {
-    de: countWords(it.de.passage) + countWords(it.de.text),
-    en: countWords(it.en.passage) + countWords(it.en.text),
-  },
+  ...wordCounts(it),
 }));
 export const ITEM_BY_ID = Object.fromEntries(ITEMS.map((it) => [it.id, it]));
 export const TOTAL = ITEMS.length;
@@ -123,10 +128,7 @@ export function effectiveItems(overrides = {}) {
     const o = overrides[it.id];
     if (!o) return it;
     const out = { ...it, de: { ...it.de, ...(o.de || {}) }, en: { ...it.en, ...(o.en || {}) } };
-    out.words = {
-      de: countWords(out.de.passage) + countWords(out.de.text),
-      en: countWords(out.en.passage) + countWords(out.en.text),
-    };
+    Object.assign(out, wordCounts(out));
     return out;
   });
 }

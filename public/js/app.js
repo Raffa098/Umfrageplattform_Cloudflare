@@ -256,6 +256,11 @@ function restart() {
 }
 document.getElementById('restartBtn').addEventListener('click', restart);
 
+// Hinweis auf Wiederholung: Browser hat schon einmal abgeschlossen (nur Markierung, keine Personendaten)
+const DONE_KEY = 'decision-study:done';
+const wasDone = () => { try { return !!store?.getItem(DONE_KEY); } catch { return false; } };
+const markDone = () => { try { store?.setItem(DONE_KEY, '1'); } catch { /* ignorieren */ } };
+
 async function consentScreen() {
   try {
     await loadConfig(S.lang);
@@ -284,6 +289,7 @@ async function consentScreen() {
         </div>
         <p class="warn-small">${L.pickHint}</p>
       </div>` : ''}
+      <a class="privacy-btn" style="--i:5" id="privacyBtn" href="/datenschutz.html?lang=${S.lang}" target="_blank" rel="noopener">${ICONS.shield}<span><span>${L.privacyBtn}</span><span class="pb-sub">${L.privacySub}</span></span><span class="pb-arrow" aria-hidden="true">↗</span></a>
       <label class="check" style="--i:5"><input type="checkbox" id="agree"><span class="box" aria-hidden="true"></span><span>${L.consentCheck}</span></label>
     </section>
     <div class="actions"><button class="btn btn-primary" id="startBtn" disabled>${L.start}<span class="arrow" aria-hidden="true">→</span></button></div>`);
@@ -323,7 +329,7 @@ async function consentScreen() {
       document.getElementById('testBadge').hidden = !r.test;
       await loadConfig(r.lang, r.group);
       ev('language', null, { lang: r.lang, src: SOURCE });
-      ev('consent');
+      ev('consent', null, { repeat: wasDone(), pv: cfg.privacy_version || null });
       renderTreatment();
       advance(0);
     } catch (e) {
@@ -642,6 +648,7 @@ async function completeSurvey() {
 
 async function finishScreen(already) {
   flush();
+  markDone();
   const code = S.code || '';
   setTreatmentVisible(!already && !!journey);
   const redirect = cfg?.redirect_url ? cfg.redirect_url.replace('{code}', encodeURIComponent(code)) : '';
@@ -671,6 +678,7 @@ async function finishScreen(already) {
           ${prize.terms ? `<details><summary>${L.prizeTerms}</summary><p style="white-space:pre-line">${esc(prize.terms)}</p></details>` : ''}
         </div>` : ''}
       ${cfg?.open_test ? `<button type="button" class="btn btn-warm" id="againBtn" style="--i:6;margin-top:18px;max-width:360px">${L.again}</button>` : ''}
+      <a class="privacy-link" style="--i:6" href="/datenschutz.html?lang=${S.lang}" target="_blank" rel="noopener">${L.privacyBtn}</a>
       ${redirect ? `<a class="btn btn-ghost" style="--i:6" href="${esc(redirect)}" rel="noopener">${L.backToPlatform}<span class="arrow" aria-hidden="true">→</span></a>` : ''}
     </section>`);
   ev('finish_shown', null, { already });

@@ -1,4 +1,5 @@
 import { ITEMS, ITEM_BY_ID, TOTAL, ROLES, publicItems, effectiveItems } from './catalog.js';
+import { DEFAULT_PRIVACY } from './privacy.js';
 import { DEFAULT_EXTRAS, SECTIONS, ALL_GROUPS } from './extras.js';
 
 const GROUPS = ALL_GROUPS;
@@ -12,7 +13,7 @@ const EVENT_TYPES = new Set([
   'interstitial_shown', 'interstitial_done', 'extras_shown', 'extras_done', 'resume', 'finish_shown', 'save_error',
 ]);
 // Felder, die das Treatment bzw. die Messung beeinflussen: nach Start der echten Erhebung eingefroren
-const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey'];
+const FROZEN_KEYS = ['motivation', 'extras', 'catalog_overrides', 'journey', 'word_count_mode'];
 
 export const DEFAULT_SETTINGS = {
   site_online: true, // Teilnehmerseite erreichbar (aus = Offline-Meldung für alle; Admin-Testmodus bleibt nutzbar)
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS = {
   open_test: false, // Testfreigabe: Teilnehmende wählen die Gruppe selbst und dürfen wiederholt teilnehmen (Daten = Testdaten)
   experiment_version: 'v1-pilot',
   speeding_factor: { de: 0.3, en: 0.3 }, // Sekunden pro Wort
+  word_count_mode: 'text_options', // Speeding-Schwelle: Wortzahl inkl. Antwortoptionen (Pflichtenheft) oder 'text' = nur Text/Passage
   consistency: { rule: 'same_side', min_diff: 3 },
   abandon_after_min: 30,
   motivation: {
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS = {
   christmas_scene: true, // Weihnachtsszene auf der Abschlussseite (im Admin abschaltbar)
   contact: { de: '', en: '' },
   privacy_extra: { de: '', en: '' },
+  privacy_page: DEFAULT_PRIVACY, // Datenschutzerklärung (DSGVO) als eigene Seite; vor Erhebung Platzhalter ausfüllen
   closing_text: {
     de: 'Deine Antworten wurden vollständig gespeichert. Du kannst dieses Fenster jetzt schließen.',
     en: 'Your answers have been saved. You can close this window now.',
@@ -178,6 +181,14 @@ async function getParticipant(request, env) {
   return p;
 }
 
+const privacyVersion = async (s) => (await sha256(JSON.stringify(s.privacy_page))).slice(0, 8);
+
+async function getPrivacy(env, url) {
+  const lang = LANGS.includes(url.searchParams.get('lang')) ? url.searchParams.get('lang') : 'de';
+  const s = await getSettings(env);
+  return json({ lang, text: s.privacy_page[lang] || '', contact: s.contact[lang] || '', extra: s.privacy_extra[lang] || '', version: await privacyVersion(s) });
+}
+
 async function getConfig(env, url) {
   const lang = LANGS.includes(url.searchParams.get('lang')) ? url.searchParams.get('lang') : 'de';
   const group = GROUPS.includes(url.searchParams.get('group')) ? url.searchParams.get('group') : null;
@@ -195,6 +206,7 @@ async function getConfig(env, url) {
     christmas: !!s.christmas_scene,
     contact: s.contact[lang] || '',
     privacy_extra: s.privacy_extra[lang] || '',
+    privacy_version: await privacyVersion(s),
     closing_text: s.closing_text[lang] || '',
     prize: { enabled: s.prize.enabled && !!s.prize.email, email: s.prize.email, terms: s.prize.terms[lang] || '' },
     redirect_url: s.redirect_url || '',
@@ -390,17 +402,37 @@ async function postEvents(request, env) {
 }
 
 // ---------------------------------------------------------------- Auswertung
+// Rohdaten (participants, responses, extra_answers, events) sind das Original. Alle Indikatoren werden hier daraus neu berechnet.
+
+// Wortzahl für die Speeding-Schwelle: nur Text (alt) oder inklusive Antwortoptionen (Pflichtenheft, Standard)
+const wordsFor = (it, lang, s) => (s.word_count_mode === 'text' ? it.words : it.words_opt)[lang];
+const iso = (ms) => (Number.isFinite(Number(ms)) && ms !== null ? new Date(Number(ms)).toISOString() : null);
+const quantile = (xs, p) => {
+  if (!xs.length) return null;
+  const a = [...xs].sort((x, y) => x - y);
+  const i = (a.length - 1) * p;
+  const lo = Math.floor(i), hi = Math.ceil(i);
+  return Math.round(a[lo] + (a[hi] - a[lo]) * (i - lo));
+};
+const catCache = new WeakMap();
+const catalogOf = (s) => {
+  if (!catCache.has(s)) catCache.set(s, effectiveItems(s.catalog_overrides));
+  return catCache.get(s);
+};
+const deviceClass = (p) => (p.device_mobile === 1 ? 'mobile' : p.device_mobile === 0 ? 'desktop' : null);
+const PREFIX = { manipulation: 'mc', control: 'cv', feedback: 'fb' };
+const ROLE_OF = { Q06: 'consistency_a', Q10: 'consistency_b', Q09: 'comprehension', Q14: 'bogus' };
 
 function evaluate(p, rs, s) {
   const factor = Number(s.speeding_factor?.[p.lang]) || 0.3;
-  const cat = Object.fromEntries(effectiveItems(s.catalog_overrides).map((it) => [it.id, it]));
+  const cat = Object.fromEntries(catalogOf(s).map((it) => [it.id, it]));
   const by = {};
   let sc = 0, sn = 0, hidden = 0;
   const items = rs.map((r) => {
     const it = cat[r.item_id];
     by[r.item_id] = r.value;
     hidden += r.hidden_ms || 0;
-    const words = it ? it.words[p.lang] : null;
+    const words = it ? wordsFor(it, p.lang, s) : null;
     let threshold = null, speeding = null;
     if (it?.speeding) {
       threshold = Math.round(factor * words * 1000);
@@ -410,6 +442,7 @@ function evaluate(p, rs, s) {
     }
     return { ...r, item_type: it?.type ?? null, words, speeding_threshold_ms: threshold, speeding };
   });
+  // Auffällig = 1, unauffällig = 0, fehlend = NA (nie automatisch 0)
   const wrong = (id) => (by[id] == null ? null : ITEM_BY_ID[id].correct.includes(by[id]) ? 0 : 1);
   let consistency = null;
   const a = by[ROLES.consistencyA], bb = by[ROLES.consistencyB];
@@ -431,6 +464,7 @@ function evaluate(p, rs, s) {
       comprehension: wrong(ROLES.comprehension),
       q06: by[ROLES.consistencyA] ?? null,
       q10: by[ROLES.consistencyB] ?? null,
+      q10_inverted: by[ROLES.consistencyB] != null ? 6 - Number(by[ROLES.consistencyB]) : null,
       q09: by[ROLES.comprehension] ?? null,
       q14: by[ROLES.bogus] ?? null,
       total_hidden_ms: hidden,
@@ -438,32 +472,44 @@ function evaluate(p, rs, s) {
   };
 }
 
+// ---- Filter: Gruppe, Sprache, Version, Modus (prod/test/all), Status, Zeitraum
 function parseFilters(url) {
   const q = url.searchParams;
   const block = Number(q.get('block'));
+  const date = (k) => (/^\d{4}-\d{2}-\d{2}$/.test(q.get(k) || '') ? q.get(k) : null);
   return {
     group: GROUPS.includes(q.get('group')) ? q.get('group') : null,
     lang: LANGS.includes(q.get('lang')) ? q.get('lang') : null,
     version: q.get('version') || null,
-    includeTest: q.get('include_test') === '1',
-    completedOnly: q.get('completed_only') === '1',
+    mode: ['prod', 'test', 'all'].includes(q.get('mode')) ? q.get('mode') : q.get('include_test') === '1' ? 'all' : 'prod',
+    status: q.get('completed_only') === '1' ? 'completed' : ['completed', 'abandoned', 'in_progress'].includes(q.get('status')) ? q.get('status') : null,
+    from: date('from'),
+    to: date('to'),
     block: [1, 2, 3].includes(block) ? block : null,
     item: ITEM_BY_ID[q.get('item')] ? q.get('item') : null,
   };
 }
 
-function whereClause(f) {
+function whereClause(f, s) {
   const w = [], binds = [];
-  if (!f.includeTest) w.push('p.is_test = 0');
+  if (f.mode === 'prod') w.push('p.is_test = 0');
+  else if (f.mode === 'test') w.push('p.is_test = 1');
   if (f.group) { w.push('p.grp = ?'); binds.push(f.group); }
   if (f.lang) { w.push('p.lang = ?'); binds.push(f.lang); }
   if (f.version) { w.push('p.version = ?'); binds.push(f.version); }
-  if (f.completedOnly) w.push('p.completed_at IS NOT NULL');
+  if (f.from) { w.push('p.created_at >= ?'); binds.push(`${f.from}T00:00:00.000Z`); }
+  if (f.to) { w.push('p.created_at <= ?'); binds.push(`${f.to}T23:59:59.999Z`); }
+  if (f.status) {
+    const cutoff = new Date(Date.now() - s.abandon_after_min * 60000).toISOString();
+    if (f.status === 'completed') w.push('p.completed_at IS NOT NULL');
+    else if (f.status === 'abandoned') { w.push('(p.completed_at IS NULL AND COALESCE(p.last_seen_at, p.created_at) < ?)'); binds.push(cutoff); }
+    else { w.push('(p.completed_at IS NULL AND COALESCE(p.last_seen_at, p.created_at) >= ?)'); binds.push(cutoff); }
+  }
   return { sql: w.length ? `WHERE ${w.join(' AND ')}` : '', binds };
 }
 
-async function loadData(env, f) {
-  const { sql, binds } = whereClause(f);
+async function loadData(env, f, s) {
+  const { sql, binds } = whereClause(f, s);
   const [ps, rs] = await env.DB.batch([
     env.DB.prepare(`SELECT p.* FROM participants p ${sql} ORDER BY p.created_at`).bind(...binds),
     env.DB.prepare(`SELECT r.* FROM responses r JOIN participants p ON p.id = r.participant_id ${sql} ORDER BY r.participant_id, r.position`).bind(...binds),
@@ -476,11 +522,21 @@ async function loadData(env, f) {
   return { participants: ps.results, responsesBy };
 }
 
-async function loadExtraAnswers(env, f) {
-  const { sql, binds } = whereClause(f);
+async function loadExtraAnswers(env, f, s) {
+  const { sql, binds } = whereClause(f, s);
   const { results } = await env.DB.prepare(
-    `SELECT e.participant_id, e.item_id, e.value, p.grp FROM extra_answers e JOIN participants p ON p.id = e.participant_id ${sql}`,
+    `SELECT e.participant_id, e.item_id, e.value, e.created_at, p.grp FROM extra_answers e JOIN participants p ON p.id = e.participant_id ${sql} ORDER BY e.participant_id, e.created_at`,
   ).bind(...binds).all();
+  return results;
+}
+
+async function loadEvents(env, f, s, types) {
+  const { sql, binds } = whereClause(f, s);
+  const cond = types ? `${sql ? `${sql} AND` : 'WHERE'} e.type IN (${types.map(() => '?').join(',')})` : sql;
+  const { results } = await env.DB.prepare(
+    `SELECT e.id, e.participant_id, e.type, e.item_id, e.client_ts, e.data, e.created_at, p.grp, p.lang, p.version, p.is_test
+     FROM events e JOIN participants p ON p.id = e.participant_id ${cond} ORDER BY e.id`,
+  ).bind(...binds, ...(types || [])).all();
   return results;
 }
 
@@ -488,18 +544,41 @@ const statusOf = (p, s, now = Date.now()) =>
   p.completed_at ? 'completed'
     : now - Date.parse(p.last_seen_at || p.created_at) > s.abandon_after_min * 60000 ? 'abandoned' : 'in_progress';
 
+// ---- Dokumentierte Kennzahlen: Definition, Nenner, passende Exportspalte
+const KPI_DEFS = [
+  { id: 'started', name: 'Starts / gültige Einwilligungen', definition: 'Teilnahmen mit erteilter Einwilligung (Sitzung angelegt, Gruppe zugeteilt).', denominator: '–', export: 'participants.csv: eine Zeile je Teilnahme (consent_at)' },
+  { id: 'completed', name: 'Vollständige Abschlüsse', definition: 'completed_at gesetzt: 15 Hauptfragen, alle sichtbaren Pflichtseiten und Abschluss.', denominator: 'Starts', export: 'participants.csv: status = completed' },
+  { id: 'abandoned', name: 'Abbrüche', definition: 'Nicht abgeschlossen und länger als die eingestellte Inaktivitätszeit ohne Aktivität.', denominator: 'Starts', export: 'participants.csv: status = abandoned' },
+  { id: 'in_progress', name: 'Laufend', definition: 'Nicht abgeschlossen, aber innerhalb der Inaktivitätszeit noch aktiv.', denominator: 'Starts', export: 'participants.csv: status = in_progress' },
+  { id: 'completion_rate', name: 'Abschlussquote', definition: 'Abschlüsse ÷ Starts.', denominator: 'Starts', export: 'participants.csv: status' },
+  { id: 'randomization', name: 'Randomisierung (Anteil je Gruppe)', definition: 'Starts je Gruppe ÷ Starts gesamt; Zuteilung serverseitig ausgeglichen (1:1:1) je Version und Test/Produktiv.', denominator: 'Starts gesamt', export: 'participants.csv: group' },
+  { id: 'median_rt', name: 'Median Antwortzeit (ms)', definition: 'performance.now() ab vollständig sichtbarer Frage bis Abgabe; Ladezeit, Animation und Hinweisseiten zählen nicht. Median über alle beantworteten Speeding-Items.', denominator: 'beantwortete Speeding-Items', export: 'responses_long.csv: duration_ms' },
+  { id: 'rt_per_item', name: 'Antwortzeit je Frage (Median, Q1–Q3)', definition: 'Verteilung der Antwortdauer je Frage und Gruppe.', denominator: 'beantwortete Fälle je Frage × Gruppe', export: 'responses_long.csv: question_id, group, duration_ms' },
+  { id: 'speeding', name: 'Speeding-Quote', definition: 'Anteil speeding_flag = 1 an gültigen Speeding-Items (13 Items, ohne Q9/Q14). Flag = 1, falls duration_ms < Wortanzahl × Faktor (s/Wort, je Sprache).', denominator: 'gültig beantwortete Speeding-Items (n_speeding_valid)', export: 'responses_long.csv: speeding_flag; derived_person.csv: n_speeding, n_speeding_valid, speeding_share' },
+  { id: 'bogus', name: 'Bogus-Item (Q14)', definition: 'Auffällig (1), wenn die Antwort nicht 4 oder 5 ist; fehlend = NA.', denominator: 'Personen mit Antwort auf Q14', export: 'derived_person.csv: bogus_flag' },
+  { id: 'consistency', name: 'Consistency (Q6/Q10)', definition: 'Q10 invertiert (6 − Q10) und mit Q6 verglichen; Regel und Schwelle laut Konfiguration; fehlend = NA.', denominator: 'Personen mit Antwort auf Q6 und Q10', export: 'derived_person.csv: consistency_flag, q06, q10, q10_inverted' },
+  { id: 'comprehension', name: 'Comprehension (Q9)', definition: 'Auffällig (1), wenn die Antwort nicht korrekt ist (A); fehlend = NA.', denominator: 'Personen mit Antwort auf Q9', export: 'derived_person.csv: comprehension_flag, q09_choice' },
+  { id: 'reach', name: 'Fortschritt / Abbruchstelle', definition: 'Personen mit mindestens k beantworteten Hauptfragen.', denominator: 'Starts', export: 'responses_long.csv: answered; derived_person.csv: n_answered' },
+  { id: 'manipulation', name: 'Manipulationschecks', definition: 'Mittelwert (Skala 1–5) bzw. Verteilung je Item und Gruppe. Kein Nachweis kausaler Wirkung; nicht unkritisch als Kontrollvariable verwenden.', denominator: 'beantwortete Items je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = manipulation' },
+  { id: 'control', name: 'Kontextvariablen', definition: 'Verteilung je Gruppe (z. B. Semester, Umfrageerfahrung, Teilnahmegrund); Fehlwerte werden getrennt gezählt.', denominator: 'beantwortete Items je Gruppe (n) und Fehlwerte (NA)', export: 'checks_and_covariates.csv: check_type = control' },
+  { id: 'feedback', name: 'Zufriedenheit (Smiley)', definition: 'Mittelwert der Bewertung 1 (gar nicht gut) bis 5 (sehr gut).', denominator: 'beantwortete Bewertungen je Gruppe (n)', export: 'checks_and_covariates.csv: check_type = feedback' },
+  { id: 'quality', name: 'Datenqualität', definition: 'Fehlende Hauptantworten, technische Speicherfehler (save_error), Wiederholungs-Verdacht (Browser hatte schon einen Abschluss), Geräteklasse, Sprache.', denominator: 'Starts bzw. erwartete Antworten (Starts × 15)', export: 'participants.csv: device_class, language; events.csv: event_type = save_error / consent' },
+];
+
 async function adminStats(env, url) {
   const s = await getSettings(env);
   const f = parseFilters(url);
-  const { participants, responsesBy } = await loadData(env, f);
+  const { participants, responsesBy } = await loadData(env, f, s);
   const mk = () => ({
     started: 0, completed: 0, in_progress: 0, abandoned: 0, main_completed: 0,
     speeding: [0, 0], bogus: [0, 0], consistency: [0, 0], comprehension: [0, 0],
-    blocks: [[0, 0], [0, 0], [0, 0]], durations: [], rts: [],
+    blocks: [[0, 0], [0, 0], [0, 0]], durations: [], rts: [], reach: Array(TOTAL + 1).fill(0),
+    mobile: 0, desktop: 0, device_unknown: 0, items_answered: 0,
   });
   const total = mk();
   const groups = Object.fromEntries(GROUPS.map((g) => [g, mk()]));
   const langs = { de: 0, en: 0 };
+  const perItem = {};
   const now = Date.now();
   for (const p of participants) {
     const { person, items } = evaluate(p, responsesBy.get(p.id) || [], s);
@@ -510,6 +589,9 @@ async function adminStats(env, url) {
       a[st]++;
       if (p.main_completed_at) a.main_completed++;
       if (p.completed_at) a.durations.push((Date.parse(p.completed_at) - Date.parse(p.created_at)) / 1000);
+      a.items_answered += person.n_answered;
+      for (let k = 0; k <= Math.min(person.n_answered, TOTAL); k++) a.reach[k]++;
+      if (p.device_mobile === 1) a.mobile++; else if (p.device_mobile === 0) a.desktop++; else a.device_unknown++;
       for (const it of items) {
         if (it.speeding === null) continue;
         a.rts.push(it.rt_ms);
@@ -520,56 +602,82 @@ async function adminStats(env, url) {
         if (person[k] !== null) { a[k][0] += person[k]; a[k][1]++; }
       }
     }
+    for (const it of items) {
+      const x = ((perItem[it.item_id] ??= {})[p.grp] ??= { rts: [], sp: [0, 0] });
+      x.rts.push(it.rt_ms);
+      if (it.speeding !== null) { x.sp[0] += it.speeding; x.sp[1]++; }
+    }
   }
   const fin = ({ durations, rts, ...a }) => ({ ...a, median_duration_s: median(durations), median_rt_ms: median(rts) });
 
-  // Manipulationschecks / Kontrollvariablen je Gruppe
+  // Manipulationschecks / Kontext / Zufriedenheit je Gruppe (inkl. Fehlwerte)
   const extras = {};
-  for (const r of await loadExtraAnswers(env, f)) {
-    if (r.value === '') continue;
-    const e = (extras[r.item_id] ??= {});
-    const g = (e[r.grp] ??= { n: 0, sum: 0, dist: {} });
+  for (const r of await loadExtraAnswers(env, f, s)) {
+    const g = ((extras[r.item_id] ??= {})[r.grp] ??= { n: 0, na: 0, sum: 0, dist: {} });
+    if (r.value === '') { g.na++; continue; }
     g.n++;
     g.sum += Number(r.value);
     g.dist[r.value] = (g.dist[r.value] || 0) + 1;
   }
-  for (const e of Object.values(extras)) for (const g of Object.values(e)) { g.mean = Number((g.sum / g.n).toFixed(2)); delete g.sum; }
+  for (const e of Object.values(extras)) for (const g of Object.values(e)) { g.mean = g.n ? Number((g.sum / g.n).toFixed(2)) : null; delete g.sum; }
+
+  // Datenqualität: technische Fehler, Wiederholungs-Verdacht
+  let saveErrors = 0, repeats = 0;
+  const errPeople = new Set();
+  for (const e of await loadEvents(env, f, s, ['save_error', 'consent'])) {
+    if (e.type === 'save_error') { saveErrors++; errPeople.add(e.participant_id); } else {
+      try { if (JSON.parse(e.data || '{}').repeat) repeats++; } catch { /* ignorieren */ }
+    }
+  }
 
   const { results: versions } = await env.DB.prepare(
     'SELECT version, COUNT(*) AS n FROM participants GROUP BY version ORDER BY MIN(created_at)',
-  ).all();
+  ).bind().all();
   const snap = await env.DB.prepare('SELECT catalog_hash FROM config_versions WHERE version = ?').bind(s.experiment_version).first();
+  const items = catalogOf(s).map((it) => ({
+    id: it.id, position: it.position, block: it.block, type: it.type, speeding: it.speeding,
+    groups: Object.fromEntries(GROUPS.map((g) => {
+      const x = perItem[it.id]?.[g];
+      return [g, x
+        ? { n: x.rts.length, median_ms: median(x.rts), q1_ms: quantile(x.rts, 0.25), q3_ms: quantile(x.rts, 0.75), speeding: x.sp }
+        : { n: 0, median_ms: null, q1_ms: null, q3_ms: null, speeding: [0, 0] }];
+    })),
+  }));
   return json({
     generated_at: nowIso(),
     current_version: s.experiment_version,
     catalog_mismatch: !!snap && snap.catalog_hash !== (await sha256(CATALOG_HASH_SRC)),
+    filters: f,
+    rules: { word_count_mode: s.word_count_mode, speeding_factor: s.speeding_factor, consistency: s.consistency, abandon_after_min: s.abandon_after_min },
     total: fin(total),
     groups: Object.fromEntries(GROUPS.map((g) => [g, fin(groups[g])])),
     langs,
     versions,
     extras,
     extras_meta: s.extras.map((e) => ({ id: e.id, section: e.section, kind: e.kind, ordinal: e.ordinal, text: e.de.text, options: e.de.options })),
+    items,
+    quality: {
+      save_errors: saveErrors,
+      participants_with_errors: errPeople.size,
+      repeat_suspects: repeats,
+      items_expected: total.started * TOTAL,
+      items_answered: total.items_answered,
+    },
+    definitions: KPI_DEFS,
   });
 }
 
-const BASE_COLS = ['participant_id', 'group', 'gamification', 'motivation', 'lang', 'version', 'is_test', 'source',
-  'device_mobile', 'viewport_w', 'viewport_h', 'dark_mode', 'reduced_motion'];
-const PERSON_COLS = [...BASE_COLS, 'started_at', 'main_completed_at', 'completed_at', 'status', 'duration_s', 'n_answered', 'speeding_items',
-  'speeding_count', 'speeding_share', 'bogus', 'consistency', 'comprehension', 'q06', 'q10', 'q09', 'q14', 'total_hidden_ms'];
-const EXPORT_COLS = {
-  item: [...BASE_COLS, 'block', 'position', 'item_id', 'item_type', 'value', 'rt_ms', 'first_click_ms', 'hidden_ms',
-    'changes', 'words', 'speeding_threshold_ms', 'speeding', 'answered_at'],
-  events: ['participant_id', 'group', 'lang', 'version', 'is_test', 'event_id', 'type', 'item_id', 'client_ts', 'data', 'created_at'],
-};
+// ---------------------------------------------------------------- Export (CSV UTF-8, ISO-8601, NA für fehlende Werte)
 
-function toCSV(cols, rows, sep) {
+function toCSV(cols, rows, sep = ',', bom = false) {
   const cell = (v) => {
-    if (v === null || v === undefined) return '';
-    let s = String(v);
-    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s) && !/^-?\d/.test(s)) s = `'${s}`; // Formel-Injection verhindern
-    return /["\n\r,;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    if (v === null || v === undefined || v === '') return 'NA';
+    if (typeof v === 'boolean') return v ? '1' : '0';
+    let t = String(v);
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(t) && !/^-?\d/.test(t)) t = `'${t}`; // Formel-Injection verhindern
+    return /["\n\r,;]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
-  return '﻿' + [cols.join(sep), ...rows.map((r) => cols.map((c) => cell(r[c])).join(sep))].join('\r\n') + '\r\n';
+  return (bom ? '﻿' : '') + [cols.join(sep), ...rows.map((r) => cols.map((c) => cell(r[c])).join(sep))].join('\r\n') + '\r\n';
 }
 
 const csvResponse = (name, body) =>
@@ -581,66 +689,235 @@ const csvResponse = (name, body) =>
     },
   });
 
+const EXPORT_LEVELS = ['participants', 'responses_long', 'codebook', 'checks', 'derived', 'events', 'config'];
+const LEVEL_ALIAS = { person: 'derived', item: 'responses_long' };
+const FILE_NAME = { participants: 'participants', responses_long: 'responses_long', codebook: 'questions_codebook', checks: 'checks_and_covariates', derived: 'derived_person', events: 'events', config: 'experiment_config' };
+
+const metaOfExtras = (s) => Object.fromEntries(s.extras.map((e) => [e.id, e]));
+
+// participants.csv – eine Zeile je Teilnahme
+function buildParticipants(ctx, profile) {
+  const raw = profile === 'raw';
+  const cols = ['participant_id', 'group', 'consent_at', 'started_at', ...(raw ? ['last_seen_at'] : []), 'main_completed_at', 'completed_at', 'status',
+    'language', 'device_class', 'experiment_version', 'randomization_version', 'is_test', 'n_answered',
+    ...(raw ? ['source', 'viewport_w', 'viewport_h', 'dark_mode', 'reduced_motion'] : [])];
+  const rows = ctx.participants.map((p) => ({
+    participant_id: p.id, group: p.grp, consent_at: p.consent_at, started_at: p.created_at, last_seen_at: p.last_seen_at,
+    main_completed_at: p.main_completed_at, completed_at: p.completed_at, status: statusOf(p, ctx.s, ctx.now),
+    language: p.lang, device_class: deviceClass(p), experiment_version: p.version, randomization_version: p.version,
+    is_test: p.is_test, n_answered: (ctx.responsesBy.get(p.id) || []).length,
+    source: p.source, viewport_w: p.viewport_w, viewport_h: p.viewport_h, dark_mode: p.dark_mode, reduced_motion: p.reduced_motion,
+  }));
+  return { cols, rows };
+}
+
+// responses_long.csv – eine Zeile je Person × Hauptfrage (auch unbeantwortete: answered = 0, Werte = NA)
+function buildResponses(ctx) {
+  const cols = ['participant_id', 'group', 'question_id', 'item_order', 'block', 'item_type', 'response_value', 'answered', 'correct',
+    'shown_at', 'submitted_at', 'duration_ms', 'first_click_ms', 'hidden_ms', 'changes', 'word_count', 'speeding_threshold_ms',
+    'speeding_flag', 'language', 'experiment_version', 'is_test'];
+  const rows = [];
+  for (const p of ctx.participants) {
+    const rs = ctx.responsesBy.get(p.id) || [];
+    const byItem = Object.fromEntries(rs.map((r) => [r.item_id, r]));
+    const ev = Object.fromEntries(evaluate(p, rs, ctx.s).items.map((e) => [e.item_id, e]));
+    const factor = Number(ctx.s.speeding_factor?.[p.lang]) || 0.3;
+    for (const it of ctx.catalog) {
+      if ((ctx.f.block && it.block !== ctx.f.block) || (ctx.f.item && it.id !== ctx.f.item)) continue;
+      const r = byItem[it.id];
+      const words = wordsFor(it, p.lang, ctx.s);
+      rows.push({
+        participant_id: p.id, group: p.grp, question_id: it.id, item_order: it.position, block: it.block, item_type: it.type,
+        response_value: r ? r.value : null, answered: r ? 1 : 0,
+        correct: r && it.correct ? (it.correct.includes(r.value) ? 1 : 0) : null,
+        shown_at: iso(ctx.shownMain.get(`${p.id}|${it.id}`) ?? null), submitted_at: r ? r.created_at : null,
+        duration_ms: r ? r.rt_ms : null, first_click_ms: r ? r.first_click_ms : null, hidden_ms: r ? r.hidden_ms : null, changes: r ? r.changes : null,
+        word_count: words, speeding_threshold_ms: it.speeding ? Math.round(factor * words * 1000) : null,
+        speeding_flag: ev[it.id] ? ev[it.id].speeding : null,
+        language: p.lang, experiment_version: p.version, is_test: p.is_test,
+      });
+    }
+  }
+  return { cols, rows };
+}
+
+// questions_codebook.csv – Itemdefinitionen (Haupt- und Zusatzfragen)
+function buildCodebook(ctx) {
+  const { s } = ctx;
+  const opts = (a) => (a || []).join(' | ');
+  const cols = ['question_id', 'question_kind', 'item_type', 'block', 'item_order', 'passage_de', 'passage_en', 'question_text_de', 'question_text_en',
+    'options_de', 'options_en', 'coding', 'is_speeding_item', 'word_count_text_de', 'word_count_text_en', 'word_count_with_options_de',
+    'word_count_with_options_en', 'word_count_used_de', 'word_count_used_en', 'check_role', 'required', 'visible', 'groups', 'version'];
+  const rows = ctx.catalog.map((it) => {
+    const o = it.de.options;
+    const coding = it.type === 'comprehension'
+      ? 'Antwortbuchstabe A–D; korrekt = A; flag 1 = falsch'
+      : it.type === 'bogus'
+        ? 'Skala 1–5; unauffällig (0) = 4 oder 5, sonst 1'
+        : `Skala 1–5 (1 = ${o[0]} … 5 = ${o[4]})${ROLE_OF[it.id]?.startsWith('consistency') ? '; für Konsistenz wird Q10 invertiert (6 − Q10)' : ''}`;
+    return {
+      question_id: it.id, question_kind: 'main', item_type: it.type, block: it.block, item_order: it.position,
+      passage_de: it.de.passage || null, passage_en: it.en.passage || null, question_text_de: it.de.text, question_text_en: it.en.text,
+      options_de: opts(it.de.options), options_en: opts(it.en.options), coding, is_speeding_item: it.speeding ? 1 : 0,
+      word_count_text_de: it.words.de, word_count_text_en: it.words.en, word_count_with_options_de: it.words_opt.de, word_count_with_options_en: it.words_opt.en,
+      word_count_used_de: wordsFor(it, 'de', s), word_count_used_en: wordsFor(it, 'en', s),
+      check_role: ROLE_OF[it.id] || 'none', required: 1, visible: 1, groups: GROUPS.join('|'), version: s.experiment_version,
+    };
+  });
+  s.extras.forEach((e, i) => {
+    rows.push({
+      question_id: e.id, question_kind: e.section, item_type: e.kind, block: null, item_order: TOTAL + 1 + i,
+      passage_de: null, passage_en: null, question_text_de: e.de.text, question_text_en: e.en.text,
+      options_de: opts(e.de.options), options_en: opts(e.en.options),
+      coding: e.kind === 'number' ? `ganze Zahl ${e.min}–${e.max}` : `${e.de.options.length} Optionen; Wert = Position der Option (1 = erste)`,
+      is_speeding_item: 0, check_role: e.section, required: e.required ? 1 : 0, visible: e.visible ? 1 : 0, groups: e.groups.join('|'), version: s.experiment_version,
+    });
+  });
+  return { cols, rows };
+}
+
+// checks_and_covariates.csv – eine Zeile je Zusatzantwort (Manipulationscheck / Kontrollfrage / Zufriedenheit)
+function buildChecks(ctx) {
+  const meta = metaOfExtras(ctx.s);
+  const cols = ['participant_id', 'group', 'check_id', 'check_type', 'response_value', 'answered', 'shown_at', 'submitted_at', 'language', 'experiment_version', 'is_test'];
+  const rows = ctx.extraRows.map((r) => {
+    const p = ctx.pById.get(r.participant_id);
+    const type = meta[r.item_id]?.section ?? null;
+    return {
+      participant_id: r.participant_id, group: r.grp, check_id: r.item_id, check_type: type,
+      response_value: r.value === '' ? null : r.value, answered: r.value === '' ? 0 : 1,
+      shown_at: type ? ctx.shownExtras.get(`${r.participant_id}|${type}`) ?? null : null, submitted_at: r.created_at,
+      language: p?.lang ?? null, experiment_version: p?.version ?? null, is_test: p?.is_test ?? null,
+    };
+  });
+  return { cols, rows };
+}
+
+// derived_person.csv – eine Zeile je Person, aus den Rohdaten neu berechnet
+function buildDerived(ctx) {
+  const meta = metaOfExtras(ctx.s);
+  const colOf = (id) => `${PREFIX[meta[id]?.section] || 'x'}_${id}`;
+  const ids = [...new Set([...ctx.s.extras.map((e) => e.id), ...ctx.extraRows.map((r) => r.item_id)])];
+  const covCols = ids.map(colOf);
+  const cov = new Map();
+  for (const r of ctx.extraRows) {
+    if (!cov.has(r.participant_id)) cov.set(r.participant_id, {});
+    cov.get(r.participant_id)[colOf(r.item_id)] = r.value === '' ? null : r.value;
+  }
+  const cols = ['participant_id', 'group', 'status', 'completed', 'language', 'device_class', 'experiment_version', 'is_test', 'n_answered',
+    'n_speeding', 'n_speeding_valid', 'speeding_share', 'bogus_flag', 'consistency_flag', 'comprehension_flag', 'q06', 'q10', 'q10_inverted',
+    'q09_choice', 'q14_value', 'duration_s', ...covCols];
+  const rows = ctx.participants.map((p) => {
+    const { person } = evaluate(p, ctx.responsesBy.get(p.id) || [], ctx.s);
+    return {
+      participant_id: p.id, group: p.grp, status: statusOf(p, ctx.s, ctx.now), completed: p.completed_at ? 1 : 0, language: p.lang,
+      device_class: deviceClass(p), experiment_version: p.version, is_test: p.is_test, n_answered: person.n_answered,
+      n_speeding: person.speeding_items ? person.speeding_count : null, n_speeding_valid: person.speeding_items, speeding_share: person.speeding_share,
+      bogus_flag: person.bogus, consistency_flag: person.consistency, comprehension_flag: person.comprehension,
+      q06: person.q06, q10: person.q10, q10_inverted: person.q10_inverted, q09_choice: person.q09, q14_value: person.q14,
+      duration_s: p.completed_at ? Math.round((Date.parse(p.completed_at) - Date.parse(p.created_at)) / 1000) : null,
+      ...(cov.get(p.id) || {}),
+    };
+  });
+  return { cols, rows };
+}
+
+// events.csv – nur notwendige Ablaufereignisse (keine Mausbewegungen); analysis-Profil ohne Rohdatenfeld
+function buildEvents(ctx, profile) {
+  const raw = profile === 'raw';
+  const cols = ['participant_id', 'group', 'language', 'experiment_version', 'is_test', 'event_id', 'event_type', 'question_id', 'treatment_stage', 'client_time', 'server_time', ...(raw ? ['data'] : [])];
+  const rows = ctx.events.map((e) => ({
+    participant_id: e.participant_id, group: e.grp, language: e.lang, experiment_version: e.version, is_test: e.is_test, event_id: e.id,
+    event_type: e.type, question_id: e.item_id, treatment_stage: e.item_id ? ctx.catalogById[e.item_id]?.block ?? null : null,
+    client_time: iso(e.client_ts), server_time: e.created_at, data: e.data,
+  }));
+  return { cols, rows };
+}
+
+// experiment_config.json – archivierte Studienkonfiguration inkl. Versionsstände und Kennzahl-Definitionen
+async function exportConfig(env, s, profile) {
+  const cat = catalogOf(s);
+  const { results: versions } = await env.DB.prepare(
+    `SELECT v.version, v.frozen_at, v.catalog_hash,
+       (SELECT COUNT(*) FROM participants p WHERE p.version = v.version AND p.is_test = 0) AS participants
+     FROM config_versions v ORDER BY v.frozen_at`,
+  ).bind().all();
+  const body = {
+    exported_at: nowIso(),
+    export_profile: profile,
+    experiment_version: s.experiment_version,
+    note: 'Rohdaten sind das Original; alle Indikatoren sind daraus mit diesen Regeln neu berechenbar. Zeitstempel ISO-8601 (UTC). shown_at der Hauptfragen stammt aus der Uhr des Geräts, submitted_at vom Server.',
+    groups: [
+      { id: 'control', name_de: 'Kontrolle', treatment: 'Neutraler Kopfbereich ab Q1; keine spielerischen oder motivierenden Hinweise.' },
+      { id: 'gamification', name_de: 'Gamification', treatment: 'Animierte Fortschrittsreise ab Q1 auf jeder Frageseite (Wald → Stadt mit Universität → Raketenstation → antikes Forum); Punkte und Titel nur aus der Zahl beantworteter Fragen.', journey: s.journey },
+      { id: 'motivation', name: 'Motivation', treatment: 'Einmalige Hinweisseiten vor Q1 sowie nach Q5 und Q10; keine Botschaft auf Frageseiten.', interstitials: [{ before_question: 1 }, { after_question: 5 }, { after_question: 10 }], texts: s.motivation },
+    ],
+    randomization: { method: 'serverseitig; neue Person kommt in die Gruppe mit den wenigsten Teilnahmen der Version (Gleichstand zufällig), getrennt nach Test/Produktiv', stable_per_session: true },
+    flow: { main_items: TOTAL, order: cat.map((i) => i.id), blocks: { 1: 'Q01–Q05', 2: 'Q06–Q10', 3: 'Q11–Q15' }, after_main: SECTIONS },
+    scoring: {
+      speeding: { items: cat.filter((i) => i.speeding).map((i) => i.id), rule: 'duration_ms < Wortanzahl × Faktor × 1000', factor_seconds_per_word: s.speeding_factor, word_count_mode: s.word_count_mode, word_count_mode_note: 'text_options = Text/Passage plus Antwortoptionen (Pflichtenheft); text = nur Text/Passage' },
+      consistency: { pair: ['Q06', 'Q10'], inversion: '6 − Q10', rule: s.consistency },
+      comprehension: { item: 'Q09', correct: ITEM_BY_ID.Q09.correct, flag_if: 'falsch' },
+      bogus: { item: 'Q14', unauffaellig: ITEM_BY_ID.Q14.correct, flag_if: 'sonst' },
+      missing: 'Fehlende Werte sind NA (nicht 0).',
+      abandon_after_min: s.abandon_after_min,
+    },
+    items: cat.map((it) => ({ id: it.id, order: it.position, block: it.block, type: it.type, speeding: it.speeding, role: ROLE_OF[it.id] || 'none', de: it.de, en: it.en, word_count_text: it.words, word_count_with_options: it.words_opt })),
+    extras: s.extras,
+    versions,
+    kpi_definitions: KPI_DEFS,
+  };
+  return new Response(JSON.stringify(body, null, 2), {
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-disposition': `attachment; filename="experiment_config_${nowIso().slice(0, 16).replace(/[:T]/g, '-')}.json"`,
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 async function adminExport(env, url) {
   const s = await getSettings(env);
   const f = parseFilters(url);
-  const level = ['item', 'person', 'events'].includes(url.searchParams.get('level')) ? url.searchParams.get('level') : 'person';
+  const asked = url.searchParams.get('level');
+  const level = EXPORT_LEVELS.includes(LEVEL_ALIAS[asked] || asked) ? LEVEL_ALIAS[asked] || asked : 'participants';
+  const profile = url.searchParams.get('profile') === 'analysis' ? 'analysis' : 'raw';
   const sep = url.searchParams.get('sep') === 'semicolon' ? ';' : ',';
-  const rows = [];
-  const base = (p) => ({
-    participant_id: p.id, group: p.grp, gamification: p.grp === 'gamification' ? 1 : 0, motivation: p.grp === 'motivation' ? 1 : 0,
-    lang: p.lang, version: p.version, is_test: p.is_test, source: p.source, device_mobile: p.device_mobile,
-    viewport_w: p.viewport_w, viewport_h: p.viewport_h, dark_mode: p.dark_mode, reduced_motion: p.reduced_motion,
-  });
-  let cols = EXPORT_COLS[level];
 
-  if (level === 'events') {
-    const { sql, binds } = whereClause(f);
-    const { results } = await env.DB.prepare(
-      `SELECT e.*, p.grp, p.lang, p.version, p.is_test FROM events e JOIN participants p ON p.id = e.participant_id ${sql} ORDER BY e.id`,
-    ).bind(...binds).all();
-    for (const e of results) {
-      rows.push({
-        participant_id: e.participant_id, group: e.grp, lang: e.lang, version: e.version, is_test: e.is_test,
-        event_id: e.id, type: e.type, item_id: e.item_id, client_ts: e.client_ts, data: e.data, created_at: e.created_at,
-      });
-    }
-  } else {
-    const { participants, responsesBy } = await loadData(env, f);
-    const now = Date.now();
-    // Zusatzfragen als Spalten x_<id> (alle in der Konfiguration vorhandenen und alle je beantworteten Items)
-    const xAns = new Map();
-    const xIds = new Set(s.extras.map((e) => e.id));
-    if (level === 'person') {
-      for (const r of await loadExtraAnswers(env, f)) {
-        xIds.add(r.item_id);
-        if (!xAns.has(r.participant_id)) xAns.set(r.participant_id, {});
-        xAns.get(r.participant_id)[`x_${r.item_id}`] = r.value;
-      }
-      cols = [...PERSON_COLS, ...[...xIds].map((id) => `x_${id}`)];
-    }
-    for (const p of participants) {
-      const { person, items } = evaluate(p, responsesBy.get(p.id) || [], s);
-      if (level === 'item') {
-        for (const it of items) {
-          if ((f.block && it.block !== f.block) || (f.item && it.item_id !== f.item)) continue;
-          rows.push({
-            ...base(p), block: it.block, position: it.position, item_id: it.item_id, item_type: it.item_type, value: it.value,
-            rt_ms: it.rt_ms, first_click_ms: it.first_click_ms, hidden_ms: it.hidden_ms, changes: it.changes, words: it.words,
-            speeding_threshold_ms: it.speeding_threshold_ms, speeding: it.speeding, answered_at: it.created_at,
-          });
-        }
-      } else {
-        rows.push({
-          ...base(p), started_at: p.created_at, main_completed_at: p.main_completed_at, completed_at: p.completed_at, status: statusOf(p, s, now),
-          duration_s: p.completed_at ? Math.round((Date.parse(p.completed_at) - Date.parse(p.created_at)) / 1000) : null,
-          ...person, ...(xAns.get(p.id) || {}),
-        });
-      }
+  if (level === 'config') {
+    await audit(env, 'export', { level, profile, rows: 1, filters: f });
+    return exportConfig(env, s, profile);
+  }
+
+  const { participants, responsesBy } = await loadData(env, f, s);
+  const catalog = catalogOf(s);
+  const ctx = {
+    s, f, now: Date.now(), participants, responsesBy, catalog, catalogById: Object.fromEntries(catalog.map((i) => [i.id, i])),
+    pById: new Map(participants.map((p) => [p.id, p])), shownMain: new Map(), shownExtras: new Map(), extraRows: [], events: [],
+  };
+  if (level === 'responses_long') {
+    for (const e of await loadEvents(env, f, s, ['question_visible'])) {
+      const key = `${e.participant_id}|${e.item_id}`;
+      if (!ctx.shownMain.has(key) && e.client_ts) ctx.shownMain.set(key, e.client_ts);
     }
   }
-  await audit(env, 'export', { level, rows: rows.length, filters: f });
-  return csvResponse(`export_${level}`, toCSV(cols, rows, sep));
+  if (level === 'checks' || level === 'derived') ctx.extraRows = await loadExtraAnswers(env, f, s);
+  if (level === 'checks') {
+    for (const e of await loadEvents(env, f, s, ['extras_shown'])) {
+      let sec = null;
+      try { sec = JSON.parse(e.data || '{}').section; } catch { /* ignorieren */ }
+      const key = `${e.participant_id}|${sec}`;
+      if (sec && !ctx.shownExtras.has(key)) ctx.shownExtras.set(key, e.created_at);
+    }
+  }
+  if (level === 'events') ctx.events = await loadEvents(env, f, s, null);
+
+  const built = {
+    participants: buildParticipants, responses_long: buildResponses, codebook: buildCodebook, checks: buildChecks, derived: buildDerived, events: buildEvents,
+  }[level](ctx, profile);
+  await audit(env, 'export', { level, profile, rows: built.rows.length, filters: f });
+  // UTF-8 ohne BOM (R/Python/Stata); BOM nur zusammen mit Semikolon (Excel DE)
+  return csvResponse(`${FILE_NAME[level]}${profile === 'analysis' ? '_analysis' : ''}`, toCSV(built.cols, built.rows, sep, sep === ';'));
 }
 
 // ---------------------------------------------------------------- Admin: Gewinnspiel (getrennt von den Antworten)
@@ -671,7 +948,7 @@ async function adminGetSettings(env) {
   const s = await getSettings(env);
   const eff = effectiveItems(s.catalog_overrides);
   const catalog = eff.map((it) => ({
-    id: it.id, position: it.position, block: it.block, type: it.type, speeding: it.speeding, words: it.words,
+    id: it.id, position: it.position, block: it.block, type: it.type, speeding: it.speeding, words: it.words, words_opt: it.words_opt,
     de: { text: it.de.text, passage: it.de.passage || null, options: it.de.options },
     en: { text: it.en.text, passage: it.en.passage || null, options: it.en.options },
   }));
@@ -768,6 +1045,11 @@ async function adminPutSettings(request, env) {
       }
     }
   }
+  if ('word_count_mode' in b) {
+    if (!['text', 'text_options'].includes(b.word_count_mode)) bad('word_count_mode');
+    next.word_count_mode = b.word_count_mode;
+  }
+  if (isObj(b.privacy_page)) langPair('privacy_page', b.privacy_page, 20000);
   if (isObj(b.consistency)) {
     if (b.consistency.rule && !['same_side', 'diff'].includes(b.consistency.rule)) bad('consistency.rule');
     const md = b.consistency.min_diff === undefined ? next.consistency.min_diff : clampInt(b.consistency.min_diff, 1, 4);
@@ -875,6 +1157,7 @@ async function route(request, env, url) {
   if (['/api/config', '/api/session', '/api/answer', '/api/extras', '/api/finish', '/api/events'].includes(p)) await requireOnline(request, env);
 
   if (p === '/api/config' && m === 'GET') return getConfig(env, url);
+  if (p === '/api/privacy' && m === 'GET') return getPrivacy(env, url);
   if (p === '/api/session' && m === 'POST') return createSession(request, env);
   if (p === '/api/session' && m === 'GET') return getSession(request, env);
   if (p === '/api/answer' && m === 'POST') return postAnswer(request, env);

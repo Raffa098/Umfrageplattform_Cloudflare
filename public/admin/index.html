@@ -50,27 +50,61 @@
     <div id="frozenBanner" class="banner" hidden></div>
     <div class="banner info">Der Fragenkatalog ist ein <b>vorläufiger Testkatalog</b> und kein validiertes Instrument. Wissenschaftliche Regeln (Schwellen, Konsistenzregel, Ausschlusskriterien) vor der Erhebung festlegen.</div>
 
+    <!-- Gemeinsame Filter für Übersicht und Export -->
+    <form id="filterBar" class="filters panel" hidden>
+      <label class="field"><span>Version</span><select name="version" id="fVersion"><option value="">Alle</option></select></label>
+      <label class="field"><span>Gruppe</span><select name="group"><option value="">Alle</option><option value="control">1 · Kontrolle</option><option value="gamification">2 · Gamification</option><option value="motivation">3 · Motivation</option></select></label>
+      <label class="field"><span>Sprache</span><select name="lang"><option value="">Alle</option><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
+      <label class="field"><span>Abschlussstatus</span><select name="status"><option value="">Alle</option><option value="completed">Abgeschlossen</option><option value="abandoned">Abgebrochen</option><option value="in_progress">Laufend</option></select></label>
+      <label class="field"><span>Daten</span><select name="mode"><option value="prod">Nur Produktiv</option><option value="test">Nur Test</option><option value="all">Test + Produktiv</option></select></label>
+      <label class="field"><span>Von</span><input type="date" name="from"></label>
+      <label class="field"><span>Bis</span><input type="date" name="to"></label>
+      <div class="filter-actions"><button class="btn-sm" type="button" id="fReset">Zurücksetzen</button><button class="btn-sm" id="ovRefresh" type="button">Aktualisieren</button><span class="live"><i></i><span id="ovUpdated">–</span></span></div>
+    </form>
+
     <!-- Übersicht -->
     <section class="tab" id="tab-overview">
-      <div class="toolbar">
-        <label class="field inline"><span>Version</span><select id="ovVersion"><option value="">Alle</option></select></label>
-        <label class="toggle"><input type="checkbox" id="ovTest"><span></span>Testdaten einbeziehen</label>
-        <span class="live"><i></i><span id="ovUpdated">–</span></span>
-        <button class="btn-sm" id="ovRefresh" type="button">Aktualisieren</button>
-      </div>
       <div id="mismatchBanner" class="banner warn" hidden>Der Fragenkatalog im Code weicht vom eingefrorenen Stand der aktuellen Version ab. Bitte eine neue Experimentversion vergeben.</div>
+      <div id="ovWarn"></div>
       <div class="tiles" id="ovTiles"></div>
-      <h2>Gruppen &amp; Antwortqualität <small>(Anteil auffällig, weniger = besser)</small></h2>
+
+      <h2>Teilnahme je Gruppe <small>(Anzahl Personen; Nenner = Starts mit Einwilligung)</small></h2>
+      <div class="panel chart-panel">
+        <div class="chart-tools"><span class="muted">X-Achse:</span>
+          <button class="btn-sm seg-on" type="button" data-axis="group">Gruppe</button>
+          <button class="btn-sm" type="button" data-axis="status">Status</button></div>
+        <div id="chStatus" class="chart"></div>
+      </div>
+
+      <h2>Fortschritt &amp; Abbruchstelle <small>(Anteil der Starts mit mindestens k beantworteten Fragen)</small></h2>
+      <div class="panel chart-panel"><div id="chReach" class="chart"></div></div>
+
+      <h2>Antwortqualität <small>(Anteil auffällig, 95 %-Intervall · weniger = besser)</small></h2>
+      <div class="panel chart-panel"><div id="chQuality" class="chart"></div></div>
       <div class="table-wrap"><table id="ovGroups"></table></div>
+
+      <h2>Antwortzeit je Frage <small>(Median in Sekunden, nur Speeding-Items ohne Q9/Q14)</small></h2>
+      <div class="panel chart-panel"><div id="chRt" class="chart"></div></div>
+      <details class="panel fold"><summary>Tabelle: Antwortzeit und Speeding je Frage und Gruppe</summary>
+        <div class="table-wrap"><table id="ovItems"></table></div></details>
       <h2>Speeding nach Block <small>(explorativ)</small></h2>
       <div class="table-wrap"><table id="ovBlocks"></table></div>
+
       <h2>Manipulationschecks <small>(Ø auf 1–5 bzw. Verteilung, je Gruppe)</small></h2>
+      <div class="panel chart-panel"><div id="chManip" class="chart"></div></div>
       <div class="table-wrap"><table id="ovManip"></table></div>
-      <h2>Kontrollvariablen</h2>
+      <h2>Kontextvariablen <small>(inkl. Fehlwerte NA)</small></h2>
       <div class="table-wrap"><table id="ovControl"></table></div>
       <h2>Zufriedenheit mit der Umfrage <small>(Smiley-Bewertung, 1 = Gar nicht gut … 5 = Sehr gut)</small></h2>
       <div class="table-wrap"><table id="ovFeedback"></table></div>
-      <p class="note">Speeding: Anteil der 13 Speeding-Fragen mit Antwortzeit unter Faktor × Wortzahl. Bogus, Consistency und Comprehension: Anteil der Personen mit auffälliger Antwort. Die inferenzstatistische Auswertung (Logit, Marginaleffekte, Wald-Test) erfolgt mit dem Export in R, Python oder Stata.</p>
+
+      <h2>Datenqualität</h2>
+      <div class="tiles" id="ovQuality"></div>
+
+      <h2>Kennzahlen &amp; Definitionen <small>(Nenner und Exportspalte je Kennzahl)</small></h2>
+      <details class="panel fold"><summary>Alle Definitionen anzeigen</summary><div class="table-wrap"><table id="ovDefs"></table></div></details>
+      <p class="note" id="ovRules"></p>
+      <p class="note">Die inferenzstatistische Auswertung (Logit, Marginaleffekte, Wald-Test) erfolgt mit dem Export in R, Python oder Stata. Diese Übersicht zeigt deskriptive Kennzahlen; Manipulationschecks sind kein Nachweis kausaler Wirkung.</p>
     </section>
 
     <!-- Einstellungen -->
@@ -106,6 +140,12 @@
             <label class="field"><span>Schwelle (nur Regel „diff“)</span><input type="number" name="c_min" min="1" max="4"></label>
             <label class="field"><span>Abbruch nach (Min. inaktiv)</span><input type="number" name="abandon" min="5" max="1440"></label>
           </div>
+          <label class="field"><span>Wortzahl für die Speeding-Schwelle</span>
+            <select name="word_mode">
+              <option value="text_options">Text/Passage + Antwortoptionen (laut Pflichtenheft)</option>
+              <option value="text">Nur Text/Passage (frühere Variante)</option>
+            </select></label>
+          <p class="hint">Wirkt nur auf die Auswertung (Rohdaten bleiben unverändert) und wird mit der Experimentversion eingefroren. Beide Zählungen stehen im Codebook.</p>
           <p class="hint">Messregeln wirken nur auf die Auswertung – Rohdaten bleiben unverändert und können jederzeit neu berechnet werden.</p>
         </div>
         <div class="panel">
@@ -139,6 +179,13 @@
             <label class="field"><span>Zusätzlicher Datenschutzhinweis (DE) – Zweck, Löschfristen …</span><textarea name="priv_de" rows="3" maxlength="3000"></textarea></label>
             <label class="field"><span>Additional privacy notice (EN)</span><textarea name="priv_en" rows="3" maxlength="3000"></textarea></label>
           </div>
+          <h3>Datenschutzerklärung (DSGVO) <small>– eigene Seite, Teilnehmende öffnen sie vor der Zustimmung</small></h3>
+          <p class="hint"><b>Vorlage ohne rechtliche Prüfung.</b> Stellen in [eckigen Klammern] sind Platzhalter (verantwortliche Stelle, Datenschutzbeauftragte, Hosting/Drittland, Speicherdauer, Aufsichtsbehörde, Gewinnspiel) und müssen vor dem echten Start ausgefüllt und rechtlich geprüft werden. Format: <code>## Überschrift</code>, Absätze durch Leerzeile, Listen mit <code>- </code>. <a href="/datenschutz.html" target="_blank" rel="noopener">Seite ansehen</a></p>
+          <div class="row">
+            <label class="field"><span>Datenschutzerklärung (DE)</span><textarea name="pp_de" rows="14" maxlength="20000"></textarea></label>
+            <label class="field"><span>Privacy notice (EN)</span><textarea name="pp_en" rows="14" maxlength="20000"></textarea></label>
+          </div>
+          <p class="hint" id="ppCount"></p>
           <div class="row">
             <label class="field"><span>Abschlusstext (DE)</span><textarea name="close_de" rows="3" maxlength="1000"></textarea></label>
             <label class="field"><span>Closing text (EN)</span><textarea name="close_en" rows="3" maxlength="1000"></textarea></label>
@@ -196,29 +243,23 @@
 
     <!-- Export -->
     <section class="tab" id="tab-export" hidden>
-      <form id="expForm" class="panel">
-        <h2>CSV-Export</h2>
+      <div class="panel">
+        <h2>Datenexport <small>(es gelten die Filter oben)</small></h2>
         <div class="row">
-          <label class="field"><span>Ebene</span><select name="level">
-            <option value="person">Personenebene inkl. Zusatzfragen (x_…)</option>
-            <option value="item">Person × Frage (Speeding-Logit)</option>
-            <option value="events">Ereignisprotokoll</option></select></label>
-          <label class="field"><span>Trennzeichen</span><select name="sep"><option value="comma">Komma (R, Python, Stata)</option><option value="semicolon">Semikolon (Excel DE)</option></select></label>
+          <label class="field"><span>Profil</span><select id="expProfile">
+            <option value="analysis">Analyse (anonymitätsgeprüft, ohne Quelle/Bildschirmmaße/Rohdaten)</option>
+            <option value="raw">Rohdaten (zusätzlich Quelle, Bildschirmgröße, Ereignis-Rohfeld)</option></select></label>
+          <label class="field"><span>Trennzeichen</span><select id="expSep"><option value="comma">Komma (R, Python, Stata · UTF-8)</option><option value="semicolon">Semikolon (Excel DE · UTF-8 mit BOM)</option></select></label>
         </div>
         <div class="row">
-          <label class="field"><span>Gruppe</span><select name="group"><option value="">Alle</option><option value="control">Kontrolle</option><option value="gamification">Gamification</option><option value="motivation">Motivation</option></select></label>
-          <label class="field"><span>Sprache</span><select name="lang"><option value="">Alle</option><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
-          <label class="field"><span>Version</span><select name="version" id="expVersion"><option value="">Alle</option></select></label>
+          <label class="field"><span>Block (nur responses_long)</span><select id="expBlock"><option value="">Alle</option><option>1</option><option>2</option><option>3</option></select></label>
+          <label class="field"><span>Frage (nur responses_long)</span><select id="expItem"><option value="">Alle</option></select></label>
         </div>
-        <div class="row">
-          <label class="field"><span>Block (nur Person × Frage)</span><select name="block"><option value="">Alle</option><option>1</option><option>2</option><option>3</option></select></label>
-          <label class="field"><span>Frage (nur Person × Frage)</span><select name="item" id="expItem"><option value="">Alle</option></select></label>
-        </div>
-        <label class="toggle"><input type="checkbox" name="completed_only"><span></span>Nur abgeschlossene Teilnahmen</label>
-        <label class="toggle"><input type="checkbox" name="include_test"><span></span>Testdaten einbeziehen</label>
+        <div id="expFiles" class="files"></div>
+        <div class="btn-row"><button class="btn btn-primary" type="button" id="expAll">Analysepaket herunterladen (alle Dateien)</button></div>
         <p id="expMsg" class="msg-line" hidden></p>
-        <button class="btn btn-primary" type="submit">CSV herunterladen</button>
-      </form>
+        <p class="hint">Alle Dateien: UTF-8, eindeutige Spaltennamen, Zeitstempel ISO-8601 (UTC), fehlende Werte als <code>NA</code> (nie 0). Dateiname enthält das Exportdatum. Weder E-Mail-Adressen, Gewinnspiel-Codes, IP noch User-Agent sind in den Forschungsdateien enthalten. Jeder Export wird im Protokoll vermerkt. Der Export ist technisch auf Anonymität ausgelegt, ersetzt aber keine datenschutzrechtliche Prüfung.</p>
+      </div>
     </section>
 
     <!-- Testmodus -->

@@ -1,3 +1,4 @@
+import { barChart, lineChart, wilson } from '/admin/charts.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -107,6 +108,7 @@ $('#siteBtn').addEventListener('click', async () => {
 });
 
 function start() {
+  restoreFilters();
   $('#login').hidden = true;
   $('#app').hidden = false;
   showTab('overview');
@@ -117,7 +119,9 @@ function showTab(name) {
   $$('.tabs [role=tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   $$('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
   clearInterval(refreshTimer);
+  $('#filterBar').hidden = !['overview', 'export'].includes(name);
   if (name === 'overview') { loadOverview(); refreshTimer = setInterval(loadOverview, 30000); }
+  if (name === 'export') renderExportFiles();
   if (name === 'settings') fillSettings();
   if (name === 'questions') renderQuestions();
   if (name === 'prize') loadPrize();
@@ -126,65 +130,202 @@ function showTab(name) {
 }
 $$('.tabs [role=tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
+// ------------------------------------------------------------ Filter (gemeinsam für Übersicht und Export)
+const FILTER_KEYS = ['version', 'group', 'lang', 'status', 'mode', 'from', 'to'];
+function filterParams() {
+  const f = $('#filterBar');
+  const q = new URLSearchParams();
+  for (const k of FILTER_KEYS) if (f[k].value) q.set(k, f[k].value);
+  return q;
+}
+$('#filterBar').addEventListener('submit', (e) => e.preventDefault());
+$('#filterBar').addEventListener('change', () => { saveFilters(); refreshCurrent(); });
+$('#fReset').addEventListener('click', () => { $('#filterBar').reset(); saveFilters(); refreshCurrent(); });
+$('#ovRefresh').addEventListener('click', () => refreshCurrent());
+function saveFilters() {
+  try { sessionStorage.setItem('study-admin-filters', JSON.stringify(Object.fromEntries(filterParams()))); } catch { /* ignorieren */ }
+}
+function restoreFilters() {
+  try {
+    const o = JSON.parse(sessionStorage.getItem('study-admin-filters') || '{}');
+    for (const k of FILTER_KEYS) if (o[k]) $('#filterBar')[k].value = o[k];
+  } catch { /* ignorieren */ }
+}
+function refreshCurrent() {
+  const tab = $$('.tabs [role=tab]').find((b) => b.getAttribute('aria-selected') === 'true')?.dataset.tab;
+  if (tab === 'overview') loadOverview();
+  if (tab === 'export') renderExportFiles();
+}
+
 // ------------------------------------------------------------ Übersicht
-const pct = ([k, n]) => (n ? `<b>${((k / n) * 100).toFixed(1)} %</b><small>${k}/${n}</small>` : '<span class="muted">–</span>');
+const GCOL = { control: 'var(--g-control)', gamification: 'var(--g-gamification)', motivation: 'var(--g-motivation)' };
+const GLAB = { control: '1 · Kontrolle', gamification: '2 · Gamification', motivation: '3 · Motivation' };
+const GSERIES = Object.keys(GLAB).map((k) => ({ key: k, label: GLAB[k], color: GCOL[k] }));
+const SMALL_N = 30;
+const pctTxt = (v) => `${(v * 100).toFixed(v < 0.1 && v > 0 ? 1 : 0)} %`;
+const pct = ([k, n]) => (n ? `<b>${((k / n) * 100).toFixed(1)} %</b><small>${k}/${n}${n < SMALL_N ? ' · kleines n' : ''}</small>` : '<span class="muted">NA</span>');
 const dur = (s) => (s == null ? '–' : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`);
 const ms = (v) => (v == null ? '–' : `${(v / 1000).toFixed(1)} s`);
+let lastStats = null;
+let statusAxis = 'group';
 
 function fillVersions(versions, current) {
-  for (const sel of [$('#ovVersion'), $('#expVersion')]) {
-    const keep = sel.value;
-    sel.innerHTML = '<option value="">Alle</option>' + versions.map((v) =>
-      `<option value="${esc(v.version)}">${esc(v.version)}${v.version === current ? ' (aktuell)' : ''} · ${v.n}</option>`).join('');
-    sel.value = versions.some((v) => v.version === keep) ? keep : '';
-  }
+  const sel = $('#fVersion');
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">Alle</option>' + versions.map((v) =>
+    `<option value="${esc(v.version)}">${esc(v.version)}${v.version === current ? ' (aktuell)' : ''} · ${v.n}</option>`).join('');
+  sel.value = versions.some((v) => v.version === keep) ? keep : '';
 }
 
 function extraCell(meta, g) {
   if (!g) return '<span class="muted">–</span>';
-  if (meta.ordinal) return `<b>Ø ${g.mean}</b><small>n=${g.n}</small>`;
+  const na = g.na ? `<small>NA: ${g.na}</small>` : '';
+  if (!g.n) return `<span class="muted">NA</span>${na}`;
+  if (meta.ordinal) return `<b>Ø ${g.mean}</b><small>n=${g.n}${g.n < SMALL_N ? ' · kleines n' : ''}</small>${na}`;
   const dist = Object.entries(g.dist).sort(([a], [b]) => a - b).map(([k, n]) => `${k}: ${n}`).join(' · ');
-  return `<b>${dist}</b><small>n=${g.n}</small>`;
+  return `<b>${dist}</b><small>n=${g.n}</small>${na}`;
 }
 function extrasTable(sel, d, section) {
   const metas = d.extras_meta.filter((m) => m.section === section);
-  $(sel).innerHTML = `<thead><tr><th>Item</th>${Object.values(GROUPS).map((g) => `<th>${g}</th>`).join('')}</tr></thead><tbody>${
+  $(sel).innerHTML = `<thead><tr><th>Item</th>${GSERIES.map((g) => `<th>${g.label}</th>`).join('')}</tr></thead><tbody>${
     metas.length ? metas.map((m) => `<tr><td class="txt"><b>${esc(m.id)}</b> ${esc(m.text)}</td>${
-      Object.keys(GROUPS).map((g) => `<td>${extraCell(m, d.extras[m.id]?.[g])}</td>`).join('')}</tr>`).join('')
+      Object.keys(GLAB).map((g) => `<td>${extraCell(m, d.extras[m.id]?.[g])}</td>`).join('')}</tr>`).join('')
       : '<tr><td colspan="4" class="muted">Keine Items konfiguriert.</td></tr>'}</tbody>`;
 }
 
+function drawStatusChart(d) {
+  const G = Object.keys(GLAB);
+  const STAT = [
+    { key: 'started', label: 'Teilgenommen', color: 'var(--s-start)' },
+    { key: 'completed', label: 'Abgeschlossen', color: 'var(--s-done)' },
+    { key: 'abandoned', label: 'Abgebrochen', color: 'var(--s-abandon)' },
+  ];
+  const num = (g, k) => (g === 'all' ? d.total[k] : d.groups[g][k]);
+  if (statusAxis === 'group') {
+    barChart($('#chStatus'), {
+      cats: G.map((g) => ({ label: GLAB[g], sub: `n = ${d.groups[g].started}` })), series: STAT,
+      values: G.map((g) => Object.fromEntries(STAT.map((s) => [s.key, num(g, s.key)]))),
+      aria: 'Anzahl Teilgenommen, Abgeschlossen, Abgebrochen je Gruppe',
+      tip: G.map((g) => Object.fromEntries(STAT.map((s) => [s.key, `${s.label}: ${num(g, s.key)} von ${d.groups[g].started} Starts`]))),
+    });
+  } else {
+    barChart($('#chStatus'), {
+      cats: STAT.map((s) => ({ label: s.label })), series: GSERIES,
+      values: STAT.map((s) => Object.fromEntries(G.map((g) => [g, num(g, s.key)]))),
+      aria: 'Anzahl je Status und Gruppe',
+    });
+  }
+}
+$$('[data-axis]').forEach((b) => b.addEventListener('click', () => {
+  statusAxis = b.dataset.axis;
+  $$('[data-axis]').forEach((x) => x.classList.toggle('seg-on', x === b));
+  if (lastStats) drawStatusChart(lastStats);
+}));
+
 async function loadOverview() {
-  const q = new URLSearchParams({ include_test: $('#ovTest').checked ? '1' : '0' });
-  if ($('#ovVersion').value) q.set('version', $('#ovVersion').value);
   let d;
-  try { d = await api(`/api/admin/stats?${q}`); } catch { return; }
+  try { d = await api(`/api/admin/stats?${filterParams()}`); } catch { return; }
+  lastStats = d;
   fillVersions(d.versions, d.current_version);
   $('#mismatchBanner').hidden = !d.catalog_mismatch;
   const t = d.total;
+  const G = Object.keys(GLAB);
   const rate = t.started ? Math.round((t.completed / t.started) * 100) : 0;
   $('#ovTiles').innerHTML = [
-    ['Gestartet', t.started, `DE ${d.langs.de} · EN ${d.langs.en}`],
-    ['Abgeschlossen', t.completed, `${rate} % Abschlussquote · ${t.main_completed} mit 15 Fragen`],
-    ['Laufend', t.in_progress, 'aktiv in den letzten Minuten'],
-    ['Abgebrochen', t.abandoned, 'inaktiv, nicht abgeschlossen'],
+    ['Teilgenommen', t.started, `DE ${d.langs.de} · EN ${d.langs.en}`],
+    ['Abgeschlossen', t.completed, `${rate} % von ${t.started} Starts · ${t.main_completed} mit 15 Fragen`],
+    ['Abgebrochen', t.abandoned, `inaktiv > ${d.rules.abandon_after_min} Min., nicht abgeschlossen`],
+    ['Laufend', t.in_progress, 'noch aktiv'],
+    ['Median Dauer', dur(t.median_duration_s), 'Start bis Abschluss'],
   ].map(([l, v, s]) => `<div class="tile"><span>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
 
+  // Warnungen: kleine Fallzahl, Ungleichgewicht zwischen den Gruppen
+  const w = [];
+  const ns = G.map((g) => d.groups[g].started);
+  if (t.started === 0) w.push('Keine Teilnahmen im gewählten Filter.');
+  else {
+    if (ns.some((n) => n < SMALL_N)) w.push(`Kleine Fallzahl: mindestens eine Gruppe hat weniger als ${SMALL_N} Teilnahmen (${G.map((g, i) => `${GLAB[g]}: ${ns[i]}`).join(', ')}). Kennzahlen sind noch nicht belastbar.`);
+    if (Math.max(...ns) - Math.min(...ns) > Math.max(2, 0.2 * Math.max(...ns))) w.push('Die Gruppen sind unausgeglichen besetzt (Randomisierung weicht auffällig von 1:1:1 ab). Ggf. Filter (Status, Version) prüfen.');
+  }
+  if (d.filters.mode !== 'prod') w.push(`Filter „Daten“: ${d.filters.mode === 'test' ? 'nur Testdaten' : 'Test und Produktiv gemischt'} – nicht für die endgültige Auswertung verwenden.`);
+  $('#ovWarn').innerHTML = w.map((x) => `<div class="banner warn">${esc(x)}</div>`).join('');
+
+  drawStatusChart(d);
+
+  // Fortschritt: Anteil der Starts mit >= k beantworteten Fragen
+  const ks = Array.from({ length: 15 }, (_, i) => i + 1);
+  lineChart($('#chReach'), {
+    cats: ks.map((k) => ({ label: `Q${k}` })), series: GSERIES, yMax: 1, fmt: (v) => `${Math.round(v * 100)} %`,
+    values: ks.map((k) => Object.fromEntries(G.map((g) => [g, d.groups[g].started ? d.groups[g].reach[k] / d.groups[g].started : null]))),
+    tip: ks.map((k) => Object.fromEntries(G.map((g) => [g, `${GLAB[g]}: ${d.groups[g].reach[k]} von ${d.groups[g].started} (${d.groups[g].started ? pctTxt(d.groups[g].reach[k] / d.groups[g].started) : 'NA'})`]))),
+    aria: 'Anteil der Teilnehmenden mit mindestens k beantworteten Fragen je Gruppe',
+  });
+
+  // Antwortqualität mit 95-%-Intervall
+  const Q = [['speeding', 'Speeding'], ['bogus', 'Bogus (Q14)'], ['consistency', 'Consistency (Q6/Q10)'], ['comprehension', 'Comprehension (Q9)']];
+  const qv = Q.map(([k]) => Object.fromEntries(G.map((g) => { const [a, n] = d.groups[g][k]; return [g, n ? a / n : null]; })));
+  barChart($('#chQuality'), {
+    cats: Q.map(([, l]) => ({ label: l })), series: GSERIES, values: qv, yMax: undefined, fmt: (v) => `${Math.round(v * 100)} %`,
+    ci: Q.map(([k]) => Object.fromEntries(G.map((g) => { const [a, n] = d.groups[g][k]; return [g, n ? wilson(a, n) : null]; }))),
+    tip: Q.map(([k]) => Object.fromEntries(G.map((g) => { const [a, n] = d.groups[g][k]; return [g, `${GLAB[g]}: ${a}/${n}${n ? ` = ${pctTxt(a / n)}` : ''}`]; }))),
+    aria: 'Anteil auffälliger Antworten je Gruppe',
+  });
+
   const rows = Object.entries(d.groups);
-  $('#ovGroups').innerHTML = `<thead><tr><th>Gruppe</th><th>Gestartet</th><th>Anteil</th><th>Abgeschl.</th><th>Median Antwortzeit</th><th>Speeding</th><th>Bogus</th><th>Consistency</th><th>Comprehension</th><th>Median Dauer</th></tr></thead>
-    <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GROUPS[g]}</th><td>${a.started}</td>
-      <td>${t.started ? Math.round((a.started / t.started) * 100) : 0} %</td><td>${a.completed}</td><td>${ms(a.median_rt_ms)}</td>
+  $('#ovGroups').innerHTML = `<thead><tr><th>Gruppe</th><th>Starts</th><th>Anteil</th><th>Abgeschl.</th><th>Abgebr.</th><th>Median Antwortzeit</th><th>Speeding</th><th>Bogus</th><th>Consistency</th><th>Comprehension</th><th>Median Dauer</th></tr></thead>
+    <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GLAB[g]}</th><td>${a.started}</td>
+      <td>${t.started ? Math.round((a.started / t.started) * 100) : 0} %</td><td>${a.completed}</td><td>${a.abandoned}</td><td>${ms(a.median_rt_ms)}</td>
       <td>${pct(a.speeding)}</td><td>${pct(a.bogus)}</td><td>${pct(a.consistency)}</td><td>${pct(a.comprehension)}</td><td>${dur(a.median_duration_s)}</td></tr>`).join('')}</tbody>`;
+
+  // Antwortzeit je Frage (Median) – nur Speeding-Items; Tabelle mit Quartilen und Speeding
+  const sp = d.items.filter((i) => i.speeding);
+  lineChart($('#chRt'), {
+    cats: sp.map((i) => ({ label: i.id })), series: GSERIES, fmt: (v) => `${v.toFixed(0)} s`,
+    values: sp.map((i) => Object.fromEntries(G.map((g) => [g, i.groups[g].median_ms == null ? null : i.groups[g].median_ms / 1000]))),
+    tip: sp.map((i) => Object.fromEntries(G.map((g) => { const x = i.groups[g]; return [g, `${GLAB[g]}: Median ${ms(x.median_ms)} (Q1–Q3 ${ms(x.q1_ms)}–${ms(x.q3_ms)}), n=${x.n}`]; }))),
+    aria: 'Median der Antwortzeit je Frage und Gruppe',
+  });
+  $('#ovItems').innerHTML = `<thead><tr><th>Frage</th><th>Typ</th>${GSERIES.map((g) => `<th>${g.label}<br><small>Median (Q1–Q3) · Speeding</small></th>`).join('')}</tr></thead><tbody>${
+    d.items.map((i) => `<tr><th>${i.id}</th><td><span class="chip ${i.type}">${TYPES[i.type] || i.type}</span></td>${G.map((g) => {
+      const x = i.groups[g];
+      return `<td>${x.n ? `<b>${ms(x.median_ms)}</b><small>${ms(x.q1_ms)}–${ms(x.q3_ms)} · n=${x.n}${i.speeding && x.speeding[1] ? ` · Speeding ${x.speeding[0]}/${x.speeding[1]}` : ''}</small>` : '<span class="muted">NA</span>'}</td>`;
+    }).join('')}</tr>`).join('')}</tbody>`;
   $('#ovBlocks').innerHTML = `<thead><tr><th>Gruppe</th><th>Block 1 (Q1–5)</th><th>Block 2 (Q6–10)</th><th>Block 3 (Q11–15)</th></tr></thead>
-    <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GROUPS[g]}</th>${a.blocks.map((b) => `<td>${pct(b)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+    <tbody>${rows.map(([g, a]) => `<tr><th><span class="dot ${g}"></span>${GLAB[g]}</th>${a.blocks.map((b) => `<td>${pct(b)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+
+  // Manipulationschecks: Mittelwerte als Balken (nur ordinale Items)
+  const mm = d.extras_meta.filter((m) => m.section === 'manipulation' && m.ordinal);
+  if (mm.length) {
+    barChart($('#chManip'), {
+      cats: mm.map((m) => ({ label: m.id })), series: GSERIES, yMax: 5, fmt: (v) => v.toFixed(1),
+      values: mm.map((m) => Object.fromEntries(G.map((g) => [g, d.extras[m.id]?.[g]?.mean ?? null]))),
+      tip: mm.map((m) => Object.fromEntries(G.map((g) => [g, `${GLAB[g]}: Ø ${d.extras[m.id]?.[g]?.mean ?? 'NA'} (n=${d.extras[m.id]?.[g]?.n ?? 0}) – ${m.text}`]))),
+      aria: 'Mittelwerte der Manipulationschecks je Gruppe',
+    });
+  } else $('#chManip').innerHTML = '<p class="muted">Keine ordinalen Manipulationschecks konfiguriert.</p>';
   extrasTable('#ovManip', d, 'manipulation');
   extrasTable('#ovControl', d, 'control');
   extrasTable('#ovFeedback', d, 'feedback');
+
+  // Datenqualität
+  const q = d.quality;
+  const missing = q.items_expected - q.items_answered;
+  const mob = t.mobile + t.desktop;
+  const naCount = Object.values(d.extras).reduce((s, e) => s + Object.values(e).reduce((a, g) => a + g.na, 0), 0);
+  $('#ovQuality').innerHTML = [
+    ['Fehlende Hauptantworten', q.items_expected ? `${missing}` : '–', `${q.items_expected ? pctTxt(missing / q.items_expected) : 'NA'} von ${q.items_expected} erwarteten (Starts × 15)`],
+    ['Speicherfehler', q.save_errors, `bei ${q.participants_with_errors} Teilnehmenden (Ereignis save_error)`],
+    ['Wiederholungs-Verdacht', q.repeat_suspects, 'Browser hatte schon einen Abschluss (nur Hinweis)'],
+    ['Gerät', mob ? `${Math.round((t.mobile / mob) * 100)} % mobil` : '–', `${t.mobile} mobil · ${t.desktop} Desktop · ${t.device_unknown} unbekannt`],
+    ['Sprache', `${d.langs.de} DE · ${d.langs.en} EN`, 'Starts je Sprache'],
+    ['Leere Zusatzantworten', naCount, 'optionale Zusatzfragen ohne Antwort (NA)'],
+  ].map(([l, v, s]) => `<div class="tile"><span>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
+
+  $('#ovDefs').innerHTML = `<thead><tr><th>Kennzahl</th><th>Definition</th><th>Nenner</th><th>Exportspalte</th></tr></thead><tbody>${
+    d.definitions.map((k) => `<tr><th>${esc(k.name)}</th><td class="txt">${esc(k.definition)}</td><td class="txt">${esc(k.denominator)}</td><td class="txt"><code>${esc(k.export)}</code></td></tr>`).join('')}</tbody>`;
+  $('#ovRules').textContent = `Aktive Regeln: Speeding-Faktor DE ${d.rules.speeding_factor.de} / EN ${d.rules.speeding_factor.en} s pro Wort · Wortzahl ${d.rules.word_count_mode === 'text' ? 'nur Text/Passage' : 'inkl. Antwortoptionen'} · Konsistenzregel ${d.rules.consistency.rule === 'diff' ? `|Q6 − (6 − Q10)| ≥ ${d.rules.consistency.min_diff}` : 'Q6/Q10 beide zugestimmt oder beide abgelehnt'}.`;
   $('#ovUpdated').textContent = `Stand ${new Date(d.generated_at).toLocaleTimeString('de-DE')}`;
 }
-$('#ovRefresh').addEventListener('click', loadOverview);
-$('#ovTest').addEventListener('change', loadOverview);
-$('#ovVersion').addEventListener('change', loadOverview);
 
 // ------------------------------------------------------------ Einstellungen
 function updateHeader() {
@@ -224,6 +365,7 @@ function fillSettings() {
   f.experiment_version.value = s.experiment_version;
   f.sf_de.value = s.speeding_factor.de;
   f.sf_en.value = s.speeding_factor.en;
+  f.word_mode.value = s.word_count_mode;
   f.c_rule.value = s.consistency.rule;
   f.c_min.value = s.consistency.min_diff;
   f.abandon.value = s.abandon_after_min;
@@ -235,6 +377,10 @@ function fillSettings() {
   f.christmas_scene.checked = s.christmas_scene;
   f.contact_de.value = s.contact.de;
   f.contact_en.value = s.contact.en;
+  f.pp_de.value = s.privacy_page.de;
+  f.pp_en.value = s.privacy_page.en;
+  const ph = (t) => (t.match(/\[[^\]]+\]/g) || []).length;
+  $('#ppCount').textContent = `Offene Platzhalter in eckigen Klammern: DE ${ph(s.privacy_page.de)}, EN ${ph(s.privacy_page.en)} – vor dem echten Start alle ausfüllen.`;
   f.priv_de.value = s.privacy_extra.de;
   f.priv_en.value = s.privacy_extra.en;
   f.close_de.value = s.closing_text.de;
@@ -263,6 +409,8 @@ $('#setForm').addEventListener('submit', async (e) => {
     open_test: f.open_test.checked,
     experiment_version: f.experiment_version.value.trim(),
     speeding_factor: { de: Number(f.sf_de.value), en: Number(f.sf_en.value) },
+    word_count_mode: f.word_mode.value,
+    privacy_page: { de: f.pp_de.value, en: f.pp_en.value },
     consistency: { rule: f.c_rule.value, min_diff: Number(f.c_min.value) },
     abandon_after_min: Number(f.abandon.value),
     journey: { walk_ms: Number(f.j_walk.value), easing: f.j_ease.value, confetti: f.j_conf.checked, points_per_answer: Number(f.j_pts.value) },
@@ -408,17 +556,54 @@ $('#prizeCheckForm').addEventListener('submit', async (e) => {
 });
 
 // ------------------------------------------------------------ Export
-$('#expForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const f = e.target;
-  const q = new URLSearchParams();
-  for (const k of ['level', 'sep', 'group', 'lang', 'version', 'block', 'item']) if (f[k].value) q.set(k, f[k].value);
-  if (f.completed_only.checked) q.set('completed_only', '1');
-  if (f.include_test.checked) q.set('include_test', '1');
+const EXPORT_FILES = [
+  { level: 'participants', file: 'participants.csv', text: 'Eine Zeile je Teilnahme: Gruppe, Zeitstempel (Einwilligung, Start, Abschluss), Status, Sprache, Gerät, Version.' },
+  { level: 'responses_long', file: 'responses_long.csv', text: 'Eine Zeile je Person × Hauptfrage (auch unbeantwortete): Antwort, Zeitstempel, duration_ms, Wortzahl, Speeding-Schwelle und -Flag, correct.' },
+  { level: 'codebook', file: 'questions_codebook.csv', text: 'Alle Fragen (Haupt- und Zusatzfragen): Texte DE/EN, Optionen, Kodierung, Wortzahlen beider Varianten, Rolle (Bogus, Consistency, Comprehension).' },
+  { level: 'checks', file: 'checks_and_covariates.csv', text: 'Manipulationschecks, Kontext- und Zufriedenheitsfragen: eine Zeile je Person × Item (Antwort oder NA).' },
+  { level: 'derived', file: 'derived_person.csv', text: 'Eine Zeile je Person, aus den Rohdaten berechnet: speeding_share (mit Nenner), Bogus-/Consistency-/Comprehension-Flags, mc_/cv_/fb_-Spalten.' },
+  { level: 'events', file: 'events.csv', text: 'Optional: notwendige Ablaufereignisse (Frage sichtbar, Seite im Hintergrund, Speicherfehler …) ohne Mausbewegungen.' },
+  { level: 'config', file: 'experiment_config.json', text: 'Archivierte Studienkonfiguration: Gruppen, Reihenfolge, Texte, Schwellen, Bewertungsregeln, Versionsstände, Kennzahl-Definitionen, Exportdatum.' },
+];
+
+function exportQuery(level) {
+  const q = filterParams();
+  q.set('level', level);
+  q.set('profile', $('#expProfile').value);
+  q.set('sep', $('#expSep').value);
+  if (level === 'responses_long') {
+    if ($('#expBlock').value) q.set('block', $('#expBlock').value);
+    if ($('#expItem').value) q.set('item', $('#expItem').value);
+  }
+  return q;
+}
+
+function renderExportFiles() {
+  $('#expFiles').innerHTML = EXPORT_FILES.map((f) => `<div class="file-row"><div><b>${f.file}</b><span>${esc(f.text)}</span></div>
+    <button class="btn-sm" type="button" data-level="${f.level}">Herunterladen</button></div>`).join('');
+}
+$('#expFiles').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-level]');
+  if (!b) return;
   const msg = $('#expMsg');
   say(msg, 'Export wird erstellt …');
   try {
-    say(msg, `Heruntergeladen: ${await download(`/api/admin/export?${q}`, 'export.csv')}`, 'ok');
+    const name = await download(`/api/admin/export?${exportQuery(b.dataset.level)}`, `${b.dataset.level}.csv`);
+    say(msg, `Heruntergeladen: ${name}`, 'ok');
+  } catch (err) {
+    say(msg, `Fehler: ${err.message}`, 'err');
+  }
+});
+$('#expAll').addEventListener('click', async () => {
+  const msg = $('#expMsg');
+  const done = [];
+  try {
+    for (const f of EXPORT_FILES) {
+      say(msg, `Export ${done.length + 1}/${EXPORT_FILES.length}: ${f.file} …`);
+      done.push(await download(`/api/admin/export?${exportQuery(f.level)}`, f.file));
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    say(msg, `Analysepaket heruntergeladen (${done.length} Dateien). Falls der Browser Mehrfach-Downloads blockiert, bitte erlauben oder die Dateien einzeln laden.`, 'ok');
   } catch (err) {
     say(msg, `Fehler: ${err.message}`, 'err');
   }
