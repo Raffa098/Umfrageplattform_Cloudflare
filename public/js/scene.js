@@ -6,7 +6,7 @@
 export const STEP = 60;   // Pixel pro Frage
 const LIBORI_EXTRA = 300; // zusätzlicher Weg zwischen Universität (Q5) und Raketenstation (Q10) für die Kirmes "Libori"
 // Weltverschiebung nach n beantworteten Fragen: Q0–5 und Q10–15 mit Hermannsdenkmal-Abschnitt (länger), Q5–10 mit Libori-Abschnitt (länger)
-const HERMANN_EXTRA = 260; // zusätzlicher Weg zwischen Raketenstation (Q10) und Forum (Q15) für das Hermannsdenkmal
+const HERMANN_EXTRA = 140; // zusätzlicher Weg zwischen Raketenstation (Q10) und Forum (Q15) für das Hermannsdenkmal
 export const worldShift = (n) => n * STEP + LIBORI_EXTRA * Math.max(0, Math.min(n, 10) - 5) / 5
   + HERMANN_EXTRA * Math.max(0, Math.min(n, 15) - 10) / 5;
 export const CX = 90;     // feste x-Position der Figur im Bild
@@ -480,15 +480,15 @@ export function sceneSVG() {
     ${university(430)}
     ${lamp(334)}${oak(552, 0.9, 1.3)}${pine(566, 0.95, 2.2)}${lamp(542)}${libori()}${pine(864, 1, 0.8)}${oak(880, 0.9, 3.1)}${lamp(846)}
 
-    ${hermann(1300)}
+    ${hermann(1268)}
     <g transform="translate(250 0)">
     ${hangar(646)}
     ${gantry(722, 18)}${rocket(766)}${tesla(766)}
     <rect class="pad" x="708" y="${GY - 4}" width="108" height="5" rx="1.5"/>
     ${tank(826)}${tank(848)}${dish(872)}${panel(894)}${antenna(916)}
 
-    ${forum(1360)}
-    ${cypress(922, 1, 0.4)}${olive(1350, 1.05, 2)}
+    ${forum(1240)}
+    ${cypress(922, 1, 0.4)}${olive(1230, 1.05, 2)}
     </g>
 
     <rect class="path" x="-60" y="${GY + 1}" width="1860" height="8" rx="4"/>
