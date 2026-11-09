@@ -60,6 +60,17 @@ function mountains() {
 }
 
 // ---------------------------------------------------------------- Stadt mit Universität (Bachelor)
+// Europaflagge: blaues Feld mit zwölf goldenen Sternen im Kreis
+const euStars = Array.from({ length: 12 }, (_, k) => {
+  const ang = (Math.PI * 2 * k) / 12 - Math.PI / 2, sx = 13 + Math.cos(ang) * 5.9, sy = 8.7 + Math.sin(ang) * 5.9;
+  let d = '';
+  for (let p = 0; p < 10; p++) {
+    const rr = p % 2 ? 0.6 : 1.4, t = -Math.PI / 2 + (p * Math.PI) / 5;
+    d += `${p ? 'L' : 'M'}${(sx + Math.cos(t) * rr).toFixed(2)} ${(sy + Math.sin(t) * rr).toFixed(2)}`;
+  }
+  return `<path d="${d}Z" fill="#ffcc00"/>`;
+}).join('');
+
 function university(cx) {
   // Moderner Hochschulbau (nach dem Vorbild der Universität Paderborn): auskragender Obergeschoss-Block aus Aluminiumpaneelen
   // mit dreigeschossiger Lamellenfassade, Schriftzug unter der Auskragung, schlanke Stütze, Klinker-Erdgeschoss mit Lamellenfenstern, Hecke.
@@ -97,7 +108,7 @@ function university(cx) {
     <text class="u2-text" x="${L + 11}" y="${GY - 37.4}">UNIVERSITÄT PADERBORN</text>
     <rect class="u2-soffit" x="${L - 2}" y="${GY - 35}" width="${W + 4}" height="3.6" rx="1"/>
     <rect class="pole" x="${cx + 52}" y="${GY - 118}" width="1.6" height="25"/>
-    <path class="uni-flag" d="M${cx + 53.6} ${GY - 117} q8 -3 16 0 t16 0 v10 q-8 -3 -16 0 t-16 0Z"/>
+    <g transform="translate(${cx + 53.6} ${GY - 117})"><g class="uni-flag"><rect width="26" height="17.4" fill="#0a3d9c"/>${euStars}</g></g>
     ${hedge}
   </g>`;
 }
